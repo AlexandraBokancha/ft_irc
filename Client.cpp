@@ -6,6 +6,9 @@ Client::Client(void)
     std::cout << "Default constructor called" << std::endl;
     return ;
 }
+Client::Client(int socket, const std::string & ip, int port) : _socket(socket), _ip(ip), _port(port){
+    std::cout << "Connexion of " << _ip.c_str() << ":" << _port << std::endl;
+};
 
 // Copy constructor
 Client::Client(const Client &other)
@@ -26,7 +29,7 @@ Client &Client::operator=(const Client &other)
 // Destructor
 Client::~Client(void)
 {
-    std::cout << "Destructor called" << std::endl;
+   // std::cout << "Destructor called" << std::endl;
     return ;
 }
 
