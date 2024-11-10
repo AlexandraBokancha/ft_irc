@@ -10,7 +10,9 @@ class Client
         Client(const Client& other);
         Client &operator=(const Client &other);
         ~Client();
-   
+
+        int getSocket(){return _socket;}
+
     private:
 
         int                 _socket;

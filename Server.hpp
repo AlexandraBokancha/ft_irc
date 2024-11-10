@@ -6,6 +6,9 @@
 # include <unistd.h>
 # include <arpa/inet.h>
 # include <cstdlib>
+# include <cstring>
+# include <poll.h>
+# include <vector>
 
 class Server
 {
@@ -14,6 +17,13 @@ class Server
         Server(const Server& other);
         Server &operator=(const Server &other);
         ~Server();
+        
+        void pushPollfd(struct pollfd & fd){
+            this->_fds.push_back(fd);
+        }
+
+    private:
+        std::vector<struct pollfd> _fds; 
 };
 
 #endif
