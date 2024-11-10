@@ -6,7 +6,7 @@ class Client
 {
     public:
         Client(void);
-        Client(int socket, const std::string & ip, int port);
+        Client(int socket);
         Client(const Client& other);
         Client &operator=(const Client &other);
         ~Client();
@@ -16,8 +16,6 @@ class Client
     private:
 
         int                 _socket;
-        const std::string   _ip;
-        int                 _port;
 };
 
 #endif

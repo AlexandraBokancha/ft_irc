@@ -20,21 +20,17 @@ void setUserInfo(Client & obj){
 }
 
 
-int main(){
-    
+int main(int ac, char *av[]){
+    (void) ac;
     // const char *password;
-    Server irc;
-    int port = 4242; 
+    int port = atoi(av[1]); 
 
     /* AF_INET = IPv4 protocol, SOCK_STREAN = TCP type socket*/
 
-    int serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (serverSocket < 0){
-        std::cout << "Error: invalid socket" << std::endl;
-        exit(-1); // < remplacer par l'exception ?>
-    }
+    Server irc(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
    
     /* defining server address */
+
     sockaddr_in serverAddress; // struct is used to represent an IPv4 address and port number combination
 
     serverAddress.sin_family = AF_INET;
@@ -43,70 +39,68 @@ int main(){
 
 /* when you first create the socket descriptor with socket(),
    the kernel sets it to blocking. If you don't want a socket
-   to be blocking, you habe to make a call to fcntl()*/
-   
-    // fcntl () -> performs operations on the open fd
-    // F_SETFL -> set the file status flags to the value specified by arg
-    // O_NONBLOCK -> the bit that enables nonblocking mode for the file.
+   to be blocking, you have to make a call to fcntl()
+
+    * fcntl () -> performs operations on the open fd
+    * F_SETFL -> set the file status flags to the value specified by arg
+    * O_NONBLOCK -> the bit that enables nonblocking mode for the file.
+*/
+    if (fcntl(irc.getSocket(), F_SETFL, O_NONBLOCK) < 0){
+        std::cout << "Error: failed to set a non-blocking flag for the socket" << std::endl;
+        exit(-1); // < remplacer par l'exception ?>
+    }
 
     /* binding the server socket */
-    if (bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0){
+    if (bind(irc.getSocket(), (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0){
         std::cout << "Error: socket connection failed" << std::endl;
         exit(-1); // < remplacer par l'exception ?>
     }
 
     /* listening for connections */
-    if (listen(serverSocket, SOMAXCONN) < 0){
+    if (listen(irc.getSocket(), SOMAXCONN) < 0){
         std::cout << "Error: listen() falied" << std::endl;
-        exit(-1);
+        exit(-1); // < remplacer par l'exception ?>
     }
 
-    // poll() -> wait for some event on a file descriptor
-    // with a non-blocking file descriptor you can wait
-    // for ANY of a set of fds to become useable -> https://stackoverflow.com/questions/3360797/non-blocking-socket-with-poll
-
+    /* poll() -> wait for some event on a file descriptor.
+        With a non-blocking file descriptor you can wait
+        for ANY of a set of fds to become useable -> https://stackoverflow.com/questions/3360797/non-blocking-socket-with-poll
+        It saves CPU time for your programm.
+    */
     struct pollfd newFds;
   
-    newFds.fd = serverSocket;
-    newFds.events = POLLRDNORM; // "normal data may be read without blocking"
-    newFds.revents = POLLOUT; // "normal data may be written without blocking"
+    newFds.fd = irc.getSocket();
+    newFds.events = POLLIN; // "alert me when data is ready to recv() on this socket"
+    newFds.revents = 0; // "set to 0 or "not yet ready to read"
     irc.pushPollfd(newFds);
 
     std::cout << "Server starting on port " << port << std::endl;
 
     /* accepting a client connection */
+    for (;;){
+        if (poll(&(irc.getFds()), irc.getFdsSize(), -1) < 0){
+            std::cout << "Error: poll() failed";
+            exit(-1);
+        }
+        // est-ce que le socket de server a recu au moins 1 connexion
+        if (irc.getFds().revents == POLLIN){
+            irc.getConnection(0);  
+            std::cout << "Nouvelle connexion" << std::endl;
+        }    
 
-    sockaddr clientAddress = {} ;
-    socklen_t len = sizeof(clientAddress);  
-    int clientSocket = accept(serverSocket, &clientAddress, &len);
-    if (clientSocket < 0)
-        std::cout << "Error: invalid socket" << std::endl;
-    sockaddr_in from;
-    socklen_t addrlen = sizeof(from);
-    if (getsockname(clientSocket, (struct sockaddr*)&clientAddress, &addrlen) < 0){
-        std::cout << "Impossible to have an IP of a new client" << std::endl;
-        close(clientSocket);
+        std::vector<struct pollfd> tmpFds = irc.getFdsVec();
+        // run through the existing connections looking for data to read
+        for (int i = 1; i < irc.getFdsSize(); ++i){
+            // check if someone's ready to read
+            if (tmpFds[i].revents == POLLIN){
+                irc.getConnection(i);
+            }  
+        }   
     }
 
-    // map/vector container for clients ?
-
-    Client client(clientSocket, inet_ntoa(from.sin_addr), ntohs(from.sin_port));
-    
     //setUserInfo(client);
 
-    /* receiving data from the client with cmd recv() */
-    while (true){
-        char buffer[1024] = {0};
-        if (recv(clientSocket, buffer, sizeof(buffer), 0) == 0){
-            std::cout << "Connexion has been closed" << std::endl;
-            exit(0);
-        }
-        else
-            std::cout << "Message from client: " << buffer << std::endl;
-    }
-    
     /* closing the server socket */
-    close(clientSocket);
-    close(serverSocket);
+    close(irc.getSocket());
     return 0;
 }

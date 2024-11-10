@@ -9,11 +9,13 @@
 # include <cstring>
 # include <poll.h>
 # include <vector>
+# include <fcntl.h>
 
 class Server
 {
     public:
         Server(void);
+        Server(int socket);
         Server(const Server& other);
         Server &operator=(const Server &other);
         ~Server();
@@ -22,8 +24,25 @@ class Server
             this->_fds.push_back(fd);
         }
 
+        struct pollfd & getFds(){
+            return this->_fds[0];
+        }
+
+        std::vector<struct pollfd> getFdsVec(){
+            return this->_fds;
+        }
+
+        int getFdsSize(){
+            return this->_fds.size();
+        }
+        
+        int getSocket(){return _socket;}
+
+        void getConnection(int i);
+
     private:
-        std::vector<struct pollfd> _fds; 
+        std::vector<struct pollfd>  _fds; 
+        int                         _socket;
 };
 
 #endif

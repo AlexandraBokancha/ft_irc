@@ -6,9 +6,7 @@ Client::Client(void)
     std::cout << "Default constructor called" << std::endl;
     return ;
 }
-Client::Client(int socket, const std::string & ip, int port) : _socket(socket), _ip(ip), _port(port){
-    std::cout << "Connexion of " << _ip.c_str() << ":" << _port << std::endl;
-};
+Client::Client(int socket) : _socket(socket){};
 
 // Copy constructor
 Client::Client(const Client &other)
