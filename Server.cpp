@@ -68,13 +68,13 @@ void Server::getConnection(int i){
         }
         else{
             // send to everyone
+            std::cout << "Message from client: " << buffer << std::endl;
             for (int j = 0; j < getFdsSize(); ++j){
                 int dest_fd = _fds[j].fd;
                 if (dest_fd != _socket && dest_fd != _fds[i].fd){
                     if (send(dest_fd, buffer, nbytes, 0) < 0){
                         std::cout << "Error: send() failed" << std::endl;
                     }
-                    std::cout << "Message from client: " << buffer << std::endl;
                 }
             }
         }
