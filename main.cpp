@@ -1,23 +1,17 @@
 # include "Server.hpp"
 # include "Client.hpp"
 
-/* sous UNIX les sockets sont de simples descripteurs de fichiers */
+/* sous UNIX les sockets sont de simples descripteurs de fichiers 
+stream-sockets are reliable two-way connected communication stream */
+
+/* TCP makes sure your data arrives sequentially and error-free */
 
 /* non-blocking calls don't block the thread until they finish
 their work; instead, this type of system call returns immediately
 after completing its job without having any effect on what's happening
 in other threads */
 
-void setUserInfo(Client & obj){
-    char buffer[1024] = {0};
 
-  // send();
-  // CMD = /NICK -> PARSING
-    write(obj.getSocket(), "Enter your nickname: \n", 23);
-    recv(obj.getSocket(), buffer, sizeof(buffer), 0);
-    write(obj.getSocket(), "Enter your username: \n", 23);
-    recv(obj.getSocket(), buffer, sizeof(buffer), 0);
-}
 
 
 int main(int ac, char *av[]){
@@ -97,8 +91,6 @@ int main(int ac, char *av[]){
             }  
         }   
     }
-
-    //setUserInfo(client);
 
     /* closing the server socket */
     close(irc.getSocket());

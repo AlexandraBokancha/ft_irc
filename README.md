@@ -1,17 +1,17 @@
--> channel starts with '#'
--> channels are run by channel operators ("ops")
--> "ops" have absolute authority over their channels
--> commands begins with '/'
--> anyting that does not begin with '/' is
-assumed to be a message you are typing
+Requirements for the project:
 
-Basic IRC Commands:
+-> You mustn't develop a client
+-> You mustn't handle server-to-server communication
+----------------------------------------------------
+-> The server must be capable of handling multiple clients
+at the same time and never hang
+-> Forking is not allowed. All I/O operations must be 
+non-blocking
+-> Only 1 poll() can be used for handling all these operations
+-> Communication between client and server has to be done
+via TCP/IP (v4 or v6)
+-> Using your reference client with your server must be
+similiar to using it with any official IRC server
+------------------------------------------------------
 
-/help = show up a list of all commads
-/quit = to quit IRC
-/leave = to leave a channel
-/join
-/MSG [nickname] [msg] = to send a private msg
-
-Channel Maintenance:
-
+Features to implement:
