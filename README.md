@@ -1,6 +1,6 @@
 Requirements for the project:
 
--> You mustn't develop a client
+-> You mustn't develop a client\n
 -> You mustn't handle server-to-server communication
 ----------------------------------------------------
 -> The server must be capable of handling multiple clients
