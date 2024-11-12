@@ -33,18 +33,47 @@ Server::~Server(void)
     return ;
 }
 
+std::vector<struct pollfd> Server::getFdsVec(){
+    return this->_fds;
+}
+
+int Server::getFdsSize(){
+    return this->_fds.size();
+}
+
+int Server::getSocket(){
+    return this->_socket;
+}
+
+int Server::sendAll(int socket, char *buf, int *len){
+    int total = 0; // bytes sent
+    int left = *len; // bytes left to sent
+    int b;
+
+    while (total < *len){
+        b = send(socket, buf + total, left, 0);
+        if (b == -1)
+            break;
+        total += b;
+        left -= b;
+    }
+    *len = total;
+    return b == -1 ? -1 : 0; // return -1 on error, 0 on success
+}
+
+
 void Server::getConnection(int i){
     if (_fds[i].fd == _socket){
        
         // if listener is ready to read, handle new connection
         struct pollfd newFd; 
-        sockaddr clientAddress = {} ;
+        struct sockaddr_storage clientAddress = {};
         socklen_t len = sizeof(clientAddress);  
+        // accept() will return a new socket fd
         int clientSocket = accept(_socket, (struct sockaddr *)&clientAddress, &len);
         if (clientSocket < 0){
-            std::cout << "Error: invalid socket" << std::endl;
+            std::cout << "Error: accept() failed" << std::endl;
         }
-       // std::cout << "Client socket" << clientSocket << "has been connected" << std::endl;
         newFd.fd = clientSocket;
         newFd.events = POLLIN;
         _fds.push_back(newFd);
@@ -64,17 +93,18 @@ void Server::getConnection(int i){
                 std::cout << "Error: recv() failed" << std::endl;
             }
             close(_fds[i].fd);
-            _fds[i].fd = 0;  // delete from __fds[i] ? 
+            _fds[i].fd = -1;  // delete from __fds[i] ? 
         }
         else{
             // send to everyone
             std::cout << "Message from client: " << buffer << std::endl;
             for (int j = 0; j < getFdsSize(); ++j){
                 int dest_fd = _fds[j].fd;
+                // si ce n'est pas un serveur, et si ce n'est pas lui-meme
                 if (dest_fd != _socket && dest_fd != _fds[i].fd){
-                    if (send(dest_fd, buffer, nbytes, 0) < 0){
+                    // send() can return less of data ??
+                    if (sendAll(dest_fd, buffer, &nbytes) == -1)
                         std::cout << "Error: send() failed" << std::endl;
-                    }
                 }
             }
         }

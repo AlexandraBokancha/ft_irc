@@ -28,21 +28,17 @@ class Server
             return this->_fds[0];
         }
 
-        std::vector<struct pollfd> getFdsVec(){
-            return this->_fds;
-        }
-
-        int getFdsSize(){
-            return this->_fds.size();
-        }
-        
-        int getSocket(){return _socket;}
-
-        void getConnection(int i);
+        std::vector<struct pollfd>  getFdsVec();
+        int                         getFdsSize();
+        int                         getSocket();
+        void                        getConnection(int i);
 
     private:
+
         std::vector<struct pollfd>  _fds; 
         int                         _socket;
+
+        int sendAll(int socket, char *buf, int *len);
 };
 
 #endif

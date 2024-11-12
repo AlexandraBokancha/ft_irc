@@ -59,7 +59,9 @@ int main(int ac, char *av[]){
         exit(-1); // < remplacer par l'exception ?>
     }
 
-    /* listening for connections */
+    /*  listening for connections 
+        SOMAXCONN -> the number of connections allowed on the incoming queue
+    */
     if (listen(irc.getSocket(), SOMAXCONN) == -1){
         std::cout << "Error: listen() falied" << std::endl;
         exit(-1); // < remplacer par l'exception ?>
@@ -81,8 +83,13 @@ int main(int ac, char *av[]){
 
     /* accepting a client connection */
     for (;;){
-        if (poll(&(irc.getFds()), irc.getFdsSize(), -1) == -1){
+        int events = poll(&(irc.getFds()), irc.getFdsSize(), -1);
+        if (events == -1){
             std::cout << "Error: poll() failed";
+            exit(-1);
+        }
+        else if (events == 0){
+            std::cout << "Error: poll() timed out" << std::endl;
             exit(-1);
         }
         // est-ce que le socket de server a recu au moins 1 connexion
