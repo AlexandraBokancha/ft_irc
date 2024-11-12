@@ -1,49 +1,65 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
+/*   Updated: 2024/11/12 21:56:38 by dbaladro         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef SERVER_HPP
 # define SERVER_HPP
+
 # include <iostream>
+# include <unistd.h>
+# include <sstream>
+# include <cstring>
+# include <string>
+# include <errno.h>
+# include <exception>
+# include <vector>
+# include <poll.h>
 # include <sys/socket.h>
 # include <netinet/in.h>
-# include <unistd.h>
 # include <arpa/inet.h>
-# include <cstdlib>
-# include <cstring>
-# include <poll.h>
-# include <vector>
-# include <fcntl.h>
 
-class Server
-{
-    public:
-        Server(void);
-        Server(int socket);
-        Server(const Server& other);
-        Server &operator=(const Server &other);
-        ~Server();
-        
-        void pushPollfd(struct pollfd & fd){
-            this->_fds.push_back(fd);
-        }
+class Server {
+public:
+	Server( void );
+	Server( int port, std::string password);
+	Server( Server const & rhs );
+	~Server();
 
-        struct pollfd & getFds(){
-            return this->_fds[0];
-        }
+	Server& operator=( Server const & rhs );
 
-        std::vector<struct pollfd> getFdsVec(){
-            return this->_fds;
-        }
+	// Server exception
+	class InvalidArgException : public std::exception {
+		public :
+			const char *what() const throw();
+	};
+	class InvalidPortException : public InvalidArgException {
+		public :
+			virtual const char *what() const throw();
+	};
 
-        int getFdsSize(){
-            return this->_fds.size();
-        }
-        
-        int getSocket(){return _socket;}
+	void	startServer( void );
+	void	waitClient( void );
 
-        void getConnection(int i);
+	void	pollPushBack(int fd, short events);
 
-    private:
-        std::vector<struct pollfd>  _fds; 
-        int                         _socket;
+private:
+	// static const std::string	_ip;
+	const int						_port;
+	const std::string				_passwd;
+	int								_socket;
+	struct sockaddr_in				_socketAddress;
+	int								_socketAdress_len;
+
+	std::vector<struct pollfd>		_pollFd;
+	unsigned int					_clientNbr;
 };
 
-#endif
-
+#endif // !SERVER_HPP

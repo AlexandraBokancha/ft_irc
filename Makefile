@@ -1,30 +1,43 @@
-NAME = ircserv
+### COMPILATION ###
+CPP = c++
+CPPFLAGS = -std=c++98 -Wall -Wextra -Werror -g3
 
-CC = c++
+### PROJECT NAME ###
+PROJECT = ircserv
+PROJECT_DIR = ./
 
-CFLAGS = -std=c++98 -Wall -Wextra -Werror -g3
+### SOURCE FILE ###
+SRC_DIR = ./
+SRC_FILE = main.cpp \
+			Server.cpp \
+			log.cpp
 
-SRCS =  main.cpp \
-		Server.cpp \
-		Client.cpp
+## OBJECT FILE ###
+OBJ_DIR = .obj
+OBJ_SRC = $(addprefix $(OBJ_DIR)/, $(SRC_FILE:.cpp=.o))
 
-OBJS = $(SRCS:.cpp=.o)
+.PHONY= all clean fclean
 
+### RULES ###
+all : $(PROJECT)
 
-%.o: %.cpp 
-	$(CC) $(CFLAGS) -c $< -o $@
+# COMPILE PROJECT
+$(PROJECT) : $(OBJ_SRC) $(OBJ_MANDATORY)
+	$(CPP) $(CPPFLAGS) $(OBJ_SRC) -o $(PROJECT)
 
-all: $(NAME)
+# COMPILE OBJECT FILE
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
+	@mkdir -p $(@D)
+	$(CPP) $(CPPFLAGS) -c $< -o $@
 
-$(NAME): $(OBJS)
-	$(CC) $(CFLAGS) $^ -o $(NAME)
+# DELETE OBJECT FILE AND EXECUTABLE
+fclean : clean
+	rm -f $(PROJECT)
 
-clean: 
-	rm -f $(OBJS)
+# DELETE OBJECT FILE
+clean :
+	rm -f $(OBJ_DIR)/*.o
+	@rm -df $(OBJ_DIR)/
 
-fclean: clean
-	rm -f $(NAME)
-
-re: fclean all
-
-.PHONY: all clean fclean re
+# DELETE EXECUTABLE OBJECT FILE THEN MAKE ALL
+re : fclean all
