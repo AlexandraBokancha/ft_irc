@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/12 21:56:38 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/12 23:51:33 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,12 +19,15 @@
 # include <cstring>
 # include <string>
 # include <errno.h>
+# include <signal.h>
 # include <exception>
 # include <vector>
 # include <poll.h>
 # include <sys/socket.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
+
+extern int g_signal;
 
 class Server {
 public:
@@ -48,7 +51,9 @@ public:
 	void	startServer( void );
 	void	waitClient( void );
 
-	void	pollPushBack(int fd, short events);
+	void	pollPushBack( int fd, short events );
+
+	void	stopServer( void );
 
 private:
 	// static const std::string	_ip;

@@ -154,13 +154,12 @@ int	main(int ac, char **av) {
 
 	try {
 		irc_serv.startServer();
-
 		irc_serv.waitClient();
-
 	} catch (std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		return (1);
 	}
 	
+	irc_serv.stopServer();
 	return (0);
 }

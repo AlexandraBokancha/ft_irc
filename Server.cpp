@@ -6,19 +6,29 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/12 22:29:38 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 00:01:04 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
 /* FOR TESTING PURPOSE */
-#include <asm-generic/socket.h>
-#include <csignal>
 #include <cstdio>
-#include <sys/poll.h>
-#include <sys/socket.h>
 # include "log.hpp"
+
+/* ************************************************************************** */
+/* *                             Signal Handling                            * */
+/* ************************************************************************** */
+int g_signal = 0;
+
+void	signal_handler(int signum) {
+	if (signum == SIGINT)
+		g_signal = signum;
+}
+
+void	set_signal( void ) {
+	signal(SIGINT, signal_handler);
+}
 
 /* ************************************************************************** */
 /* *                       Constructors && Destructors                      * */
@@ -43,8 +53,8 @@ Server::Server( Server const &rhs )
 }
 
 Server::~Server() {
+	log("Closing socket %d.", this->_pollFd[0].fd);
 	close(this->_socket);
-	std::cout << "Deleting Server object closing socket " << BLU << this->_socket << RESET << std::endl;
 	return ;
 }
 
@@ -67,7 +77,6 @@ void	Server::pollPushBack(int fd, short events) {
 	
 	new_socket.fd = fd;
 	new_socket.events = events;
-	// new_socket.revents = revents;
 	this->_pollFd.push_back(new_socket);
 }
 
@@ -107,6 +116,20 @@ void	Server::startServer( void ) {
 	log("Socket %d is listening on port %d.", this->_socket, this->_port);
 
 	this->pollPushBack(this->_socket, POLLIN); //!< Add server to poll
+
+	set_signal();
+}
+
+void		Server::stopServer( void ) {
+	std::cout << std::endl;
+	log("%s======= SHUTDOWN SIGNAL RECEIVED =======%s", GRN, RESET);
+	log("Disconecting every client...");
+	for (unsigned long i = this->_pollFd.size() - 1; i > 0; --i) {
+		log("Closing socket %d.", this->_pollFd[i].fd);
+		close(this->_pollFd[i].fd);
+		this->_pollFd.pop_back();
+	}
+	log("Ending server...");
 }
 
 void	Server::waitClient( void ) {
@@ -118,16 +141,13 @@ void	Server::waitClient( void ) {
 
 	//! Perform poll check until error
 	while (poll(this->_pollFd.data(), this->_pollFd.size(), -1) > 0) {
-
-		//! Check if new client is trying to connect
-		if (this->_pollFd[0].revents == POLLIN) {
-			//! Accept new client
+		if (this->_pollFd[0].revents == POLLIN) { //! Accept new client
 			client_socket = accept(this->_socket, (struct sockaddr*)&client_addr, reinterpret_cast<socklen_t *>(&addr_len));
 			if (client_socket < 0) {
 				war_log("%sINTERNAL ERROR%s: %saccept%s: %s", RED, RESET, MAG, RESET, std::strerror(errno));
 				break ;
 			}
-			log("Accepted client on: %d", inet_ntoa(client_addr.sin_addr));
+			log("Accepted client on: %s", inet_ntoa(client_addr.sin_addr));
 			this->pollPushBack(client_socket, POLLIN); //!< Add client to poll
 		}
 
