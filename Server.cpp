@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 12:25:59 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 14:24:37 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,7 @@ Server& Server::operator=( Server const & rhs ) {
 /* ************************************************************************** */
 
 /**
- * @brief Add new <styruct pollfd> to server poll
+ * @brief Add new <struct pollfd> to server poll
  *
  * Add new element to poll
  *
@@ -88,6 +88,30 @@ void	Server::pollPushBack(int fd, short events) {
 	this->_pollFd.push_back(new_socket);
 }
 
+/**
+ * @brief Disconnect client and remove it from poll
+ *
+ * This function remove the client-index from poll.
+ * It does it by first closing the client socket,
+ * then it remove all of it's data from poll
+ *
+ * BEWARE:
+ *     The index is reduced by one and this behavioue shouldn't be changed
+ *     For the moment !
+ *
+ * @param index	The client index in the pollFd
+ */
+void	Server::disconnectClient( long unsigned int& index ) {
+	if (index == 0)
+		return ;
+	log("Closing socket %d.", this->_pollFd[index].fd);
+	close(this->_pollFd[index].fd);
+	this->_pollFd.erase(this->_pollFd.begin() + index);
+	index--;
+
+}
+
+                           /* SERVER HANDLING */
 /**
  * @brief Start the server
  *
@@ -134,9 +158,12 @@ void	Server::startServer( void ) {
  */
 void		Server::stopServer( void ) {
 	std::cout << std::endl;
-	log("%s======= SHUTDOWN SIGNAL RECEIVED =======%s", GRN, RESET);
+	log("%s======= SHUTDOWN SIGNAL RECEIVED =======%s", WHT, RESET);
+	if (this->_pollFd.size() <= 1)
+		return ;
+
 	log("Disconecting every client...");
-	for (unsigned long i = this->_pollFd.size() - 1; i > 0; --i) {
+	for (unsigned long int i = this->_pollFd.size() - 1; i > 0; --i) {
 		log("Closing socket %d.", this->_pollFd[i].fd);
 		close(this->_pollFd[i].fd);
 		this->_pollFd.pop_back();
@@ -164,6 +191,60 @@ void	Server::acceptNewClient( void ) {
 }
 
 /**
+ * @brief Receive client message after POLLIN event
+ *
+ * This function read the Msg send byy the client after POLLIN event
+ * IT SHOULD BE UPDATED ACCORDINGLY
+ *
+ * @param i The pollFd index
+ */
+void	Server::receiveMsg( long unsigned int& i ) {
+	char	buffer[512]; //<! 512 = max irc message size
+	
+	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
+
+	if (buffer_size > 0) { //!< Received msg
+		buffer[buffer_size - 1] = '\0';
+		log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
+		return ;
+	}
+	if (buffer_size == 0)
+		war_log("Received no data on socket %d", this->_pollFd[i].fd);
+	if (buffer_size == -1)
+		err_log("Could not received data on socket %d: %srecv%s: %s.", this->_pollFd[i].fd, MAG, RESET, std::strerror(errno));
+	disconnectClient(i);
+}
+
+/**
+ * @brief Treat the event caught by poll
+ *
+ * This function will treat the event caught by poll.
+ *
+ * It either catch a POLLIN event and will read the client Msg.
+ * Or it received on error and will display a log according to the error
+ *
+ * @param i The pollFd index
+ */
+void	Server::receiveEvent( long unsigned int& i ) {
+	//! Receive nothing
+	if (this->_pollFd[i].revents == 0)
+		return ;
+
+	//! Receive data
+	if (this->_pollFd[i].revents & POLLIN)
+		return (this->receiveMsg(i));	
+
+	//! received error
+	if (this->_pollFd[i].revents & POLLHUP)
+		err_log("Client hang up on socket %d.", this->_pollFd[i].fd);
+	if (this->_pollFd[i].revents & POLLERR)
+		err_log("Error on socket %d.", this->_pollFd[i].fd);
+	if (this->_pollFd[i].revents & POLLNVAL)
+		err_log("Invalid request on socket %d.", this->_pollFd[i].fd);
+	disconnectClient(i);
+}
+
+/**
  * @brief Run the server
  */
 void	Server::runServer( void ) {
@@ -177,59 +258,14 @@ void	Server::runServer( void ) {
 			this->acceptNewClient();
 
 		//! Check if data has been received on client socket
-		for (std::size_t i = 1; i < this->_pollFd.size(); i++) {
-			if (this->_pollFd[i].fd > 0) {
-				if (this->_pollFd[i].revents & POLLIN) {
-					char	buffer[512]; //! 512 = max irc message size
-
-					int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
-					if (buffer_size == -1) {
-						err_log("Could not received data on socket %d: %srecv%s: %s.", this->_pollFd[i].fd, MAG, RESET, std::strerror(errno));
-						// this->_pollFd.erase(this->_pollFd.begin() + i);
-						// i--;
-					} else if (buffer_size == 0) {
-						war_log("Received no data on socket %d", this->_pollFd[i].fd);
-						log("Closing socket %d", this->_pollFd[i].fd);
-						close(this->_pollFd[i].fd);
-						this->_pollFd.erase(this->_pollFd.begin() + i);
-						i--;
-					} else {
-						buffer[buffer_size - 1] = '\0';
-						log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
-					}
-					continue ;
-				}
-				if (this->_pollFd[i].revents & POLLHUP) {
-					err_log("Disconnected client on socket %d.", this->_pollFd[i].fd);
-					close(this->_pollFd[i].fd);
-					this->_pollFd.erase(this->_pollFd.begin() + i);
-					i--;
-					continue ;
-				}
-				if (this->_pollFd[i].revents & POLLERR) {
-
-					err_log("Error on socket %d.", this->_pollFd[i].fd);
-					close(this->_pollFd[i].fd);
-					this->_pollFd.erase(this->_pollFd.begin() + i);
-					i--;
-					continue ;
-				}
-				if (this->_pollFd[i].revents & POLLNVAL) {
-					err_log("Invalid request on socket %d.", this->_pollFd[i].fd);
-					close(this->_pollFd[i].fd);
-					this->_pollFd.erase(this->_pollFd.begin() + i);
-					i--;
-					continue;
-				}
-				continue ;
-			}
-			if (this->_pollFd[i].fd == 0) { //! Case unused fd
+		for (long unsigned int i = 1; i < this->_pollFd.size(); i++) {
+			if (this->_pollFd[i].fd > 0)
+				this->receiveEvent(i);
+			else if (this->_pollFd[i].fd == 0) { //! Case unused fd
 				war_log("Removed unused fd from pollfd [%sShouldn't happened%s]", YEL, RESET);
-				this->_pollFd.erase(this->_pollFd.begin() + i);
-				i--;
-				continue ;
-			}
-			war_log("WTF happened on socket %d", this->_pollFd[i].fd);
+				disconnectClient(i);
+			} else
+				war_log("Why tha F*** socket = %d?", this->_pollFd[i].fd);
 		}
 	}
 }

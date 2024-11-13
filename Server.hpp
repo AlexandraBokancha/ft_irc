@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 12:25:10 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 14:06:48 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,11 +48,12 @@ public:
 			const char *what() const throw();
 	};
 
+	void	pollPushBack( int fd, short events );
+	void	disconnectClient( long unsigned int& index );
+
 	void	startServer( void ); //!< Start the server
 	void	runServer( void );
 	void	stopServer( void );
-
-	void	pollPushBack( int fd, short events );
 
 private:
 	//! Private member
@@ -68,6 +69,8 @@ private:
 
 	//! Private member function
 	void							acceptNewClient( void );
+	void							receiveMsg( long unsigned int& i );
+	void							receiveEvent( long unsigned int& i );
 
 };
 
