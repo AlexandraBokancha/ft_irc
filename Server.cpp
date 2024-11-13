@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 00:01:04 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 11:54:55 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,14 @@ Server& Server::operator=( Server const & rhs ) {
 /* *                              Member function                           * */
 /* ************************************************************************** */
 
+/**
+ * @brief Add new <styruct pollfd> to server poll
+ *
+ * Add new element to poll
+ *
+ * @param fd The socket file descriptor to add
+ * @param events The poll event mask
+ */
 void	Server::pollPushBack(int fd, short events) {
 	struct pollfd	new_socket;
 	
@@ -81,16 +89,17 @@ void	Server::pollPushBack(int fd, short events) {
 }
 
 /**
- * @brief Create server socket and bind it.
+ * @brief Start the server
  *
- * Create a server socket, set socketAddress and bind it.
+ * Init server variable and signals, create socket, bind it and start listaning
  */
 void	Server::startServer( void ) {
 	this->_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_socket == -1)
 		throw (std::runtime_error(std::string("socket: ") + std::strerror(errno)));
+	this->pollPushBack(this->_socket, POLLIN); //!< Add server to poll
 
-	log("Socket %d created", this->_socket);
+	success_log("Socket %d created", this->_socket);
 
 	this->_socketAdress_len = sizeof(this->_socketAddress);
 	std::memset(&(this->_socketAddress), 0, this->_socketAdress_len);
@@ -99,27 +108,32 @@ void	Server::startServer( void ) {
 	this->_socketAddress.sin_addr.s_addr = inet_addr("0.0.0.0");
 	int	reusable_addr = 1;
 	if (setsockopt(this->_socket, SOL_SOCKET, SO_REUSEADDR, &reusable_addr, sizeof(reusable_addr)) < 0)
-		throw (std::runtime_error(std::string("bind: ") + std::strerror(errno)));
+		throw (std::runtime_error(std::string("setsockopt: ") + std::strerror(errno)));
 
-	log("AdressSocket created.");
+	success_log("AdressSocket created: %d.", this->_socketAddress.sin_addr);
 
 	if (bind(this->_socket, (struct sockaddr *)&this->_socketAddress,
 		this->_socketAdress_len) < 0)
 		throw (std::runtime_error(std::string("bind: ") + std::strerror(errno)));
 
 
-	log("Binded socket %d.", this->_socket);
+	success_log("Binded socket %d.", this->_socket);
 
 	if (listen(this->_socket, 256) < 0)
 		throw (std::runtime_error(std::string("listen: ") + std::strerror(errno)));
 
 	log("Socket %d is listening on port %d.", this->_socket, this->_port);
 
-	this->pollPushBack(this->_socket, POLLIN); //!< Add server to poll
 
 	set_signal();
 }
 
+/**
+ * @brief Stop the server
+ *
+ * Stop the server by disconnecting every client and closing associated sockets
+ * Should be called just before server desctructor / End of program
+ */
 void		Server::stopServer( void ) {
 	std::cout << std::endl;
 	log("%s======= SHUTDOWN SIGNAL RECEIVED =======%s", GRN, RESET);
@@ -132,7 +146,7 @@ void		Server::stopServer( void ) {
 	log("Ending server...");
 }
 
-void	Server::waitClient( void ) {
+void	Server::runServer( void ) {
 	int					client_socket;
 	struct sockaddr_in	client_addr;
 	int					addr_len = sizeof(client_addr);
@@ -144,10 +158,10 @@ void	Server::waitClient( void ) {
 		if (this->_pollFd[0].revents == POLLIN) { //! Accept new client
 			client_socket = accept(this->_socket, (struct sockaddr*)&client_addr, reinterpret_cast<socklen_t *>(&addr_len));
 			if (client_socket < 0) {
-				war_log("%sINTERNAL ERROR%s: %saccept%s: %s", RED, RESET, MAG, RESET, std::strerror(errno));
+				err_log("%sINTERNAL ERROR%s: %saccept%s: %s", RED, RESET, MAG, RESET, std::strerror(errno));
 				break ;
 			}
-			log("Accepted client on: %s", inet_ntoa(client_addr.sin_addr));
+			success_log("Accepted client on: %s", inet_ntoa(client_addr.sin_addr));
 			this->pollPushBack(client_socket, POLLIN); //!< Add client to poll
 		}
 

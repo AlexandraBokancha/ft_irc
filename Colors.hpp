@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 14:57:38 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/12 15:01:26 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 11:32:13 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,5 +86,9 @@
 # define RESET "\e[0m"
 # define CRESET "\e[0m"
 # define COLOR_RESET "\e[0m"
+
+// Special 256 color
+# define DRKRED "\e[38;5;124m"
+# define FLUOGRN "\e[38;5;118m"
 
 #endif

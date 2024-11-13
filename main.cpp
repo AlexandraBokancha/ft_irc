@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "log.hpp"
 #include <stdexcept>
 // # include "Client.hpp"
 
@@ -137,16 +138,16 @@ void	parse_arg(int ac, char **av, int& port, std::string& passwd) {
 
 int	main(int ac, char **av) {
 	int				port;
-	std::string	passwd;
+	std::string		passwd;
 
 	try {
 		parse_arg(ac, av, port, passwd);
 	} catch (Server::InvalidPortException& e ) {
-		std::cerr << e.what() << ": " << av[1] << std::endl;
+		fatal_log((std::string(e.what()) + ": " + av[1]).c_str());
 		return (1);
 	}
 	catch (std::exception& e) {
-		std::cerr << e.what() << std::endl;
+		fatal_log(e.what());
 		return (1);
 	}
 
@@ -154,12 +155,12 @@ int	main(int ac, char **av) {
 
 	try {
 		irc_serv.startServer();
-		irc_serv.waitClient();
+		irc_serv.runServer();
 	} catch (std::exception& e) {
-		std::cerr << e.what() << std::endl;
+		fatal_log(e.what());
+		irc_serv.stopServer();
 		return (1);
 	}
-	
 	irc_serv.stopServer();
 	return (0);
 }

@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/12 23:51:33 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 11:55:02 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,18 +38,18 @@ public:
 
 	Server& operator=( Server const & rhs );
 
-	// Server exception
+	//! Server exceptions
 	class InvalidArgException : public std::exception {
 		public :
 			const char *what() const throw();
 	};
 	class InvalidPortException : public InvalidArgException {
 		public :
-			virtual const char *what() const throw();
+			const char *what() const throw();
 	};
 
 	void	startServer( void );
-	void	waitClient( void );
+	void	runServer( void );
 
 	void	pollPushBack( int fd, short events );
 
