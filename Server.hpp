@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 11:55:02 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 12:25:10 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,14 +48,14 @@ public:
 			const char *what() const throw();
 	};
 
-	void	startServer( void );
+	void	startServer( void ); //!< Start the server
 	void	runServer( void );
+	void	stopServer( void );
 
 	void	pollPushBack( int fd, short events );
 
-	void	stopServer( void );
-
 private:
+	//! Private member
 	// static const std::string	_ip;
 	const int						_port;
 	const std::string				_passwd;
@@ -65,6 +65,10 @@ private:
 
 	std::vector<struct pollfd>		_pollFd;
 	unsigned int					_clientNbr;
+
+	//! Private member function
+	void							acceptNewClient( void );
+
 };
 
 #endif // !SERVER_HPP

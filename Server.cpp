@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 12:09:50 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 12:25:59 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -145,26 +145,36 @@ void		Server::stopServer( void ) {
 }
 
 /**
- * @brief Run the server
+ * @brief Accept a new client connecting to the server
+ *
+ * Accept new client after a POLLIN event have been caught on the Server socket
  */
-void	Server::runServer( void ) {
+void	Server::acceptNewClient( void ) {
 	int					client_socket;
 	struct sockaddr_in	client_addr;
 	int					addr_len = sizeof(client_addr);
 
+		client_socket = accept(this->_socket, (struct sockaddr*)&client_addr,
+			reinterpret_cast<socklen_t *>(&addr_len));
+		if (client_socket < 0) //!< accept error
+			return (err_log("%sInternal error%s: %saccept%s: %s",
+					RED, RESET, MAG, RESET, std::strerror(errno)));
+		success_log("accepted client on: %s", inet_ntoa(client_addr.sin_addr));
+		this->pollPushBack(client_socket, POLLIN); //!< add client to poll
+}
+
+/**
+ * @brief Run the server
+ */
+void	Server::runServer( void ) {
+
 	log("Server waiting for connection...");
 
-	//! Perform poll check until error
+	//! Perform poll check until error or signal catch
 	while (poll(this->_pollFd.data(), this->_pollFd.size(), -1) > 0) {
-		if (this->_pollFd[0].revents == POLLIN) { //! Accept new client
-			client_socket = accept(this->_socket, (struct sockaddr*)&client_addr, reinterpret_cast<socklen_t *>(&addr_len));
-			if (client_socket < 0) {
-				err_log("%sINTERNAL ERROR%s: %saccept%s: %s", RED, RESET, MAG, RESET, std::strerror(errno));
-				break ;
-			}
-			success_log("Accepted client on: %s", inet_ntoa(client_addr.sin_addr));
-			this->pollPushBack(client_socket, POLLIN); //!< Add client to poll
-		}
+
+		if (this->_pollFd[0].revents == POLLIN) //!< New client connecting
+			this->acceptNewClient();
 
 		//! Check if data has been received on client socket
 		for (std::size_t i = 1; i < this->_pollFd.size(); i++) {
