@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 11:54:55 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 12:09:50 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,14 +116,12 @@ void	Server::startServer( void ) {
 		this->_socketAdress_len) < 0)
 		throw (std::runtime_error(std::string("bind: ") + std::strerror(errno)));
 
-
 	success_log("Binded socket %d.", this->_socket);
 
 	if (listen(this->_socket, 256) < 0)
 		throw (std::runtime_error(std::string("listen: ") + std::strerror(errno)));
 
 	log("Socket %d is listening on port %d.", this->_socket, this->_port);
-
 
 	set_signal();
 }
@@ -146,6 +144,9 @@ void		Server::stopServer( void ) {
 	log("Ending server...");
 }
 
+/**
+ * @brief Run the server
+ */
 void	Server::runServer( void ) {
 	int					client_socket;
 	struct sockaddr_in	client_addr;
