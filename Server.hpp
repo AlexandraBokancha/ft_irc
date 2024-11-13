@@ -14,31 +14,47 @@
 class Server
 {
     public:
-        Server(void);
-        Server(int socket);
+
+        Server(int socket, int port);
         Server(const Server& other);
         Server &operator=(const Server &other);
         ~Server();
-        
-        void pushPollfd(struct pollfd & fd){
-            this->_fds.push_back(fd);
-        }
-
-        struct pollfd & getFds(){
-            return this->_fds[0];
-        }
-
+    
+		/* getters */
         std::vector<struct pollfd>  getFdsVec();
         int                         getFdsSize();
         int                         getSocket();
+
+		/* function to establish a socket which
+		can accept calls. use of non-blocking socket for i/o operations.*/
+		void						establishSocket();
+
+		/* main function using poll() for handle multiple file descriptors (clients)*/
+		void						createPoll();
+
+		/* function that accept() a new connection, 
+		and then handle recv() and send() operations */
         void                        getConnection(int i);
+		
+		/* function inside getConnection used to accept and
+		create a new socket fd of a user trying to connect
+		to a server */
+		void						acceptNewConnection();
+
+		/* function receiveing and sending data from a client(user) 
+		connected to a server */
+		void						clientRoutine(int i);
+
+		/* improved send() function to handle big data 
+		send by a user */
+        int							sendAll(int socket, char *buf, int *len);
 
     private:
 
         std::vector<struct pollfd>  _fds; 
         int                         _socket;
-
-        int sendAll(int socket, char *buf, int *len);
+		int							_port;
+		
 };
 
 #endif
