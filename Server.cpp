@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 18:10:12 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 18:30:06 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@
 int g_signal = 0;
 
 void	signal_handler(int signum) {
-	if (signum == SIGINT) {
+	if (signum == SIGINT || signum == SIGQUIT) {
 		std::cout << std::endl;
 		log("%s======= SHUTDOWN SIGNAL RECEIVED =======%s", BLU, RESET);
 		g_signal = signum;
@@ -31,6 +31,7 @@ void	signal_handler(int signum) {
 }
 
 void	set_signal( void ) {
+	signal(SIGQUIT, signal_handler);
 	signal(SIGINT, signal_handler);
 }
 
