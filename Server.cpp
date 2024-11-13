@@ -6,14 +6,13 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 14:24:37 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 14:40:33 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
 /* FOR TESTING PURPOSE */
-#include <cstdio>
 # include "log.hpp"
 
 /* ************************************************************************** */
@@ -22,8 +21,11 @@
 int g_signal = 0;
 
 void	signal_handler(int signum) {
-	if (signum == SIGINT)
+	if (signum == SIGINT) {
+		std::cout << std::endl;
+		log("%s======= SHUTDOWN SIGNAL RECEIVED =======%s", BLU, RESET);
 		g_signal = signum;
+	}
 }
 
 void	set_signal( void ) {
@@ -115,7 +117,7 @@ void	Server::disconnectClient( long unsigned int& index ) {
 /**
  * @brief Start the server
  *
- * Init server variable and signals, create socket, bind it and start listaning
+ * Init server variable and signals, create socket, bind it and start listening
  */
 void	Server::startServer( void ) {
 	this->_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -157,17 +159,14 @@ void	Server::startServer( void ) {
  * Should be called just before server desctructor / End of program
  */
 void		Server::stopServer( void ) {
-	std::cout << std::endl;
-	log("%s======= SHUTDOWN SIGNAL RECEIVED =======%s", WHT, RESET);
+	log("%sStopping server%s", WHT, RESET);
 	if (this->_pollFd.size() <= 1)
 		return ;
 
 	log("Disconecting every client...");
-	for (unsigned long int i = this->_pollFd.size() - 1; i > 0; --i) {
-		log("Closing socket %d.", this->_pollFd[i].fd);
-		close(this->_pollFd[i].fd);
-		this->_pollFd.pop_back();
-	}
+	unsigned long int i = this->_pollFd.size() - 1;
+	while (i > 0)
+		disconnectClient(i);
 	log("Ending server...");
 }
 
@@ -216,16 +215,17 @@ void	Server::receiveMsg( long unsigned int& i ) {
 }
 
 /**
- * @brief Treat the event caught by poll
+ * @brief Check if an event have been received and treat it if received
  *
- * This function will treat the event caught by poll.
+ * This function check if an event have been received on the revents field
  *
  * It either catch a POLLIN event and will read the client Msg.
- * Or it received on error and will display a log according to the error
+ * Or it received on ERROR and will display a log according to the error
+ * Or it do nothing
  *
  * @param i The pollFd index
  */
-void	Server::receiveEvent( long unsigned int& i ) {
+void	Server::checkEvent( long unsigned int& i ) {
 	//! Receive nothing
 	if (this->_pollFd[i].revents == 0)
 		return ;
@@ -260,7 +260,7 @@ void	Server::runServer( void ) {
 		//! Check if data has been received on client socket
 		for (long unsigned int i = 1; i < this->_pollFd.size(); i++) {
 			if (this->_pollFd[i].fd > 0)
-				this->receiveEvent(i);
+				this->checkEvent(i);
 			else if (this->_pollFd[i].fd == 0) { //! Case unused fd
 				war_log("Removed unused fd from pollfd [%sShouldn't happened%s]", YEL, RESET);
 				disconnectClient(i);

@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 11:03:57 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 11:35:55 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 14:41:26 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,6 @@
 
 
 #include "log.hpp"
-#include "Colors.hpp"
 
 /**
  * @brief Create timestamp in the buffer
@@ -65,7 +64,7 @@ void	log(const char *format, ...) {
 			switch (*format) {
 				case 'd': {
 					int i = va_arg(args, int);
-					std::cout << i;
+					std::cout << CYN << i << RESET;
 					break ;
 				}
 				case 'f': {

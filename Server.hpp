@@ -6,13 +6,14 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 14:06:48 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 14:37:29 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
+# include "Colors.hpp"
 # include <iostream>
 # include <unistd.h>
 # include <sstream>
@@ -70,7 +71,7 @@ private:
 	//! Private member function
 	void							acceptNewClient( void );
 	void							receiveMsg( long unsigned int& i );
-	void							receiveEvent( long unsigned int& i );
+	void							checkEvent( long unsigned int& i );
 
 };
 
