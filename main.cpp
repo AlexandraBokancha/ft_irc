@@ -70,7 +70,7 @@ int	main(int ac, char **av) {
 
 	Server	irc_serv(port, passwd); //!< Creating the server
 	try {
-		irc_serv.startServer();
+		irc_serv.startServer(av[1]);
 		irc_serv.runServer();
 	} catch (std::exception& e) {
 		fatal_log(e.what());

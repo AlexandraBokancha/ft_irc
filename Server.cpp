@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 14:40:33 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 18:10:12 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 
 /* FOR TESTING PURPOSE */
 # include "log.hpp"
+#include <asm-generic/socket.h>
+#include <sys/socket.h>
 
 /* ************************************************************************** */
 /* *                             Signal Handling                            * */
@@ -38,6 +40,8 @@ void	set_signal( void ) {
 Server::Server( void )
 	: _port(8080), _passwd("0000")
 {
+	this->_serverInfo = NULL;
+	this->_socket = -1;
 	return ;
 }
 
@@ -45,18 +49,20 @@ Server::Server(const int port, const std::string password )
 	: _port(port), _passwd(password)
 {
 	std::cout << "Created Server object using port " << port << std::endl;
+	this->_serverInfo = NULL;
+	this->_socket = -1;
 	return ;
 }
 
 Server::Server( Server const &rhs )
 	: _port(rhs._port), _passwd(rhs._passwd)
 {
+	this->_serverInfo = NULL;
+	this->_socket = -1;
 	return ;
 }
 
 Server::~Server() {
-	log("Closing socket %d.", this->_pollFd[0].fd);
-	close(this->_socket);
 	return ;
 }
 
@@ -119,27 +125,32 @@ void	Server::disconnectClient( long unsigned int& index ) {
  *
  * Init server variable and signals, create socket, bind it and start listening
  */
-void	Server::startServer( void ) {
-	this->_socket = socket(AF_INET, SOCK_STREAM, 0);
+void	Server::startServer( const char *port_str ) {
+	struct addrinfo	hints;
+	struct addrinfo	*servInfo;
+
+	std::memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;		 //!< Use AF_UNSPEC for both ipv4 ipv6 interfaces
+	hints.ai_socktype = SOCK_STREAM; //!< TCP stream socket
+	hints.ai_flags = AI_PASSIVE;	 //!< <=> INADDR_ANY <=> "0.0.0.0"
+									 //!< Used by application that indent to accept
+									 //!< connexion on any of the host net adresses
+	if (getaddrinfo(NULL, port_str, &hints, &servInfo) != 0)
+		throw (std::runtime_error(std::string("getaddrinfo: ") + std::strerror(errno)));
+	this->_serverInfo = servInfo;
+
+
+	this->_socket = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
 	if (this->_socket == -1)
 		throw (std::runtime_error(std::string("socket: ") + std::strerror(errno)));
 	this->pollPushBack(this->_socket, POLLIN); //!< Add server to poll
+	int	reusable_addr = 1;
+	if (setsockopt(this->_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &reusable_addr, sizeof(reusable_addr)) < 0)
+		throw (std::runtime_error(std::string("setsockopt: ") + std::strerror(errno)));
 
 	success_log("Socket %d created", this->_socket);
 
-	this->_socketAdress_len = sizeof(this->_socketAddress);
-	std::memset(&(this->_socketAddress), 0, this->_socketAdress_len);
-	this->_socketAddress.sin_family = AF_INET;
-	this->_socketAddress.sin_port = htons(this->_port);
-	this->_socketAddress.sin_addr.s_addr = inet_addr("0.0.0.0");
-	int	reusable_addr = 1;
-	if (setsockopt(this->_socket, SOL_SOCKET, SO_REUSEADDR, &reusable_addr, sizeof(reusable_addr)) < 0)
-		throw (std::runtime_error(std::string("setsockopt: ") + std::strerror(errno)));
-
-	success_log("AdressSocket created: %d.", this->_socketAddress.sin_addr);
-
-	if (bind(this->_socket, (struct sockaddr *)&this->_socketAddress,
-		this->_socketAdress_len) < 0)
+	if (bind(this->_socket, this->_serverInfo->ai_addr, this->_serverInfo->ai_addrlen) < 0)
 		throw (std::runtime_error(std::string("bind: ") + std::strerror(errno)));
 
 	success_log("Binded socket %d.", this->_socket);
@@ -159,15 +170,22 @@ void	Server::startServer( void ) {
  * Should be called just before server desctructor / End of program
  */
 void		Server::stopServer( void ) {
+	if (this->_pollFd.size() > 1) {
+		log("Disconecting every client...");
+		unsigned long int i = this->_pollFd.size() - 1;
+		while (i > 0)
+			disconnectClient(i);
+	}
 	log("%sStopping server%s", WHT, RESET);
-	if (this->_pollFd.size() <= 1)
-		return ;
-
-	log("Disconecting every client...");
-	unsigned long int i = this->_pollFd.size() - 1;
-	while (i > 0)
-		disconnectClient(i);
-	log("Ending server...");
+	if (this->_socket != -1) {
+		log("Closing socket %d.", this->_socket);
+		close(this->_socket);
+	}
+	if (this->_serverInfo != NULL) {
+		log("Freeing server informations");
+		freeaddrinfo(this->_serverInfo);
+	}
+	log("Server stopped!");
 }
 
 /**
@@ -190,6 +208,31 @@ void	Server::acceptNewClient( void ) {
 }
 
 /**
+ * @brief Send msg to all client except the one specified by fd
+ *
+ * This function is needed to broadcast the irc message when needed
+ *
+ * @param buffer The buffer containing the message to send
+ * @param len The message len
+ * @param fd The client exluded from receiving the message (the sender)
+ */
+void	Server::msgToAllExceptOne(const char *buffer, size_t len, int fd) {
+	int	send_result;
+
+	for (unsigned long int i = 1; i < this->_pollFd.size(); i++) {
+		if (this->_pollFd[i].fd == fd)
+			continue ;
+		log("Sending back msg received on socket %d to %d", fd, this->_pollFd[i].fd);
+		send_result = send(this->_pollFd[i].fd, buffer, len, MSG_DONTWAIT);
+		if (send_result == -1) {
+			err_log("Msg could not be sent on socket %d", this->_pollFd[i].fd);
+			continue ; }
+		if (len != send_result)
+			war_log("Msg could not be sent entirely on socket %d", this->_pollFd[i].fd);
+	}
+}
+
+/**
  * @brief Receive client message after POLLIN event
  *
  * This function read the Msg send byy the client after POLLIN event
@@ -205,10 +248,11 @@ void	Server::receiveMsg( long unsigned int& i ) {
 	if (buffer_size > 0) { //!< Received msg
 		buffer[buffer_size - 1] = '\0';
 		log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
+		msgToAllExceptOne(buffer, buffer_size, this->_pollFd[i].fd);
 		return ;
 	}
 	if (buffer_size == 0)
-		war_log("Received no data on socket %d", this->_pollFd[i].fd);
+		log("Client disconnected on socket %d", this->_pollFd[i].fd);
 	if (buffer_size == -1)
 		err_log("Could not received data on socket %d: %srecv%s: %s.", this->_pollFd[i].fd, MAG, RESET, std::strerror(errno));
 	disconnectClient(i);
