@@ -1,8 +1,8 @@
 #include "Server.hpp"
 
-Server::Server(int socket, int port) : _socket(socket), _port(port){
+Server::Server(int socket, int port) : _listeningSocket(socket), _port(port){
 	// parser port + password ?
-    if (_socket < 0){
+    if (_listeningSocket < 0){
         std::cout << "Error: invalid socket" << std::endl;
         exit(-1);
     }
@@ -39,7 +39,7 @@ int Server::getFdsSize(){
 }
 
 int Server::getSocket(){
-    return this->_socket;
+    return this->_listeningSocket;
 }
 
 int Server::sendAll(int socket, char *buf, int *len){
@@ -59,6 +59,7 @@ int Server::sendAll(int socket, char *buf, int *len){
 }
 
 void Server::clientRoutine(int i){
+
         /* if not the listener -> it's a regular client.
 		receiving data from the client with cmd recv() */
         
@@ -80,7 +81,7 @@ void Server::clientRoutine(int i){
             for (size_t j = 0; j < _fds.size(); ++j){
                 int dest_fd = _fds[j].fd;
                 // send()s i ce n'est pas un serveur, et si ce n'est pas lui-meme
-                if (dest_fd != _socket && dest_fd != _fds[i].fd){
+                if (dest_fd != _listeningSocket && dest_fd != _fds[i].fd){
                     // send() can return less of data ??
                     if (sendAll(dest_fd, buffer, &nbytes) == -1)
                         std::cout << "Error: send() failed" << std::endl;
@@ -95,18 +96,23 @@ void Server::acceptNewConnection(){
         struct sockaddr_storage clientAddress = {};
         socklen_t len = sizeof(clientAddress);  
         // accept() will return a new socket fd
-        int clientSocket = accept(_socket, (struct sockaddr *)&clientAddress, &len);
-        if (clientSocket < 0){
+        int connectedSocket = accept(_listeningSocket, (struct sockaddr *)&clientAddress, &len);
+        if (connectedSocket < 0){
             std::cout << "Error: accept() failed" << std::endl;
+			exit(-1);
         }
-        newFd.fd = clientSocket;
+        newFd.fd = connectedSocket;
         newFd.events = POLLIN;
         _fds.push_back(newFd);
 }
 
+
+/* ???
+The connected socket is closed each time through the
+loop, but the listening socket remains open for the life of the server.*/
 void Server::getConnection(int i){
-    if (_fds[i].fd == _socket){
-       Server::acceptNewConnection();
+    if (_fds[i].fd == _listeningSocket){
+    	Server::acceptNewConnection();
     }
     else{
 		Server::clientRoutine(i);
@@ -122,14 +128,14 @@ void Server::createPoll(){
     */
     struct pollfd newFds;
   
-    newFds.fd = _socket;
+    newFds.fd = _listeningSocket;
     newFds.events = POLLIN; // "alert me when data is ready to recv() on this socket"
     newFds.revents = 0; // "set to 0 or "not yet ready to read"
     _fds.push_back(newFds);
 
     std::cout << "Server starting on port " << _port << std::endl;
 
-    /* accepting a client connection */
+    /* main loop accepting a client connection */
     for (;;){
         int events = poll(&_fds[0], _fds.size(), -1);
         if (events == -1){
@@ -169,7 +175,7 @@ void Server::establishSocket(){
     /* to prevent bind() from failed when a socket that was connected
      is still hanging around in the kernel, and it's hogging the port */
     int yes = 1;
-    if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1){
+    if (setsockopt(_listeningSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1){
         std::cout << "Error: setsockopt() failed" << std::endl;
         exit(-1);
     }
@@ -183,22 +189,26 @@ void Server::establishSocket(){
     * O_NONBLOCK -> the bit that enables nonblocking mode for the file.
     */
 
-    if (fcntl(_socket, F_SETFL, O_NONBLOCK) == -1){
+    if (fcntl(_listeningSocket, F_SETFL, O_NONBLOCK) == -1){
         std::cout << "Error: failed to set a non-blocking flag for the socket" << std::endl;
-        exit(-1); // < remplacer par l'exception ?>
+        exit(-1);
     }
 
-    /* binding the server socket */
-    if (bind(_socket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1){
+    /* bind() assigns a local protocol address to a socket */
+    if (bind(_listeningSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1){
         std::cout << "Error: socket connection failed" << std::endl;
-        exit(-1); // < remplacer par l'exception ?>
+        exit(-1);
     }
 
     /*  listening for connections 
         SOMAXCONN -> the number of connections allowed on the incoming queue
     */
-    if (listen(_socket, SOMAXCONN) == -1){
+    if (listen(_listeningSocket, SOMAXCONN) == -1){
         std::cout << "Error: listen() falied" << std::endl;
-        exit(-1); // < remplacer par l'exception ?>
+        exit(-1);
     }
+}
+
+void Server::signalHandler(int signum){
+	(void) signum;
 }

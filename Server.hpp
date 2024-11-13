@@ -10,6 +10,7 @@
 # include <poll.h>
 # include <vector>
 # include <fcntl.h>
+# include <csignal>
 
 class Server
 {
@@ -49,10 +50,12 @@ class Server
 		send by a user */
         int							sendAll(int socket, char *buf, int *len);
 
+		static void					signalHandler(int signum);
+
     private:
 
         std::vector<struct pollfd>  _fds; 
-        int                         _socket;
+        int                         _listeningSocket;
 		int							_port;
 		
 };

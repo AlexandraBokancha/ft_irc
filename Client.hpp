@@ -11,11 +11,11 @@ class Client
         Client &operator=(const Client &other);
         ~Client();
 
-        int getSocket(){return _socket;}
+        int getSocket(){return _connectedSocket;}
 
     private:
 
-        int                 _socket;
+        int                 _connectedSocket;
 };
 
 #endif

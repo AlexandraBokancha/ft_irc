@@ -6,7 +6,7 @@ Client::Client(void)
     std::cout << "Default constructor called" << std::endl;
     return ;
 }
-Client::Client(int socket) : _socket(socket){};
+Client::Client(int socket) : _connectedSocket(socket){};
 
 // Copy constructor
 Client::Client(const Client &other)
