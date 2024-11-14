@@ -11,6 +11,7 @@
 # include <vector>
 # include <fcntl.h>
 # include <csignal>
+# include <limits.h>
 
 class Server
 {
@@ -51,7 +52,7 @@ class Server
         int							sendAll(int socket, char *buf, int *len);
 
 		static void					signalHandler(int signum);
-        
+
         void                        closeFds();
 
     private:

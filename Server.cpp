@@ -99,17 +99,13 @@ void Server::acceptNewConnection(){
         int connectedSocket = accept(_listeningSocket, (struct sockaddr *)&clientAddress, &len);
         if (connectedSocket < 0){
             std::cout << "Error: accept() failed" << std::endl;
-			exit(-1);
+			//exit(-1);
         }
         newFd.fd = connectedSocket;
         newFd.events = POLLIN;
         _fds.push_back(newFd);
 }
 
-
-/* ???
-The connected socket is closed each time through the
-loop, but the listening socket remains open for the life of the server.*/
 void Server::getConnection(int i){
     if (_fds[i].fd == _listeningSocket){
     	Server::acceptNewConnection();
@@ -151,7 +147,7 @@ void Server::createPoll(){
         }
         // est-ce que le socket de server a recu au moins 1 connexion
         if (_fds[0].revents == POLLIN){
-            Server::getConnection(0);  
+            Server::getConnection(0);
             std::cout << "Nouvelle connexion" << std::endl;
         }    
 
@@ -166,6 +162,14 @@ void Server::createPoll(){
     }
 }
 
+// void printIP(){
+    // socklen_t len = sizeof(serverAddress);
+    // getsockname(_listeningSocket, (struct sockaddr *)&serverAddress, &len);
+    // char ip[INET_ADDRSTRLEN];
+    // inet_ntop(AF_INET, &(serverAddress.sin_addr), ip, INET_ADDRSTRLEN);
+    // std::cout << "IP: " << ip << std::endl;
+// }
+
 void Server::establishSocket(){
 	/* defining server address */
     struct sockaddr_in serverAddress; // struct is used to represent an IPv4 address and port number combination
@@ -174,7 +178,7 @@ void Server::establishSocket(){
     serverAddress.sin_port = htons(_port); // convert the int from machine (host) byte to network byte
     serverAddress.sin_addr.s_addr = INADDR_ANY; // listen to all ips
     memset(&(serverAddress.sin_zero), '\0', sizeof(serverAddress.sin_zero));
-   
+    
     /* to prevent bind() from failed when a socket that was connected
      is still hanging around in the kernel, and it's hogging the port */
     int yes = 1;
@@ -219,6 +223,10 @@ void Server::signalHandler(int signum){
     std::cout << "Signal caught" << std::endl;
     Server::_signal = true; // to stop a server
 }
+
+
+// to check on Linux: netstat -a | grep port_nb
+// to debug : ltrace, strace, perf trace
 
 void Server::closeFds(){
     for (size_t i = 0; i < _fds.size(); ++i){
