@@ -26,7 +26,7 @@ Server &Server::operator=(const Server &other)
 // Destructor
 Server::~Server(void)
 {
-    std::cout << "Destructor called" << std::endl;
+  //  std::cout << "Destructor called" << std::endl;
     return ;
 }
 
@@ -136,9 +136,12 @@ void Server::createPoll(){
     std::cout << "Server starting on port " << _port << std::endl;
 
     /* main loop accepting a client connection */
-    for (;;){
+    for(;;) {
+        if (_signal == true){
+            break;
+        }
         int events = poll(&_fds[0], _fds.size(), -1);
-        if (events == -1){
+        if (events == -1 && !_signal){
             std::cout << "Error: poll() failed";
             exit(-1);
         }
@@ -209,6 +212,21 @@ void Server::establishSocket(){
     }
 }
 
+bool Server::_signal = false; // default
+
 void Server::signalHandler(int signum){
 	(void) signum;
+    std::cout << "Signal caught" << std::endl;
+    Server::_signal = true; // to stop a server
+}
+
+void Server::closeFds(){
+    for (size_t i = 0; i < _fds.size(); ++i){
+        if (i != 0 && _fds[i].fd != -1){
+            close(_fds[i].fd); // close connected socket
+            std::cout << "Client " << _fds[i].fd << " disconnected" << std::endl; // to test
+        }
+    }
+    close(_fds[0].fd); // close the server
+    std::cout << "Server closed" << std::endl;
 }

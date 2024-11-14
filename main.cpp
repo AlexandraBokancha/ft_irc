@@ -31,20 +31,19 @@ int main(int ac, char *av[]){
     // const char *password;
 	// ->> parse port + password 
 
+	signal(SIGINT, Server::signalHandler); // ctrl + c
+	signal(SIGQUIT, Server::signalHandler); // (ctrl + \)
+	
+    /* AF_INET = IPv4 protocol, SOCK_STREAN = TCP type socket*/
+	Server irc(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP), port);
+	
 	try{
-		signal(SIGINT, Server::signalHandler); // ctrl + c
-		signal(SIGQUIT, Server::signalHandler); // (ctrl + \)
-
-    	/* AF_INET = IPv4 protocol, SOCK_STREAN = TCP type socket*/
-
-    	Server irc(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP), port);
-
 		irc.establishSocket();
 		irc.createPoll();
 	}
 	catch (std::exception & e){
-		// close all fds
+		std::cout << e.what() << std::endl;
 	}
-
+	irc.closeFds();
     return 0;
 }

@@ -51,10 +51,13 @@ class Server
         int							sendAll(int socket, char *buf, int *len);
 
 		static void					signalHandler(int signum);
+        
+        void                        closeFds();
 
     private:
 
-        std::vector<struct pollfd>  _fds; 
+        std::vector<struct pollfd>  _fds;
+        static bool                 _signal; 
         int                         _listeningSocket;
 		int							_port;
 		
