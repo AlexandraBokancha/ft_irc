@@ -43,7 +43,7 @@ int main(int ac, char *av[]){
 	}
 	catch (std::exception & e){
 		std::cout << e.what() << std::endl;
+		return (irc.closeFds(), 1);
 	}
-	irc.closeFds();
-    return 0;
+    return (irc.closeFds(), 0);
 }
