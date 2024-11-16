@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 18:30:06 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/15 16:05:39 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -254,7 +254,7 @@ void	Server::receiveMsg( long unsigned int& i ) {
 	}
 	if (buffer_size == 0)
 		log("Client disconnected on socket %d", this->_pollFd[i].fd);
-	if (buffer_size == -1)
+	if (buffer_size < 0)
 		err_log("Could not received data on socket %d: %srecv%s: %s.", this->_pollFd[i].fd, MAG, RESET, std::strerror(errno));
 	disconnectClient(i);
 }
