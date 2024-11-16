@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/15 16:05:39 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/16 22:40:17 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,6 @@
 
 /* FOR TESTING PURPOSE */
 # include "log.hpp"
-#include <asm-generic/socket.h>
-#include <sys/socket.h>
 
 /* ************************************************************************** */
 /* *                             Signal Handling                            * */
@@ -94,6 +92,7 @@ void	Server::pollPushBack(int fd, short events) {
 	
 	new_socket.fd = fd;
 	new_socket.events = events;
+	new_socket.revents = 0;
 	this->_pollFd.push_back(new_socket);
 }
 
@@ -208,6 +207,36 @@ void	Server::acceptNewClient( void ) {
 		this->pollPushBack(client_socket, POLLIN); //!< add client to poll
 }
 
+
+/**
+ * @brief Send the complete message to Client
+ *
+ * Protected send ensuring that the full message real the client at one time
+ *
+ * @param socket The client socket
+ * @param buf The buffer containing the message to send
+ * @param len The message len
+ *
+ * @return 0 on SUCCESS; -1 on ERROR
+ */
+int Server::sendMsg(int socket, const char *buf, int len) const {
+    int total = 0; // bytes sent
+    int left = len; // bytes left to sent
+    int b;
+
+    while (total < len){
+        b = send(socket, buf + total, left, MSG_DONTWAIT);
+        if (b == -1) {
+			err_log("send(): %s.", std::strerror(errno));
+			break;
+		}
+        total += b;
+        left -= b;
+    }
+    // *len = total; //!< Why
+    return (b == -1 ? -1 : 0); // return -1 on error, 0 on success
+}
+
 /**
  * @brief Send msg to all client except the one specified by fd
  *
@@ -217,19 +246,18 @@ void	Server::acceptNewClient( void ) {
  * @param len The message len
  * @param fd The client exluded from receiving the message (the sender)
  */
-void	Server::msgToAllExceptOne(const char *buffer, size_t len, int fd) {
+void	Server::broadcast(const char *buffer, int len, int fd) const {
+	int	total = 0; // bytes sent
 	int	send_result;
 
 	for (unsigned long int i = 1; i < this->_pollFd.size(); i++) {
 		if (this->_pollFd[i].fd == fd)
 			continue ;
+
 		log("Sending back msg received on socket %d to %d", fd, this->_pollFd[i].fd);
-		send_result = send(this->_pollFd[i].fd, buffer, len, MSG_DONTWAIT);
-		if (send_result == -1) {
+
+		if (sendMsg(this->_pollFd[i].fd, buffer, len) == -1)
 			err_log("Msg could not be sent on socket %d", this->_pollFd[i].fd);
-			continue ; }
-		if (len != send_result)
-			war_log("Msg could not be sent entirely on socket %d", this->_pollFd[i].fd);
 	}
 }
 
@@ -247,9 +275,9 @@ void	Server::receiveMsg( long unsigned int& i ) {
 	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
 
 	if (buffer_size > 0) { //!< Received msg
-		buffer[buffer_size - 1] = '\0';
+		buffer[buffer_size] = '\0';
 		log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
-		msgToAllExceptOne(buffer, buffer_size, this->_pollFd[i].fd);
+		broadcast(buffer, buffer_size, this->_pollFd[i].fd);
 		return ;
 	}
 	if (buffer_size == 0)
@@ -293,11 +321,12 @@ void	Server::checkEvent( long unsigned int& i ) {
  * @brief Run the server
  */
 void	Server::runServer( void ) {
+	int	status;
 
 	log("Server waiting for connection...");
 
 	//! Perform poll check until error or signal catch
-	while (poll(this->_pollFd.data(), this->_pollFd.size(), -1) > 0) {
+	while ((status = poll(this->_pollFd.data(), this->_pollFd.size(), -1)) > 0) {
 
 		if (this->_pollFd[0].revents == POLLIN) //!< New client connecting
 			this->acceptNewClient();
@@ -312,6 +341,10 @@ void	Server::runServer( void ) {
 			} else
 				war_log("Why tha F*** socket = %d?", this->_pollFd[i].fd);
 		}
+        if (status == 0)
+            fatal_log("poll(): Timeout");
+        if (status < 0)
+			fatal_log("poll(): %s.", std::strerror(errno));
 	}
 }
 
