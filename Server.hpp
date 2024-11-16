@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 17:58:55 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/16 22:24:33 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,6 @@
 # include <vector>
 # include <poll.h>
 # include <sys/socket.h>
-# include <sys/types.h>
 # include <netdb.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
@@ -52,7 +51,6 @@ public:
 	};
 
 	void	pollPushBack( int fd, short events );
-	void	disconnectClient( long unsigned int& index );
 
 	void	startServer( const char *port_str ); //!< Start the server
 	void	runServer( void );
@@ -72,9 +70,12 @@ private:
 
 	//! Private member function
 	void							acceptNewClient( void );
-	void							msgToAllExceptOne(const char *buffer, size_t len, int fd);
-	void							receiveMsg( long unsigned int& i );
+	void							disconnectClient( long unsigned int& index );
+
 	void							checkEvent( long unsigned int& i );
+	void							receiveMsg( long unsigned int& i );
+	int								sendMsg(int socket, const char *buf, int len) const;
+	void							broadcast(const char *buffer, int len, int fd) const;
 
 };
 
