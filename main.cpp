@@ -44,7 +44,7 @@ void	parse_arg(int ac, char **av, int& port, std::string& passwd) {
 		throw (Server::InvalidPortException());
 	if (ss >> invalid_arg)
 		throw (Server::InvalidPortException());
-	if (tmp_port < 0 || tmp_port > 65535)
+	if (tmp_port < 1023 || tmp_port > 65535)
 		throw (Server::InvalidPortException());
 	port = tmp_port;
 	passwd = std::string(av[2]);
