@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 11:03:57 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/17 22:29:29 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/13 14:41:26 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,11 +77,6 @@ void	log(const char *format, ...) {
 					std::cout << s;
 					break;
 				}
-				case 'M' : {
-					Message* msg = va_arg(args, Message*);
-					std::cout << *msg;
-					break ;
-				}
 				default :
 					std::cout << "%" << *format;
 			}
@@ -129,11 +124,6 @@ void	success_log(const char *format, ...) {
 					char *s = va_arg(args, char *);
 					std::cout << s;
 					break;
-				}
-				case 'M' : {
-					Message* msg = va_arg(args, Message*);
-					std::cout << *msg;
-					break ;
 				}
 				default :
 					std::cout << "%" << *format;
@@ -183,15 +173,11 @@ void	war_log(const char *format, ...) {
 					std::cout << s;
 					break;
 				}
-				case 'o' : {
-					Message* msg = va_arg(args, Message*);
-					std::cout << *msg;
-					break ;
-				}
 				default :
 					std::cout << "%" << *format;
 			}
-		} else
+		}
+		else
 			std::cout << *format;
 		format++;
 	}
@@ -199,7 +185,7 @@ void	war_log(const char *format, ...) {
 }
 
 /**
- * @brief Error log
+ * @brief Information log
  *
  * Print the ERROR log message using formatted paramters.
  *
@@ -235,16 +221,10 @@ void	err_log(const char *format, ...) {
 					std::cout << s;
 					break;
 				}
-				case 'M' : {
-					Message* msg = va_arg(args, Message*);
-					std::cout << *msg;
-					break ;
-				}
 				default :
 					std::cout << "%" << *format;
 			}
-		}
-		else
+		} else
 			std::cout << *format;
 		format++;
 	}
@@ -252,7 +232,7 @@ void	err_log(const char *format, ...) {
 }
 
 /**
- * @brief Fatal error log
+ * @brief Information log
  *
  * Print the FATAL log message using formatted paramters.
  *
@@ -288,11 +268,6 @@ void	fatal_log(const char *format, ...) {
 					std::cout << s;
 					break;
 				}
-				case 'M' : {
-					Message* msg = va_arg(args, Message*);
-					std::cout << *msg;
-					break ;
-				}
 				default :
 					std::cout << "%" << *format;
 			}
@@ -303,3 +278,4 @@ void	fatal_log(const char *format, ...) {
 	}
 	std::cout << std::endl;
 }
+

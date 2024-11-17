@@ -1,28 +1,28 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   log.hpp                                            :+:      :+:    :+:   */
+/*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/11/12 21:50:40 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/17 22:29:12 by dbaladro         ###   ########.fr       */
+/*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
+/*   Updated: 2024/11/13 19:35:45 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef LOG_HPP
-# define LOG_HPP
+#ifndef CHANNEL_HPP
+# define CHANNEL_HPP
 
-#include <cstdarg>
-#include <ctime>
-#include <iostream>
-#include "Colors.hpp"
-#include "Message.hpp"
+class Channel {
+public:
+	Channel( void );
+	Channel( Channel const & rhs );
+	~Channel();
 
-void	log(const char *format, ...);
-void	success_log(const char *format, ...);
-void	war_log(const char *format, ...);
-void	err_log(const char *format, ...);
-void	fatal_log(const char *format, ...);
+	Channel& operator=( Channel const & rhs );
 
-#endif // !LOG_HPP
+private:
+	
+};
+
+#endif // !CHANNEL_HPP

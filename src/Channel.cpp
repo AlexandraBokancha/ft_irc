@@ -1,28 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   log.hpp                                            :+:      :+:    :+:   */
+/*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/11/12 21:50:40 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/17 22:29:12 by dbaladro         ###   ########.fr       */
+/*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
+/*   Updated: 2024/11/13 19:36:08 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef LOG_HPP
-# define LOG_HPP
+#include "Channel.hpp"
 
-#include <cstdarg>
-#include <ctime>
-#include <iostream>
-#include "Colors.hpp"
-#include "Message.hpp"
+/* ************************************************************************** */
+/* *                       Constructors && Destructors                      * */
+/* ************************************************************************** */
 
-void	log(const char *format, ...);
-void	success_log(const char *format, ...);
-void	war_log(const char *format, ...);
-void	err_log(const char *format, ...);
-void	fatal_log(const char *format, ...);
-
-#endif // !LOG_HPP

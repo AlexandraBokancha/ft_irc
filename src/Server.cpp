@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/17 22:57:14 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/16 23:08:33 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -274,26 +274,10 @@ void	Server::receiveMsg( long unsigned int& i ) {
 	
 	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
 
-
 	if (buffer_size > 0) { //!< Received msg
-		/* TESTING */
-		try {
-			int msg_i = 0;
-			int	start = 0;
-			log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
-			while (msg_i < buffer_size - 2) {
-				Message msg(buffer, msg_i, buffer_size);
-				// log("Recevied from client on socket %d: %M", this->_pollFd[i].fd, &msg);
-				broadcast(buffer + start, msg_i - start - 2, this->_pollFd[i].fd);
-				start = msg_i;
-			}
-		} catch (std::exception& e) {
-			err_log("MESSAGE: %s", e.what());
-		}
-		/* END TESTING */
-		// buffer[buffer_size] = '\0';
-		// log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
-		// broadcast(buffer, buffer_size, this->_pollFd[i].fd);
+		buffer[buffer_size] = '\0';
+		log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
+		broadcast(buffer, buffer_size, this->_pollFd[i].fd);
 		return ;
 	}
 	if (buffer_size == 0)

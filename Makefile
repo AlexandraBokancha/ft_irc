@@ -11,6 +11,7 @@ PROJECT_DIR = ./
 SRC_DIR = ./
 SRC_FILE = main.cpp \
 			Server.cpp \
+			Message.cpp \
 			log.cpp
 
 ## OBJECT FILE ###

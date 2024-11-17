@@ -1,28 +1,28 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   log.hpp                                            :+:      :+:    :+:   */
+/*   User.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/11/12 21:50:40 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/17 22:29:12 by dbaladro         ###   ########.fr       */
+/*   Created: 2024/11/13 18:41:35 by dbaladro          #+#    #+#             */
+/*   Updated: 2024/11/13 18:41:48 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef LOG_HPP
-# define LOG_HPP
+#ifndef USER_HPP
+# define USER_HPP
 
-#include <cstdarg>
-#include <ctime>
-#include <iostream>
-#include "Colors.hpp"
-#include "Message.hpp"
+class User {
+public:
+	User( void );
+	User( User const & rhs );
+	~User();
 
-void	log(const char *format, ...);
-void	success_log(const char *format, ...);
-void	war_log(const char *format, ...);
-void	err_log(const char *format, ...);
-void	fatal_log(const char *format, ...);
+	User& operator=( User const & rhs );
 
-#endif // !LOG_HPP
+private:
+	
+};
+
+#endif // !USER_HPP
