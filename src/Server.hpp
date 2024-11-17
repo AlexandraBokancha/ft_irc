@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/16 22:24:33 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/17 20:36:24 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,8 @@
 # include <netdb.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
+
+# include "Message.hpp"
 
 extern int g_signal;
 

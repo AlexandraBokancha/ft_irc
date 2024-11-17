@@ -8,7 +8,7 @@ PROJECT = ircserv
 PROJECT_DIR = ./
 
 ### SOURCE FILE ###
-SRC_DIR = ./
+SRC_DIR = ./src/
 SRC_FILE = main.cpp \
 			Server.cpp \
 			Message.cpp \
