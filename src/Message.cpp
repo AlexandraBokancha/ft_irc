@@ -6,13 +6,11 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:49 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/17 22:56:17 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/18 22:44:12 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Message.hpp"
-#include <ostream>
-#include <string>
 
 /* ************************************************************************** */
 /* *                       Constructors && Destructors                      * */
@@ -55,6 +53,8 @@ Message&	Message::operator=( const Message& rhs ) {
 	}
 	return (*this);
 }
+
+							//! FOR TESTING PURPOSE 
 
 std::ostream&	Message::printParam( std::ostream& os ) const {
 	for (std::list<std::string>::const_iterator it = this->_param.begin(); it != this->_param.end(); it++) {

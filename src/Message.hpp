@@ -6,22 +6,29 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:44 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/17 21:35:16 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/18 22:53:21 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
 /**
- * Messages are off the from 
+ * @file Message.hpp
+ *
+ * Define message class as specified in RFC2812 :
+ * Messages are splitted in tree part :
+ *   1 Prefix     : Who sent the message [ optionnal ]
+ *   2 Command    : What should be done. The important part of the message
+ *   3 Parameters : Most of the time command arguments
  *
  */
 #ifndef MESSAGE_HPP
 # define MESSAGE_HPP
 
-#include <exception>
-#include <cctype>
-#include <list>
-#include <string>
+# include <exception>
+# include <cctype>
+# include <list>
+# include <string>
+# include <ostream>
 
 //! Types
 # define NICKNAME_PREFIX 0
