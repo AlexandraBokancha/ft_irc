@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/16 22:40:17 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/18 11:01:43 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,13 @@
 
 /* FOR TESTING PURPOSE */
 # include "log.hpp"
+void	print_client(std::vector<Client> v) {
+	for (std::vector<Client>::const_iterator it = v.begin(); it < v.end(); it++) {
+		std::cout << *it << std::endl;
+	}
+}
+
+
 
 /* ************************************************************************** */
 /* *                             Signal Handling                            * */
@@ -41,6 +48,8 @@ Server::Server( void )
 {
 	this->_serverInfo = NULL;
 	this->_socket = -1;
+	this->_client = std::vector<Client>();
+	this->_pollFd = std::vector<struct pollfd>();
 	return ;
 }
 
@@ -50,6 +59,8 @@ Server::Server(const int port, const std::string password )
 	std::cout << "Created Server object using port " << port << std::endl;
 	this->_serverInfo = NULL;
 	this->_socket = -1;
+	this->_client = std::vector<Client>();
+	this->_pollFd = std::vector<struct pollfd>();
 	return ;
 }
 
@@ -58,6 +69,8 @@ Server::Server( Server const &rhs )
 {
 	this->_serverInfo = NULL;
 	this->_socket = -1;
+	this->_client = std::vector<Client>();
+	this->_pollFd = std::vector<struct pollfd>();
 	return ;
 }
 
@@ -115,6 +128,10 @@ void	Server::disconnectClient( long unsigned int& index ) {
 	log("Closing socket %d.", this->_pollFd[index].fd);
 	close(this->_pollFd[index].fd);
 	this->_pollFd.erase(this->_pollFd.begin() + index);
+
+	//! Remove client from client vector
+	this->_client.erase(this->_client.begin() + index - 1);
+
 	index--;
 
 }
@@ -194,6 +211,8 @@ void		Server::stopServer( void ) {
  * Accept new client after a POLLIN event have been caught on the Server socket
  */
 void	Server::acceptNewClient( void ) {
+	Client				new_client;
+
 	int					client_socket;
 	struct sockaddr_in	client_addr;
 	int					addr_len = sizeof(client_addr);
@@ -204,7 +223,15 @@ void	Server::acceptNewClient( void ) {
 			return (err_log("%sInternal error%s: %saccept%s: %s",
 					RED, RESET, MAG, RESET, std::strerror(errno)));
 		success_log("accepted client on: %s", inet_ntoa(client_addr.sin_addr));
-		this->pollPushBack(client_socket, POLLIN); //!< add client to poll
+
+		this->pollPushBack(client_socket, POLLIN); //!< add client fd to poll
+
+		//! Add client
+		new_client.setFd(&(this->_pollFd.end() - 1)->fd);
+		// new_client.setFd(&client_socket);
+		new_client.setNetId(client_addr);
+		this->_client.push_back(new_client);
+
 }
 
 
@@ -274,10 +301,25 @@ void	Server::receiveMsg( long unsigned int& i ) {
 	
 	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
 
+
 	if (buffer_size > 0) { //!< Received msg
-		buffer[buffer_size] = '\0';
-		log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
-		broadcast(buffer, buffer_size, this->_pollFd[i].fd);
+		/* TESTING */
+		try {
+			int msg_i = 0;
+			int	start = 0;
+			log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
+			while (msg_i < buffer_size - 2) {
+				Message msg(buffer, msg_i, buffer_size);
+				broadcast(buffer + start, msg_i - start - 2, this->_pollFd[i].fd);
+				start = msg_i;
+			}
+		} catch (std::exception& e) {
+			err_log("MESSAGE: %s", e.what());
+		}
+		/* END TESTING */
+		// buffer[buffer_size] = '\0';
+		// log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
+		// broadcast(buffer, buffer_size, this->_pollFd[i].fd);
 		return ;
 	}
 	if (buffer_size == 0)
@@ -294,9 +336,7 @@ void	Server::receiveMsg( long unsigned int& i ) {
  *
  * It either catch a POLLIN event and will read the client Msg.
  * Or it received on ERROR and will display a log according to the error
- * Or it do nothing
- *
- * @param i The pollFd index
+ * Or it do nothing @param i The pollFd index
  */
 void	Server::checkEvent( long unsigned int& i ) {
 	//! Receive nothing
@@ -327,6 +367,9 @@ void	Server::runServer( void ) {
 
 	//! Perform poll check until error or signal catch
 	while ((status = poll(this->_pollFd.data(), this->_pollFd.size(), -1)) > 0) {
+
+		// std::cout << "Print client :" << std::endl;
+		// print_client(this->_client);
 
 		if (this->_pollFd[0].revents == POLLIN) //!< New client connecting
 			this->acceptNewClient();

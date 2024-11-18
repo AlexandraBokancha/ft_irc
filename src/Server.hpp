@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/16 22:24:33 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/18 10:21:29 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,9 @@
 # include <netdb.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
+
+# include "Message.hpp"
+# include "Client.hpp"
 
 extern int g_signal;
 
@@ -59,23 +62,25 @@ public:
 private:
 	//! Private member
 	// static const std::string	_ip;
-	const int						_port;
-	const std::string				_passwd;
-	int								_socket;
+	const int					_port;
+	const std::string			_passwd;
+	int							_socket;
 
-	std::vector<struct pollfd>		_pollFd;
-	unsigned int					_clientNbr;
+	std::vector<Client>			_client;
 
-	struct addrinfo					*_serverInfo;
+	std::vector<struct pollfd>	_pollFd;
+	unsigned int				_clientNbr;
+
+	struct addrinfo				*_serverInfo;
 
 	//! Private member function
-	void							acceptNewClient( void );
-	void							disconnectClient( long unsigned int& index );
+	void						acceptNewClient( void );
+	void						disconnectClient( long unsigned int& index );
 
-	void							checkEvent( long unsigned int& i );
-	void							receiveMsg( long unsigned int& i );
-	int								sendMsg(int socket, const char *buf, int len) const;
-	void							broadcast(const char *buffer, int len, int fd) const;
+	void						checkEvent( long unsigned int& i );
+	void						receiveMsg( long unsigned int& i );
+	int							sendMsg(int socket, const char *buf, int len) const;
+	void						broadcast(const char *buffer, int len, int fd) const;
 
 };
 

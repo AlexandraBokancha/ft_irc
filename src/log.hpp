@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 21:50:40 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/13 14:37:19 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/17 22:29:12 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,12 @@
 #include <ctime>
 #include <iostream>
 #include "Colors.hpp"
+#include "Message.hpp"
 
 void	log(const char *format, ...);
+void	success_log(const char *format, ...);
 void	war_log(const char *format, ...);
 void	err_log(const char *format, ...);
-void	success_log(const char *format, ...);
 void	fatal_log(const char *format, ...);
 
 #endif // !LOG_HPP
