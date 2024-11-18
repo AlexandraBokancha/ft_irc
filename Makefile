@@ -11,6 +11,7 @@ PROJECT_DIR = ./
 SRC_DIR = ./src/
 SRC_FILE = main.cpp \
 			Server.cpp \
+			Client.cpp \
 			Message.cpp \
 			log.cpp
 
