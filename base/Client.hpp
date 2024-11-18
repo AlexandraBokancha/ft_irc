@@ -11,11 +11,12 @@ class Client
         Client &operator=(const Client &other);
         ~Client();
 
-        int getSocket(){return _connectedSocket;}
 
     private:
 
-        int                 _connectedSocket;
+        std::string                 _nickName;
+        std::string                 _userName;
+        int                         _userSocket;
 };
 
 #endif

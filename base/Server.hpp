@@ -1,0 +1,83 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
+/*   Updated: 2024/11/15 20:09:31 by alexandra        ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#ifndef SERVER_HPP
+# define SERVER_HPP
+
+# include "Client.hpp"
+# include "Colors.hpp"
+# include <iostream>
+# include <unistd.h>
+# include <sstream>
+# include <cstring>
+# include <string>
+# include <errno.h>
+# include <signal.h>
+# include <exception>
+# include <vector>
+# include <poll.h>
+# include <sys/socket.h>
+# include <sys/types.h>
+# include <netdb.h>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+
+extern int g_signal;
+
+class Server {
+public:
+	Server( void );
+	Server( int port, std::string password);
+	Server( Server const & rhs );
+	~Server();
+
+	Server& operator=( Server const & rhs );
+
+	//! Server exceptions
+	class InvalidArgException : public std::exception {
+		public :
+			const char *what() const throw();
+	};
+	class InvalidPortException : public InvalidArgException {
+		public :
+			const char *what() const throw();
+	};
+
+	void	pollPushBack( int fd, short events );
+	void	disconnectClient( long unsigned int& index );
+
+	void	startServer( const char *port_str ); //!< Start the server
+	void	runServer( void );
+	void	stopServer( void );
+
+private:
+	//! Private member
+	// static const std::string	_ip;
+	const int						_port;
+	const std::string				_passwd;
+	int								_socket;
+
+	std::vector<struct pollfd>		_pollFd;
+	unsigned int					_clientNbr;
+
+	struct addrinfo					*_serverInfo;
+	std::vector<Client>				*_clients;
+
+	//! Private member function
+	void							acceptNewClient( void );
+	void							msgToAllExceptOne(const char *buffer, size_t len, int fd);
+	void							receiveMsg( long unsigned int& i );
+	void							checkEvent( long unsigned int& i );
+
+};
+
+#endif // !SERVER_HPP
