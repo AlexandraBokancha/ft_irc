@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/18 10:21:29 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/19 16:15:45 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,8 +29,9 @@
 # include <netinet/in.h>
 # include <arpa/inet.h>
 
-# include "Message.hpp"
 # include "Client.hpp"
+# include "irc.hpp"
+# include "Message.hpp"
 
 extern int g_signal;
 
@@ -58,6 +59,11 @@ public:
 	void	startServer( const char *port_str ); //!< Start the server
 	void	runServer( void );
 	void	stopServer( void );
+	std::string  getPassword( void )  const;
+
+	//! Commands
+
+	
 
 private:
 	//! Private member

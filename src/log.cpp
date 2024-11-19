@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   log.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 11:03:57 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/17 22:29:29 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/19 15:03:56 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,11 +77,11 @@ void	log(const char *format, ...) {
 					std::cout << s;
 					break;
 				}
-				case 'M' : {
-					Message* msg = va_arg(args, Message*);
-					std::cout << *msg;
-					break ;
-				}
+				// case 'M' : {
+				// 	Message* msg = va_arg(args, Message*);
+				// 	std::cout << *msg;
+				// 	break ;
+				// }
 				default :
 					std::cout << "%" << *format;
 			}
@@ -130,11 +130,11 @@ void	success_log(const char *format, ...) {
 					std::cout << s;
 					break;
 				}
-				case 'M' : {
-					Message* msg = va_arg(args, Message*);
-					std::cout << *msg;
-					break ;
-				}
+				// case 'M' : {
+				// 	Message* msg = va_arg(args, Message*);
+				// 	std::cout << *msg;
+				// 	break ;
+				// }
 				default :
 					std::cout << "%" << *format;
 			}
@@ -183,11 +183,11 @@ void	war_log(const char *format, ...) {
 					std::cout << s;
 					break;
 				}
-				case 'o' : {
-					Message* msg = va_arg(args, Message*);
-					std::cout << *msg;
-					break ;
-				}
+				// case 'o' : {
+				// 	Message* msg = va_arg(args, Message*);
+				// 	std::cout << *msg;
+				// 	break ;
+				// }
 				default :
 					std::cout << "%" << *format;
 			}
@@ -235,11 +235,11 @@ void	err_log(const char *format, ...) {
 					std::cout << s;
 					break;
 				}
-				case 'M' : {
-					Message* msg = va_arg(args, Message*);
-					std::cout << *msg;
-					break ;
-				}
+				// case 'M' : {
+				// 	Message* msg = va_arg(args, Message*);
+				// 	std::cout << *msg;
+				// 	break ;
+				// }
 				default :
 					std::cout << "%" << *format;
 			}
@@ -288,11 +288,11 @@ void	fatal_log(const char *format, ...) {
 					std::cout << s;
 					break;
 				}
-				case 'M' : {
-					Message* msg = va_arg(args, Message*);
-					std::cout << *msg;
-					break ;
-				}
+				// case 'M' : {
+				// 	Message* msg = va_arg(args, Message*);
+				// 	std::cout << *msg;
+				// 	break ;
+				// }
 				default :
 					std::cout << "%" << *format;
 			}

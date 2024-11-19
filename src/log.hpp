@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   log.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 21:50:40 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/17 22:29:12 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/18 18:26:11 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,6 @@
 #include <ctime>
 #include <iostream>
 #include "Colors.hpp"
-#include "Message.hpp"
 
 void	log(const char *format, ...);
 void	success_log(const char *format, ...);

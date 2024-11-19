@@ -2,8 +2,9 @@
 
 ## CLIENT
 There are two types of clients, normal user and Operators (kind of like admin)
+
 ### NAMING
-- Client have a nickname of maximum 9 characters
+- Client have a unique nickname of maximum 9 characters
 
 ## SERVER RULES
 - Server must have the following informnation about client :
@@ -13,12 +14,16 @@ There are two types of clients, normal user and Operators (kind of like admin)
 
 ## CHANNEL
 A channel is a group of one or more client chatting within eachother
+
 ### CHANNEL RULES
-- The channel is created implicitly when the first client JOIN it.
+- The channel is created implicitly when the first client JOIN it. And it ceases to exist when the last client leaves it
+
+- If the channel doesn't exist, the channel is created and the creating user becomes a **channel operator**
+
 - Channel naming :
     - The Channel name must begin with a '&' or '#' character
-    - It may be of a length of 200 character (190 character im my testing)
-    - Cannot contain <Ctrl+G> or coma ','
+    - It may be of a length of 200 character (190 character in my testing)
+    - Cannot contain any spaces (' '), <Ctrl+G> or coma ','
 
 ## MESSAGES
 - Each messages id composed as follow

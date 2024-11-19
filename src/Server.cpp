@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/18 11:01:43 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/19 16:35:10 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -234,7 +234,6 @@ void	Server::acceptNewClient( void ) {
 
 }
 
-
 /**
  * @brief Send the complete message to Client
  *
@@ -301,26 +300,26 @@ void	Server::receiveMsg( long unsigned int& i ) {
 	
 	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
 
-
 	if (buffer_size > 0) { //!< Received msg
-		/* TESTING */
-		try {
+		try{
+			// buffer[buffer_size] = '\0';
 			int msg_i = 0;
-			int	start = 0;
+			int start = 0;
 			log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
-			while (msg_i < buffer_size - 2) {
+			while (msg_i < buffer_size - 2){
 				Message msg(buffer, msg_i, buffer_size);
-				broadcast(buffer + start, msg_i - start - 2, this->_pollFd[i].fd);
+				// PASS + NICK + USER
+				_client[i - 1].setPassword(&msg, this->_passwd);
+				//_client[i].setRegistred(true);
+				//write(this->_pollFd[i].fd, RPL_WELCOME, sizeof(RPL_WELCOME));
+				//broadcast(buffer, buffer_size, this->_pollFd[i].fd);
 				start = msg_i;
 			}
-		} catch (std::exception& e) {
+		}
+		catch (std::exception & e){
 			err_log("MESSAGE: %s", e.what());
 		}
-		/* END TESTING */
-		// buffer[buffer_size] = '\0';
-		// log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
-		// broadcast(buffer, buffer_size, this->_pollFd[i].fd);
-		return ;
+		return;
 	}
 	if (buffer_size == 0)
 		log("Client disconnected on socket %d", this->_pollFd[i].fd);
@@ -346,7 +345,9 @@ void	Server::checkEvent( long unsigned int& i ) {
 	//! Receive data
 	if (this->_pollFd[i].revents & POLLIN)
 		return (this->receiveMsg(i));	
-
+		
+	// if (this->_pollFd[i].revents & POLLIN & this->_client[i].getRegistred() == true)
+		
 	//! received error
 	if (this->_pollFd[i].revents & POLLHUP)
 		err_log("Client hang up on socket %d.", this->_pollFd[i].fd);
@@ -389,6 +390,10 @@ void	Server::runServer( void ) {
         if (status < 0)
 			fatal_log("poll(): %s.", std::strerror(errno));
 	}
+}
+
+std::string Server::getPassword( void ) const{
+	return (this->_passwd);
 }
 
 /* ************************************************************************** */

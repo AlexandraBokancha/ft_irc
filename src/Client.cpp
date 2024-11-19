@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/18 10:59:13 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/19 17:04:43 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ Client::Client( void ) {
 	this->_hostname = "";
 	this->_username = "";
 	this->_fd = NULL;
+	this->_isRegistred = false;
 	return ;
 }
 
@@ -56,8 +57,16 @@ std::string	Client::getNickname( void ) const {
 	return (this->_nickname);
 }
 
+bool Client::getRegistred( void ) const{
+	return (this->_isRegistred);
+}
+
 int*	Client::getFd( void ) const {
 	return (this->_fd);
+}
+
+void Client::setRegistred( int status ){
+	this->_isRegistred = status;
 }
 
 void	Client::setFd( int *fd ) {
@@ -66,6 +75,33 @@ void	Client::setFd( int *fd ) {
 
 void	Client::setNetId( struct sockaddr_in netId) {
 	this->_netId = netId;
+}
+
+void	Client::setNickname( Message *obj ){
+	if (obj->getCommand() == "NICK"){
+		this->_nickname = obj->getParam().front();
+		// chech nickname ? 
+	}	
+}
+
+void	Client::setUsername( Message *obj ){
+		
+}
+
+void	Client::setPassword( Message *obj, std::string serverPasswd){
+	if (obj->getCommand() == "PASS"){
+		if (obj->getParam().size() == 1){
+			this->_password = obj->getParam().front();
+			if (this->_password == serverPasswd){
+				success_log("Password confirmed");
+				return ;
+			}
+			else
+				throw std::runtime_error("Wrong password");
+		}
+		else
+			throw std::runtime_error("Wrong PASS cmd format");
+	}	
 }
 
 /* ************************************************************************** */
