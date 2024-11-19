@@ -13,6 +13,7 @@ SRC_FILE = main.cpp \
 			Server.cpp \
 			Client.cpp \
 			Message.cpp \
+			CommandExecutor.cpp \
 			log.cpp
 
 ## OBJECT FILE ###

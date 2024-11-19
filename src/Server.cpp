@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/18 11:01:43 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/19 22:06:57 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 /* FOR TESTING PURPOSE */
 # include "log.hpp"
+#include <stdexcept>
 void	print_client(std::vector<Client> v) {
 	for (std::vector<Client>::const_iterator it = v.begin(); it < v.end(); it++) {
 		std::cout << *it << std::endl;
@@ -107,6 +108,30 @@ void	Server::pollPushBack(int fd, short events) {
 	new_socket.events = events;
 	new_socket.revents = 0;
 	this->_pollFd.push_back(new_socket);
+}
+
+/**
+ * @brief Compare param to server password
+ *
+ * This function make the password access more secure by never directly returning it
+ *
+ * @param str The client pass argument to be compared with server password
+ * @return 0 when match password, else 1
+ */
+int Server::comparePassword(const std::string& str) const {
+	return ((str.compare(this->_passwd) == 0 ? 0 : 1));
+}
+
+/**
+ * @brief return client based on client socket
+ */
+Client&	Server::findClient( int client_sock ) {
+	std::vector<Client>::iterator it;
+	for (it = this->_client.begin(); it != this->_client.end(); it++) {
+		if (*(it->getFd()) == client_sock)
+			return (*it);
+	}
+	throw (std::runtime_error("Server.findClient(): Client not found"));
 }
 
 /**
@@ -307,9 +332,14 @@ void	Server::receiveMsg( long unsigned int& i ) {
 		try {
 			int msg_i = 0;
 			int	start = 0;
+			Client& sender = findClient(this->_pollFd[i].fd);
+
 			log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
 			while (msg_i < buffer_size - 2) {
 				Message msg(buffer, msg_i, buffer_size);
+				
+				CommandExecutor::execute(*this, sender, msg);
+
 				broadcast(buffer + start, msg_i - start - 2, this->_pollFd[i].fd);
 				start = msg_i;
 			}
@@ -369,7 +399,7 @@ void	Server::runServer( void ) {
 	while ((status = poll(this->_pollFd.data(), this->_pollFd.size(), -1)) > 0) {
 
 		// std::cout << "Print client :" << std::endl;
-		// print_client(this->_client);
+		// print_client(this->_client);						//!< For testing
 
 		if (this->_pollFd[0].revents == POLLIN) //!< New client connecting
 			this->acceptNewClient();

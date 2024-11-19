@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/18 10:21:29 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/19 22:07:10 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@
 
 # include "Message.hpp"
 # include "Client.hpp"
+# include "CommandExecutor.hpp"
 
 extern int g_signal;
 
@@ -55,6 +56,8 @@ public:
 
 	void	pollPushBack( int fd, short events );
 
+	int		comparePassword(const std::string& str) const;
+
 	void	startServer( const char *port_str ); //!< Start the server
 	void	runServer( void );
 	void	stopServer( void );
@@ -76,6 +79,8 @@ private:
 	//! Private member function
 	void						acceptNewClient( void );
 	void						disconnectClient( long unsigned int& index );
+
+	Client&						findClient( int client_sock );
 
 	void						checkEvent( long unsigned int& i );
 	void						receiveMsg( long unsigned int& i );

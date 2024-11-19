@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/18 10:25:05 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/18 23:06:13 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,9 @@
 # include <cstring>
 # include <string>
 # include <ostream>
+
+#include <arpa/inet.h>		//!< Just for struct sockaddr_in operator<<
+#include <sys/socket.h>		//!< Just for struct sockaddr_in operator<<
 
 class Client {
 public:
