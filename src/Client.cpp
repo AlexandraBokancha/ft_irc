@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/19 17:04:43 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/19 20:24:36 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,19 +88,42 @@ void	Client::setUsername( Message *obj ){
 		
 }
 
+/**
+ * @brief Handle client password verification during registration
+ *
+ * If the client is already registered, it sends an `ERR_ALREADYREGISTRED` response.
+ * If the password matches the server's password, the registration succeeds.
+ * Otherwise, it sends an `ERR_PASSWDMISMATCH` response and throws an exception. 
+ * If the `PASS` command is missing parameters, an `ERR_NEEDMOREPARAMS` response is sent.
+ *
+ * @param obj Pointer to the Message object
+ * @param serverPasswd The server’s correct password
+ */
 void	Client::setPassword( Message *obj, std::string serverPasswd){
-	if (obj->getCommand() == "PASS"){
+	if (this->_isRegistred == true){
+		std::string msg = ERR_ALREADYREGISTRED(this->_nickname); // faire une fonction qui envoie le msg au client
+		write(*_fd, msg.c_str(), msg.length());
+		return ;
+	}
+	if (obj->getCommand() == "PASS"){ // a voir si je laisse ce "if" (si on fait le tableau des pointeurs sur les fonctions)
 		if (obj->getParam().size() == 1){
 			this->_password = obj->getParam().front();
 			if (this->_password == serverPasswd){
 				success_log("Password confirmed");
 				return ;
 			}
-			else
+			else{
+				write(*_fd, ERR_PASSWDMISMATCH(), sizeof(ERR_PASSWDMISMATCH()));
 				throw std::runtime_error("Wrong password");
+			}
 		}
-		else
-			throw std::runtime_error("Wrong PASS cmd format");
+		else{
+			/* marche pas pour l'instant */
+			
+			// std::string msg = ERR_NEEDMOREPARAMS(obj->getCommand());
+			// write(*_fd, msg.c_str(), msg.length());
+			// throw std::runtime_error("Wrong PASS cmd format");
+		}
 	}	
 }
 

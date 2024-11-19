@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/19 16:38:29 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/19 19:40:21 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,8 @@
 # include <iostream>
 # include "Message.hpp"
 # include "log.hpp"
+# include "numericReplies.hpp"
+# include <unistd.h>
 
 class Client {
 public:
@@ -40,9 +42,9 @@ public:
 
 	void	setNetId( struct sockaddr_in addr );
 	void	setFd( int *fd );
-	void	setNickname(Message *obj);
-	void	setUsername(Message *obj);
-	void	setPassword(Message *obj, std::string serverPasswd);
+	void	setNickname( Message *obj );
+	void	setUsername( Message *obj );
+	void	setPassword( Message *obj, std::string serverPasswd );
 
 private:
 	struct sockaddr_in	_netId;		//!< Client addr

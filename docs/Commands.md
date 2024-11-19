@@ -7,3 +7,7 @@ Command : PASS
 Parameters : <password>
 
 Should be sent before the NICK/USER combination and before any SERVER command.
+
+ERR_NEEDMOREPARAMS
+ERR_ALREADYREGISTRED
+ERR_PASSWDMISMATCH
