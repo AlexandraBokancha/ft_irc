@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/19 19:40:21 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/20 17:45:00 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 # include "log.hpp"
 # include "numericReplies.hpp"
 # include <unistd.h>
+# include <vector>
 
 class Client {
 public:
@@ -42,7 +43,7 @@ public:
 
 	void	setNetId( struct sockaddr_in addr );
 	void	setFd( int *fd );
-	void	setNickname( Message *obj );
+	void	setNickname( Message *obj, std::vector<Client> clients );
 	void	setUsername( Message *obj );
 	void	setPassword( Message *obj, std::string serverPasswd );
 

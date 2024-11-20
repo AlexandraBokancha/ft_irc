@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/19 16:35:10 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/20 17:46:06 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -310,6 +310,7 @@ void	Server::receiveMsg( long unsigned int& i ) {
 				Message msg(buffer, msg_i, buffer_size);
 				// PASS + NICK + USER
 				_client[i - 1].setPassword(&msg, this->_passwd);
+				_client[i - 1].setNickname(&msg, this->_client);
 				//_client[i].setRegistred(true);
 				//write(this->_pollFd[i].fd, RPL_WELCOME, sizeof(RPL_WELCOME));
 				//broadcast(buffer, buffer_size, this->_pollFd[i].fd);

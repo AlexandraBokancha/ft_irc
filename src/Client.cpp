@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/19 20:24:36 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/20 19:26:32 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,16 +77,56 @@ void	Client::setNetId( struct sockaddr_in netId) {
 	this->_netId = netId;
 }
 
-void	Client::setNickname( Message *obj ){
-	if (obj->getCommand() == "NICK"){
-		this->_nickname = obj->getParam().front();
-		// chech nickname ? 
-	}	
-}
-
 void	Client::setUsername( Message *obj ){
 		
 }
+
+/**
+ * @brief Handle client nickname assignment during registration
+ *
+ * Validates and assigns a nickname to the client based on the IRC protocol rules.
+ * If the nickname is already in use, it sends an `ERR_NICKNAMEINUSE` response.
+ * If the nickname is too long or contains invalid characters, it sends an `ERR_ERRONEUSNICKNAME` response.
+ * If no nickname is provided, it sends an `ERR_NONICKNAMEGIVEN` response.
+ *
+ * Conditions checked:
+ * - The nickname must be unique among connected clients.
+ * - The nickname must not exceed 9 characters in length.
+ * 
+ * Successful registration logs the event.
+ * Throws a runtime exception if the nickname is invalid or rejected.
+ *
+ * @param obj Pointer to the Message object containing the `NICK` command and parameters.
+ * @param clients A vector of connected clients for nickname uniqueness verification.
+ */
+void	Client::setNickname( Message *obj, std::vector<Client> clients ){
+	if (obj->getCommand() == "NICK"){ // a enlever ce "if" apres
+		if (obj->getParam().size() == 1 || obj->getParam().size() == 2){
+			for (int i = 0; i < clients.size(); ++i){
+				if (clients[i].getNickname() == obj->getParam().front()){
+					std::string msg = ERR_NICKNAMEINUSE(obj->getParam().front());
+					write(*_fd, msg.c_str(), msg.length());
+					throw std::runtime_error("Nick rejected");
+					}
+				}
+			if (obj->getParam().front().length() <= 9){ // est-ce qu'il y a dautres chose a check ? 
+				this->_nickname = obj->getParam().front();
+				success_log("NICK of %d enregistred", getFd());
+				return ;
+			}
+			else{
+				std::string msg = ERR_ERRONEUSNICKNAME(obj->getParam().front());
+				write(*_fd, msg.c_str(), msg.length());
+				throw std::runtime_error("Nick rejected");
+			}
+		}	
+		else{
+			write(*_fd, ERR_NONICKNAMEGIVEN(), sizeof(ERR_NONICKNAMEGIVEN()));
+			throw std::runtime_error("Nick rejected");
+		}
+	}	
+}
+
 
 /**
  * @brief Handle client password verification during registration
@@ -107,8 +147,8 @@ void	Client::setPassword( Message *obj, std::string serverPasswd){
 	}
 	if (obj->getCommand() == "PASS"){ // a voir si je laisse ce "if" (si on fait le tableau des pointeurs sur les fonctions)
 		if (obj->getParam().size() == 1){
-			this->_password = obj->getParam().front();
-			if (this->_password == serverPasswd){
+			if (obj->getParam().front() == serverPasswd){
+				this->_password = obj->getParam().front();
 				success_log("Password confirmed");
 				return ;
 			}
@@ -118,11 +158,9 @@ void	Client::setPassword( Message *obj, std::string serverPasswd){
 			}
 		}
 		else{
-			/* marche pas pour l'instant */
-			
-			// std::string msg = ERR_NEEDMOREPARAMS(obj->getCommand());
-			// write(*_fd, msg.c_str(), msg.length());
-			// throw std::runtime_error("Wrong PASS cmd format");
+			std::string msg = ERR_NEEDMOREPARAMS(obj->getCommand());
+			write(*_fd, msg.c_str(), msg.length());
+			throw std::runtime_error("Wrong PASS cmd format");
 		}
 	}	
 }
