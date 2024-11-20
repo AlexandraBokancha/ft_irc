@@ -6,11 +6,12 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:49 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/18 22:44:12 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/20 09:25:05 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Message.hpp"
+#include <string>
 
 /* ************************************************************************** */
 /* *                       Constructors && Destructors                      * */
@@ -182,6 +183,7 @@ void Message::_parsePrefix(const char *buf, int& i, const int len) {
  */
 void	Message::_parseCommand(const char *buf, int& i, const int len) {
 	int	cmd_len = 0;
+	std::string	sep = " \r"; //!< Defining SPACE and CR as separator
 
 	if (std::isdigit(buf[i])) {
 		for (cmd_len = 0; cmd_len < 3; cmd_len++) {
@@ -190,7 +192,7 @@ void	Message::_parseCommand(const char *buf, int& i, const int len) {
 		}
 	}
 	else if (std::isalpha(buf[i])) {
-		for (cmd_len = 0; i + cmd_len < len && buf[i + cmd_len] != SPACE; cmd_len++) {
+		for (cmd_len = 0; i + cmd_len < len && sep.find(buf[i + cmd_len]) == std::string::npos; cmd_len++) {
 			if (!std::isalpha(buf[i + cmd_len]))
 				throw (Message::InvalidCommandException());
 		}
