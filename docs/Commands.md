@@ -44,8 +44,8 @@ nickname having a **maximum length of nine (9) characters**. See the
 protocol grammar rules for what may and may not be used in a
 nickname. 
 
-Nicknames cannot contain spaces, commas, or special symbols like @, #, and :.
-These symbols are reserved for commands or channels.
+<!-- Nicknames cannot contain spaces, commas, or special symbols like @, #, and :.
+These symbols are reserved for commands or channels. -->
     
 <!-- 
 ERR_NICKCOLLISION 444
@@ -53,3 +53,17 @@ ERR_NICKCOLLISION 444
     - Returned by a server to a client when it detects a
     nickname collision (registered of a NICK that
     already exists by another server). -->
+
+
+## USER
+
+Command: USER
+Parameters: <username> <hostname> <servername> <realname>
+
+- realname parameter must be the last parameter, and must be
+prefixed with colon (':')
+
+Numeric Replies:
+
+ERR_NEEDMOREPARAMS
+ERR_ALREADYREGISTRED

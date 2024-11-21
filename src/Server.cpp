@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 17:46:06 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/21 19:37:00 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -287,6 +287,15 @@ void	Server::broadcast(const char *buffer, int len, int fd) const {
 	}
 }
 
+
+// int authentification(long unsigned int & i, const Message & msg){
+// 	if (_client[i - 1].setPassword(msg, this->_passwd) && _client[i - 1].setNickname(msg, this->_client) \
+// 		&& _client[i - 1].setUsername(msg)){
+// 			return (1);
+// 		}
+// 	return (0);
+// }
+
 /**
  * @brief Receive client message after POLLIN event
  *
@@ -308,9 +317,10 @@ void	Server::receiveMsg( long unsigned int& i ) {
 			log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
 			while (msg_i < buffer_size - 2){
 				Message msg(buffer, msg_i, buffer_size);
-				// PASS + NICK + USER
-				_client[i - 1].setPassword(&msg, this->_passwd);
-				_client[i - 1].setNickname(&msg, this->_client);
+				// if (authentification(i, msg)){
+				// 	write(this->_pollFd[i].fd, "YOU WERE ENREGISTRED", 21);
+				// }
+				//print_client(_client);
 				//_client[i].setRegistred(true);
 				//write(this->_pollFd[i].fd, RPL_WELCOME, sizeof(RPL_WELCOME));
 				//broadcast(buffer, buffer_size, this->_pollFd[i].fd);
@@ -322,6 +332,7 @@ void	Server::receiveMsg( long unsigned int& i ) {
 		}
 		return;
 	}
+	print_client(_client);
 	if (buffer_size == 0)
 		log("Client disconnected on socket %d", this->_pollFd[i].fd);
 	if (buffer_size < 0)

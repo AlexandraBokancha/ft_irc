@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 17:45:00 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/21 19:34:23 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,15 +37,20 @@ public:
 	std::string			getHostname( void ) const;
 	std::string			getUsername( void ) const;
 	std::string			getNickname( void ) const;
+	std::string			getPassword( void ) const;
+	std::string			getRealname( void ) const;
+	std::string			getServername( void ) const;
+
 	int					*getFd( void ) const;
 	bool				getRegistred( void ) const;
-	void				setRegistred( int status );
+	void				setRegistred( bool status );
 
 	void	setNetId( struct sockaddr_in addr );
 	void	setFd( int *fd );
-	void	setNickname( Message *obj, std::vector<Client> clients );
-	void	setUsername( Message *obj );
-	void	setPassword( Message *obj, std::string serverPasswd );
+	int		setNickname( const  Message & obj, std::vector<Client> clients );
+	int		setUsername( const Message & obj );
+	int		setPassword( const Message & obj, std::string serverPasswd );
+	int		authentification(long unsigned int & i, const Message & msg);
 
 private:
 	struct sockaddr_in	_netId;		//!< Client addr
@@ -53,6 +58,8 @@ private:
 	std::string			_hostname;
 	std::string			_username;
 	std::string			_nickname;
+	std::string			_servername;
+	std::string			_realname;
 	bool				_isRegistred;
 	int					*_fd; //!< Pointer to server_poll fd
 };
