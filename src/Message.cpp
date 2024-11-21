@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:49 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 09:25:05 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/20 19:15:42 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ Message::Message( const char *buf, int& i, const int len ) {
 	//! Setting default value in case of error
 	this->_prefix = "";
 	this->_command = "";
-	this->_param = std::list<std::string>();
+	this->_param = std::vector<std::string>();
 
 	this->_init(buf, i, len);
 	return ;
@@ -58,7 +58,7 @@ Message&	Message::operator=( const Message& rhs ) {
 							//! FOR TESTING PURPOSE 
 
 std::ostream&	Message::printParam( std::ostream& os ) const {
-	for (std::list<std::string>::const_iterator it = this->_param.begin(); it != this->_param.end(); it++) {
+	for (std::vector<std::string>::const_iterator it = this->_param.begin(); it != this->_param.end(); it++) {
 		os << "[ " << *it << " ] ";
 	}
 	return (os);
@@ -85,7 +85,7 @@ std::string	Message::getCommand( void ) const {
 	return (this->_command);
 }
 
-std::list<std::string>	Message::getParam( void ) const {
+std::vector<std::string>	Message::getParam( void ) const {
 	return (this->_param);
 }
 
@@ -229,7 +229,7 @@ void	Message::_parseOneParam(const char *buf, int& i, const int len) {
 /**
  * @brief Get the <param> part of the message
  *
- * Extract the parameters list fromn message
+ * Extract the parameters vector fromn message
  *
  * @param buf The message buffer
  * @param i The index in buffer

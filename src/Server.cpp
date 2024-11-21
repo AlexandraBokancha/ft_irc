@@ -6,13 +6,14 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/19 22:06:57 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/20 23:22:01 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
 /* FOR TESTING PURPOSE */
+#include "Channel.hpp"
 # include "log.hpp"
 #include <stdexcept>
 void	print_client(std::vector<Client> v) {
@@ -49,6 +50,7 @@ Server::Server( void )
 {
 	this->_serverInfo = NULL;
 	this->_socket = -1;
+	this->_channel = std::vector<Channel>();
 	this->_client = std::vector<Client>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
@@ -60,6 +62,7 @@ Server::Server(const int port, const std::string password )
 	std::cout << "Created Server object using port " << port << std::endl;
 	this->_serverInfo = NULL;
 	this->_socket = -1;
+	this->_channel = std::vector<Channel>();
 	this->_client = std::vector<Client>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
@@ -70,6 +73,7 @@ Server::Server( Server const &rhs )
 {
 	this->_serverInfo = NULL;
 	this->_socket = -1;
+	this->_channel = std::vector<Channel>();
 	this->_client = std::vector<Client>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
@@ -132,6 +136,24 @@ Client&	Server::findClient( int client_sock ) {
 			return (*it);
 	}
 	throw (std::runtime_error("Server.findClient(): Client not found"));
+}
+
+/**
+ * @brief find channel by name
+ *
+ * Find channel identified by name passed in paramters
+ *
+ * @param name Channel name to find
+ * @return Channel pointer if found, else NULL
+ */
+Channel*	Server::findChannel( const std::string& name ) const {
+	std::vector<Channel>::iterator	it;
+
+	for (it = this->_channel.begin(); it != this->_channel.end(); it++) {
+		if (name.compare(it->getName()) == 0)
+			return (&(*it));
+	}
+	return (NULL);
 }
 
 /**

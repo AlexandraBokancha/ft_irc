@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:44 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/18 23:10:45 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/20 23:11:07 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@
 
 # include <exception>
 # include <cctype>
-# include <list>
+# include <vector>
 # include <string>
 # include <ostream>
 
@@ -62,7 +62,7 @@ public:
 	//! Getters and Setters
 	std::string				getPrefix( void ) const;
 	std::string				getCommand( void ) const;
-	std::list<std::string>	getParam( void ) const;
+	std::vector<std::string>	getParam( void ) const;
 
 	//! FOR TESTING PURPOSE
 	std::ostream&			printParam( std::ostream& os ) const;
@@ -113,9 +113,9 @@ private:
 	void					_parseParam(const char *buf, int& i, const int len);
 	// int						_crlf(const char *buf, int& i, const int len);
 
-	std::string				_prefix;	//!< Optionnal message prefix
-	std::string				_command;	//!< Message command
-	std::list<std::string>	_param;		//!< Message paramaters
+	std::string					_prefix;	//!< Optionnal message prefix
+	std::string					_command;	//!< Message command
+	std::vector<std::string>	_param;		//!< Message paramaters
 	
 };
 

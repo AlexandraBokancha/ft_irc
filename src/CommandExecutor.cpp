@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/19 22:08:52 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/20 23:28:02 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
  */
 
 # include "CommandExecutor.hpp"
+#include "Channel.hpp"
 # include "log.hpp"
 
 //! Anonymous namespace: Everything declared here is only accesible in this file
@@ -40,6 +41,36 @@ namespace {
 		// 	// NOTHING, continue auth process (wait for NICK, USER message )
 		// }
 		success_log("In PASS command");
+	}
+
+	void	join(Server& serv, Client& client, Message& msg) {
+		if (msg.getParam().size() == 0)
+			throw (); //!< ERR_NEEDMOREPARAMS
+
+		std::vector<std::string>::const_iterator	channel_it;
+		std::vector<std::string>					channel_name;
+		std::vector<std::string>					key;
+		Channel										ch;
+
+
+		//<! Get channel list and key list
+		channel_name = AParser::getChannelList(msg.getParam()[0]);
+		key = (msg.getParam().size > 1 ? AParser::getKeyList(msg.getParam()[1]) : std::vector<std::string>());
+		
+		for (channel_it = channel_name.begin(); channel_it != channel_name.end(); channel_it++) {
+			/**
+			 * Check if channel exist
+			 *   - if not create it
+			 *   - if yes :
+			 *     - Check for errors :
+			 *     - If no error :
+			 *       - Add client to channel
+			 *       - Send appropriate response
+			 */
+			ch = serv.findChannel(*channel_it);
+			if ()
+
+		}
 	}
 
 	/**

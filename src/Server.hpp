@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/19 22:07:10 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/20 23:16:25 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@
 
 # include "Message.hpp"
 # include "Client.hpp"
+# include "Channel.hpp"
 # include "CommandExecutor.hpp"
 
 extern int g_signal;
@@ -58,6 +59,8 @@ public:
 
 	int		comparePassword(const std::string& str) const;
 
+	Channel*	findChannel( const std::string& name ) const;
+
 	void	startServer( const char *port_str ); //!< Start the server
 	void	runServer( void );
 	void	stopServer( void );
@@ -68,6 +71,8 @@ private:
 	const int					_port;
 	const std::string			_passwd;
 	int							_socket;
+
+	std::vector<Channel>		_channel;
 
 	std::vector<Client>			_client;
 

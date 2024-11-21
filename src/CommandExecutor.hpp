@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/19 09:11:20 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/19 21:45:46 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/20 19:10:49 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 # include <utility>
 # include <vector>
 # include <iterator>
+# include "AParser.hpp"
 
 class Server;
 class Client;
