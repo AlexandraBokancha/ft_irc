@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/21 19:37:00 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/21 20:39:59 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,9 @@ Server::Server( void )
 	this->_socket = -1;
 	this->_client = std::vector<Client>();
 	this->_pollFd = std::vector<struct pollfd>();
+	this->_validPass = false;
+	this->_validNick = false;
+	this->_validUser = false;
 	return ;
 }
 
@@ -61,6 +64,9 @@ Server::Server(const int port, const std::string password )
 	this->_socket = -1;
 	this->_client = std::vector<Client>();
 	this->_pollFd = std::vector<struct pollfd>();
+	this->_validPass = false;
+	this->_validNick = false;
+	this->_validUser = false;
 	return ;
 }
 
@@ -288,13 +294,57 @@ void	Server::broadcast(const char *buffer, int len, int fd) const {
 }
 
 
-// int authentification(long unsigned int & i, const Message & msg){
-// 	if (_client[i - 1].setPassword(msg, this->_passwd) && _client[i - 1].setNickname(msg, this->_client) \
-// 		&& _client[i - 1].setUsername(msg)){
-// 			return (1);
-// 		}
-// 	return (0);
-// }
+/*
+
+->PASS
+->NICK/USER
+
+*/
+int Server::authentification(long unsigned int &i, const Message &msg) {
+    if (!_validPass) {
+        if (_client[i - 1].setPassword(msg, this->_passwd)) {
+            this->_validPass = true;
+            return 0; // Wait for the next command (NICK or USER)
+        } else {
+            err_log("Password validation failed for client %lu", i);
+            return 0; // Do not proceed to NICK/USER without a valid PASS
+        }
+    }
+
+    // Validate nickname if password is valid
+    if (!_validNick) {
+        if (_client[i - 1].setNickname(msg, this->_client)) {
+            this->_validNick = true;
+            success_log("Nickname set for client %lu", i);
+            return 0; // Wait for the USER command
+        } else {
+            err_log("Nickname validation failed for client %lu", i);
+            return 0; // Do not proceed to USER without a valid NICK
+        }
+    }
+
+    // Validate username if password and nickname are valid
+    if (!_validUser) {
+        if (_client[i - 1].setUsername(msg)) {
+            this->_validUser = true;
+            success_log("Username set for client %lu", i);
+            return 0; // User setup complete
+        } else {
+            err_log("Username validation failed for client %lu", i);
+            return 0;
+        }
+    }
+
+    // All checks passed
+    if (this->_validPass && this->_validNick && this->_validUser) {
+        success_log("Client %lu fully authenticated", i);
+        return 1;
+    }
+
+    return 0;
+}
+
+void replyToClient(std::string msg, int *fd);
 
 /**
  * @brief Receive client message after POLLIN event
@@ -317,10 +367,11 @@ void	Server::receiveMsg( long unsigned int& i ) {
 			log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
 			while (msg_i < buffer_size - 2){
 				Message msg(buffer, msg_i, buffer_size);
-				// if (authentification(i, msg)){
-				// 	write(this->_pollFd[i].fd, "YOU WERE ENREGISTRED", 21);
-				// }
-				//print_client(_client);
+				if (authentification(i, msg)){
+					//replyToClient(); jenvoie la repons regarde la norme irc
+					//write(this->_pollFd[i].fd, "YOU WERE ENREGISTRED", 21);
+				}
+				print_client(_client);
 				//_client[i].setRegistred(true);
 				//write(this->_pollFd[i].fd, RPL_WELCOME, sizeof(RPL_WELCOME));
 				//broadcast(buffer, buffer_size, this->_pollFd[i].fd);

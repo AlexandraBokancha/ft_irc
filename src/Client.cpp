@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/21 19:36:45 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/21 20:38:51 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,9 +94,7 @@ void	Client::setNetId( struct sockaddr_in netId) {
 	this->_netId = netId;
 }
 
-void replyToClient(std::string msg, int *fd){
-	write(*fd, msg.c_str(), msg.length());
-}
+void replyToClient(std::string msg, int *fd);
 
 int	Client::setUsername( const Message & obj ){
 	if (obj.getCommand() == "USER"){

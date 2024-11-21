@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/21 19:34:13 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/21 20:02:07 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,6 +78,10 @@ private:
 	unsigned int				_clientNbr;
 
 	struct addrinfo				*_serverInfo;
+	bool						 _validPass;
+	bool						 _validNick;
+	bool						 _validUser;
+	
 
 	//! Private member function
 	void						acceptNewClient( void );
@@ -87,7 +91,7 @@ private:
 	void						receiveMsg( long unsigned int& i );
 	int							sendMsg(int socket, const char *buf, int len) const;
 	void						broadcast(const char *buffer, int len, int fd) const;
-	//int							authentification(long unsigned int & i, const Message & msg);
+	int							authentification(long unsigned int & i, const Message & msg);
 
 };
 

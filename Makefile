@@ -13,7 +13,8 @@ SRC_FILE = main.cpp \
 			Server.cpp \
 			Client.cpp \
 			Message.cpp \
-			log.cpp
+			log.cpp \
+			utils.cpp
 
 ## OBJECT FILE ###
 OBJ_DIR = .obj

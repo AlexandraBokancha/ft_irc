@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/21 19:34:23 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/21 19:39:05 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,6 @@ public:
 	int		setNickname( const  Message & obj, std::vector<Client> clients );
 	int		setUsername( const Message & obj );
 	int		setPassword( const Message & obj, std::string serverPasswd );
-	int		authentification(long unsigned int & i, const Message & msg);
 
 private:
 	struct sockaddr_in	_netId;		//!< Client addr
