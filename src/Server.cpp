@@ -6,11 +6,13 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/21 20:39:59 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/22 20:01:50 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
+
+void replyToClient(std::string msg, int *fd);
 
 /* FOR TESTING PURPOSE */
 # include "log.hpp"
@@ -294,9 +296,11 @@ void	Server::broadcast(const char *buffer, int len, int fd) const {
 }
 
 
-/*
+/**  @brief Function handling authetification of a new client
 
-->PASS
+it checks :
+
+->PASS (precede toutes les autres commandes)
 ->NICK/USER
 
 */
@@ -304,10 +308,10 @@ int Server::authentification(long unsigned int &i, const Message &msg) {
     if (!_validPass) {
         if (_client[i - 1].setPassword(msg, this->_passwd)) {
             this->_validPass = true;
-            return 0; // Wait for the next command (NICK or USER)
+            return 0;
         } else {
             err_log("Password validation failed for client %lu", i);
-            return 0; // Do not proceed to NICK/USER without a valid PASS
+            return (0); // Do not proceed to NICK/USER without a valid PASS
         }
     }
 
@@ -315,50 +319,47 @@ int Server::authentification(long unsigned int &i, const Message &msg) {
     if (!_validNick) {
         if (_client[i - 1].setNickname(msg, this->_client)) {
             this->_validNick = true;
-            success_log("Nickname set for client %lu", i);
-            return 0; // Wait for the USER command
+            return (0);
         } else {
             err_log("Nickname validation failed for client %lu", i);
-            return 0; // Do not proceed to USER without a valid NICK
         }
     }
 
-    // Validate username if password and nickname are valid
+    // Validate username if password is valid
     if (!_validUser) {
         if (_client[i - 1].setUsername(msg)) {
             this->_validUser = true;
-            success_log("Username set for client %lu", i);
-            return 0; // User setup complete
         } else {
             err_log("Username validation failed for client %lu", i);
-            return 0;
+            return (0);
         }
     }
 
-    // All checks passed
     if (this->_validPass && this->_validNick && this->_validUser) {
-        success_log("Client %lu fully authenticated", i);
-        return 1;
-    }
-
-    return 0;
+		_client[i - 1].setRegistred(true);
+		replyToClient(RPL_WELCOME(_client[i - 1].getNickname(), _client[i - 1].getUsername(), \
+			_client[i - 1].getHostname()), &this->_pollFd[i].fd);
+		success_log("Client %s was enregistred", _client[i - 1].getNickname());
+		return (1);
+	}
+    return (0);
 }
 
-void replyToClient(std::string msg, int *fd);
 
 /**
  * @brief Receive client message after POLLIN event
  *
- * This function read the Msg send byy the client after POLLIN event
+ * This function read the Msg send by the client after POLLIN event
  * IT SHOULD BE UPDATED ACCORDINGLY
  *
  * @param i The pollFd index
  */
 void	Server::receiveMsg( long unsigned int& i ) {
-	char	buffer[512]; //<! 512 = max irc message size
 	
+	char	buffer[512]; //<! 512 = max irc message size
 	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
 
+	/* TESTING */
 	if (buffer_size > 0) { //!< Received msg
 		try{
 			// buffer[buffer_size] = '\0';
@@ -367,13 +368,12 @@ void	Server::receiveMsg( long unsigned int& i ) {
 			log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
 			while (msg_i < buffer_size - 2){
 				Message msg(buffer, msg_i, buffer_size);
-				if (authentification(i, msg)){
-					//replyToClient(); jenvoie la repons regarde la norme irc
-					//write(this->_pollFd[i].fd, "YOU WERE ENREGISTRED", 21);
+				if (!_client[i - 1].getRegistred()){
+					if (authentification(i, msg)){
+						break;
+					}
 				}
 				print_client(_client);
-				//_client[i].setRegistred(true);
-				//write(this->_pollFd[i].fd, RPL_WELCOME, sizeof(RPL_WELCOME));
 				//broadcast(buffer, buffer_size, this->_pollFd[i].fd);
 				start = msg_i;
 			}
@@ -383,7 +383,6 @@ void	Server::receiveMsg( long unsigned int& i ) {
 		}
 		return;
 	}
-	print_client(_client);
 	if (buffer_size == 0)
 		log("Client disconnected on socket %d", this->_pollFd[i].fd);
 	if (buffer_size < 0)
