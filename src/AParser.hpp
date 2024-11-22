@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/20 18:05:37 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 21:46:16 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/22 00:40:30 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ public:
 	virtual void	parse(std::vector<std::string> arg) = 0;
 
 	static std::string					getChannelName( const std::string& arg, std::string::const_iterator& pos );
-	static std::vector<std::string>	getChannelList( const std::string& arg );
+	static std::vector<std::string>		getChannelList( const std::string& arg );
 
 	static std::string					getKey( const std::string& arg, std::string::const_iterator& pos );
 	static std::vector<std::string>		getKeyList( const std::string& arg );

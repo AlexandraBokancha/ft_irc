@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 23:08:28 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/22 01:09:56 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,14 @@
 # include <list>
 # include "Client.hpp"
 
-# define o 0x01 //!< Give/take channel operator privileges
-# define i 0x04 //!< Invite-only channel
-# define t 0x05 //!< Topic settable by channel operator only
-# define l 0x08 //!< User limit for the channel
-# define k 0x0B //!< Set/remove the channel key (password)
+# define O 0x01 //!< Give/take channel operator privileges
+# define I 0x02 //!< Invite-only channel
+# define INVITE_ONLY 0x02 //!< Invite-only channel
+# define T 0x04 //!< Topic settable by channel operator only
+# define TOPIC 0x04 //!< Topic settable by channel operator only
+# define L 0x08 //!< User limit for the channel
+# define USER_LIMIT 0x08 //!< User limit for the channel
+# define K 0x10//!< Set/remove the channel key (password)
 
 class Channel {
 public:
@@ -33,6 +36,11 @@ public:
 	Channel& operator=( Channel const & rhs );
 
 	std::string			getName( void ) const;
+	int					getMode( void ) const;
+
+	bool				isFull( void ) const;
+	bool				validPassword( const std::string& password ) const;
+
 
 private:
 	std::string			_name; //!< Channel name

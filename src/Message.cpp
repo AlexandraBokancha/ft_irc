@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:49 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 19:15:42 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/21 12:43:16 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,13 +90,57 @@ std::vector<std::string>	Message::getParam( void ) const {
 }
 
 /* ************************************************************************** */
+/* *                           Getters and Setters                         * */
+/* ************************************************************************** */
+void	Message::setPrefix( std::string prefix ) {
+	int	start = 0;
+
+	while (prefix[start] == ':') //! Skip ':'
+		start++;
+	this->_prefix = prefix.substr(start, prefix.size());
+}
+
+void	Message::setContent( std::string content ) {
+	const char	*buffer = content.c_str();
+	int			i = 0;
+	int			len = content.size();
+
+	_parseCommand(buffer, i, len);
+	if (buffer[i] == len) //! End of message reached
+		return ;
+
+	//! Get comand parameters
+	this->_parseParam(buffer, i, len);
+	// if (!crlf(buffer, i, len))
+	// 	throw (Message::InvalidMessageException());
+	// i += 2; //!< Skip CRLF
+	return ;
+}
+
+/* ************************************************************************** */
 /* *                              Member function                           * */
 /* ************************************************************************** */
+std::string	Message::toString( void ) const {
+	std::string	str;
+
+	str.reserve(512);
+	if (this->_prefix[0] != ':')
+		str.append(1, ':');
+	str.append(this->_prefix + SPACE);
+
+	str.append(this->_command);
+
+	for (std::vector<std::string>::const_iterator it = this->_param.begin(); it != this->_param.end(); it++) {
+		str.append(*it + SPACE);
+	}
+	str.append("\r\n");
+	return (str);
+}
+
 /**
  * @brief Check if c is a special char according to RFC2812
  *
- * RFC2812: 2000 IRC Protocol
- */
+ * RFC2812: 2000 IRC Protocol */
 static int	isspecial(const char c) {
 	switch (c) {
 		case LEFT_CURLY_BRACE :

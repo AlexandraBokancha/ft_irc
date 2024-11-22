@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:44 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 23:11:07 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/21 12:42:57 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,12 +60,19 @@ public:
 	Message& operator=( Message const & rhs );
 
 	//! Getters and Setters
-	std::string				getPrefix( void ) const;
-	std::string				getCommand( void ) const;
+	std::string					getPrefix( void ) const;
+	std::string					getCommand( void ) const;
 	std::vector<std::string>	getParam( void ) const;
+
+	void						setPrefix( std::string prefix );
+	void						setContent( std::string msg );
+
+	std::string					toString( void ) const;
 
 	//! FOR TESTING PURPOSE
 	std::ostream&			printParam( std::ostream& os ) const;
+
+
 
 	//! Message Error
 	class InvalidMessageException : public std::exception {

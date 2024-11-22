@@ -6,23 +6,25 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 23:22:01 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/22 02:02:29 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
 /* FOR TESTING PURPOSE */
-#include "Channel.hpp"
+#include "Message.hpp"
 # include "log.hpp"
+#include <algorithm>
+#include <cstdarg>
 #include <stdexcept>
+#include <string>
+
 void	print_client(std::vector<Client> v) {
 	for (std::vector<Client>::const_iterator it = v.begin(); it < v.end(); it++) {
 		std::cout << *it << std::endl;
 	}
 }
-
-
 
 /* ************************************************************************** */
 /* *                             Signal Handling                            * */
@@ -94,6 +96,14 @@ Server& Server::operator=( Server const & rhs ) {
 }
 
 /* ************************************************************************** */
+/* *                            Getters and Setters                         * */
+/* ************************************************************************** */
+
+std::string	Server::getPrefix( void ) const {
+	return ("localhost");
+}
+
+/* ************************************************************************** */
 /* *                              Member function                           * */
 /* ************************************************************************** */
 
@@ -139,6 +149,61 @@ Client&	Server::findClient( int client_sock ) {
 }
 
 /**
+ * @brief Server reponse
+ *
+ */
+void	Server::respond(const int& client_sock, const char* fmt, ...) const {
+	va_list		args;
+	std::string	buffer;
+	Message		response;
+
+	response.setPrefix(this->getPrefix());
+
+	buffer.reserve(512);
+	va_start(args, fmt);
+	while (*fmt) {
+		if (*fmt == '%') {
+			fmt++;
+			switch (*fmt) {
+				case 's' : { //!< string
+					char* s = va_arg(args, char* );
+					buffer.append(s);
+					break ;
+				}
+				case 'd' : { //!< int 
+					int d = va_arg(args, int);
+					std::stringstream ss;
+					ss << d;
+					buffer.append(ss.str());
+					break ;
+				}
+				default :
+						   break ;
+			}
+			fmt++;
+		}
+		buffer.append(1, *fmt);
+		fmt++;
+	}
+	va_end(args);
+	response.setContent(buffer);
+	std::cout << response << std::endl;
+	sendMsg(client_sock, response);
+}
+
+/**
+ * @brief Add new channel to server
+ *
+ * Used when joining a channel that doesn't exst
+ *
+ * @param channel The channel to add to server
+ */
+void	Server::addChannel( Channel& channel ) {
+	this->_channel.push_back(channel);
+	return ;
+}
+
+/**
  * @brief find channel by name
  *
  * Find channel identified by name passed in paramters
@@ -146,7 +211,7 @@ Client&	Server::findClient( int client_sock ) {
  * @param name Channel name to find
  * @return Channel pointer if found, else NULL
  */
-Channel*	Server::findChannel( const std::string& name ) const {
+Channel*	Server::findChannel( const std::string& name ) {
 	std::vector<Channel>::iterator	it;
 
 	for (it = this->_channel.begin(); it != this->_channel.end(); it++) {
@@ -169,7 +234,7 @@ Channel*	Server::findChannel( const std::string& name ) const {
  *
  * @param index	The client index in the pollFd
  */
-void	Server::disconnectClient( long unsigned int& index ) {
+void	Server::disconnectClient( int& index ) {
 	if (index == 0)
 		return ;
 	log("Closing socket %d.", this->_pollFd[index].fd);
@@ -236,7 +301,7 @@ void	Server::startServer( const char *port_str ) {
 void		Server::stopServer( void ) {
 	if (this->_pollFd.size() > 1) {
 		log("Disconecting every client...");
-		unsigned long int i = this->_pollFd.size() - 1;
+		int i = this->_pollFd.size() - 1;
 		while (i > 0)
 			disconnectClient(i);
 	}
@@ -311,6 +376,12 @@ int Server::sendMsg(int socket, const char *buf, int len) const {
     return (b == -1 ? -1 : 0); // return -1 on error, 0 on success
 }
 
+int Server::sendMsg(int socket, const Message& msg ) const {
+	std::string	buffer = msg.toString();
+
+    return (this->sendMsg(socket, buffer.c_str(), buffer.size()));
+}
+
 /**
  * @brief Send msg to all client except the one specified by fd
  *
@@ -343,7 +414,7 @@ void	Server::broadcast(const char *buffer, int len, int fd) const {
  *
  * @param i The pollFd index
  */
-void	Server::receiveMsg( long unsigned int& i ) {
+void	Server::receiveMsg( int& i ) {
 	char	buffer[512]; //<! 512 = max irc message size
 	
 	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
@@ -390,7 +461,7 @@ void	Server::receiveMsg( long unsigned int& i ) {
  * Or it received on ERROR and will display a log according to the error
  * Or it do nothing @param i The pollFd index
  */
-void	Server::checkEvent( long unsigned int& i ) {
+void	Server::checkEvent( int& i ) {
 	//! Receive nothing
 	if (this->_pollFd[i].revents == 0)
 		return ;
@@ -427,7 +498,7 @@ void	Server::runServer( void ) {
 			this->acceptNewClient();
 
 		//! Check if data has been received on client socket
-		for (long unsigned int i = 1; i < this->_pollFd.size(); i++) {
+		for (int i = 1; i < this->_pollFd.size(); i++) {
 			if (this->_pollFd[i].fd > 0)
 				this->checkEvent(i);
 			else if (this->_pollFd[i].fd == 0) { //! Case unused fd

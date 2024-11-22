@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/18 23:06:20 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/22 01:32:50 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,12 +21,13 @@ Client::Client( void ) {
 	this->_hostname = "";
 	this->_username = "";
 	this->_fd = NULL;
+	this->_joinedChannel = 0;
 	return ;
 }
 
 Client::Client( const Client& rhs )
 	: _netId(rhs._netId), _nickname(rhs._nickname), _hostname(rhs._hostname), 
-		_username(rhs._username), _fd(rhs._fd) {
+		_username(rhs._username), _fd(rhs._fd), _joinedChannel(rhs._joinedChannel){
 	return ;
 }
 
@@ -55,6 +56,10 @@ std::string	Client::getNickname( void ) const {
 
 int*	Client::getFd( void ) const {
 	return (this->_fd);
+}
+
+int		Client::getJoinedChannel( void ) const {
+	return (this->_joinedChannel);
 }
 
 void	Client::setFd( int *fd ) {

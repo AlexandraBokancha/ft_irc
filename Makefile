@@ -8,12 +8,14 @@ PROJECT = ircserv
 PROJECT_DIR = ./
 
 ### SOURCE FILE ###
-SRC_DIR = ./src/
+SRC_DIR = ./src
 SRC_FILE = main.cpp \
 			Server.cpp \
 			Client.cpp \
+			Channel.cpp \
 			Message.cpp \
 			CommandExecutor.cpp \
+			AParser.cpp \
 			log.cpp
 
 ## OBJECT FILE ###

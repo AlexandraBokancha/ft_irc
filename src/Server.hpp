@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 23:16:25 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/22 01:50:00 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@
 # include "Client.hpp"
 # include "Channel.hpp"
 # include "CommandExecutor.hpp"
+# include "NumericResponse.hpp"
 
 extern int g_signal;
 
@@ -44,6 +45,9 @@ public:
 	~Server();
 
 	Server& operator=( Server const & rhs );
+
+	//! Getters and Setters
+	std::string					getPrefix( void ) const;
 
 	//! Server exceptions
 	class InvalidArgException : public std::exception {
@@ -59,11 +63,14 @@ public:
 
 	int		comparePassword(const std::string& str) const;
 
-	Channel*	findChannel( const std::string& name ) const;
+	void		addChannel(Channel& channel);
+	Channel*	findChannel( const std::string& name );
 
 	void	startServer( const char *port_str ); //!< Start the server
 	void	runServer( void );
 	void	stopServer( void );
+
+	void	respond(const int& client_sock, const char* fmr, ...) const;
 
 private:
 	//! Private member
@@ -83,13 +90,14 @@ private:
 
 	//! Private member function
 	void						acceptNewClient( void );
-	void						disconnectClient( long unsigned int& index );
+	void						disconnectClient( int& index );
 
 	Client&						findClient( int client_sock );
 
-	void						checkEvent( long unsigned int& i );
-	void						receiveMsg( long unsigned int& i );
+	void						checkEvent( int& i );
+	void						receiveMsg( int& i );
 	int							sendMsg(int socket, const char *buf, int len) const;
+	int							sendMsg(int socket, const Message& msg ) const;
 	void						broadcast(const char *buffer, int len, int fd) const;
 
 };

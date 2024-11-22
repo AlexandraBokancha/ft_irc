@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 23:08:46 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/22 01:13:21 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,4 +64,38 @@ Channel&	Channel::operator=( const Channel& rhs ) {
 /* ************************************************************************** */
 std::string	Channel::getName( void ) const {
 	return (this->_name);
+}
+
+int			Channel::getMode( void ) const {
+	return (this->_mode);
+}
+
+/* ************************************************************************** */
+/* *                        Public member functions                         * */
+/* ************************************************************************** */
+/**
+ * @brief Check if channel is full when trying to join it
+ *
+ * Check if the channel can accept a new user
+ *
+ * @return True when yes, False when channel has a limit that has been reached
+ */
+bool		Channel::isFull( void ) const {
+	return (this->_mode & L && this->_client.size() >= this->_userLimit);
+}
+
+/**
+ * @brief Check if the inputed password is the right one
+ *
+ * No need to get the password outside of a join tentative
+ *
+ * @param password The client inputed password
+ * @return True when password is valid, else false
+ */
+bool		Channel::validPassword( const std::string& password ) const {
+	if (this->_password.size() == 0) //!< No password set
+		return (true);
+	if (this->_password.compare(password) == 0)
+		return (true);
+	return (false);
 }
