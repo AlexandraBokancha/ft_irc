@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/22 01:50:00 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/23 17:39:50 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,13 +29,13 @@
 # include <netinet/in.h>
 # include <arpa/inet.h>
 
-# include "Message.hpp"
-# include "Client.hpp"
-# include "Channel.hpp"
-# include "CommandExecutor.hpp"
 # include "NumericResponse.hpp"
 
 extern int g_signal;
+
+class Channel;
+class Client;
+class Message;
 
 class Server {
 public:

@@ -11,11 +11,11 @@ PROJECT_DIR = ./
 SRC_DIR = ./src
 SRC_FILE = main.cpp \
 			Server.cpp \
-			Client.cpp \
 			Channel.cpp \
+			Client.cpp \
 			Message.cpp \
-			CommandExecutor.cpp \
 			AParser.cpp \
+			CommandExecutor.cpp \
 			log.cpp
 
 ## OBJECT FILE ###

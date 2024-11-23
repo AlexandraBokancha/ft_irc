@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:44 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/21 12:42:57 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/23 22:49:43 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,8 +23,10 @@
 #ifndef MESSAGE_HPP
 # define MESSAGE_HPP
 
+# include "AParser.hpp"
 # include <exception>
 # include <cctype>
+# include <cstring>
 # include <vector>
 # include <string>
 # include <ostream>
@@ -80,45 +82,8 @@ public:
 			const char *what() const throw();
 	};
 
-	//! Prefix error
-	class InvalidPrefixException : public InvalidMessageException {
-		public :
-			const char *what() const throw();
-	};
-	class InvalidNicknamePrefixException : public InvalidPrefixException {
-		public :
-			const char *what() const throw();
-	};
-	class InvalidServerNamePrefixException : public InvalidPrefixException {
-		public :
-			const char *what() const throw();
-	};
-
-	//! Command error
-	class InvalidCommandException : public InvalidMessageException {
-		public :
-			const char *what() const throw();
-	};
-
-	//! Param Error
-	class InvalidParamException : public InvalidMessageException {
-		public :
-			const char *what() const throw();
-	};
-
-	//!< Other error
-	class IncompleteMessageException : public InvalidMessageException {
-		public :
-			const char *what() const throw();
-	};
-
 private:
 	void					_init(const char *buf, int& i, const int len);
-	void					_parsePrefix(const char *buf, int& i, const int len);
-	void					_parseCommand(const char *buf, int& i, const int len);
-	void					_parseOneParam(const char *buf, int& i, const int len);
-	void					_parseParam(const char *buf, int& i, const int len);
-	// int						_crlf(const char *buf, int& i, const int len);
 
 	std::string					_prefix;	//!< Optionnal message prefix
 	std::string					_command;	//!< Message command

@@ -6,19 +6,19 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/22 02:02:29 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/23 17:40:50 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "Message.hpp"
+#include "Client.hpp"
+#include "Channel.hpp"
+#include "CommandExecutor.hpp"
+
 
 /* FOR TESTING PURPOSE */
-#include "Message.hpp"
 # include "log.hpp"
-#include <algorithm>
-#include <cstdarg>
-#include <stdexcept>
-#include <string>
 
 void	print_client(std::vector<Client> v) {
 	for (std::vector<Client>::const_iterator it = v.begin(); it < v.end(); it++) {

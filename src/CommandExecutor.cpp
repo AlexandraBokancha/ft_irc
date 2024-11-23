@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/22 02:05:24 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/23 22:50:30 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,9 +18,11 @@
  */
 
 # include "CommandExecutor.hpp"
-#include "Channel.hpp"
-#include "NumericResponse.hpp"
+# include "Channel.hpp"
+# include "NumericResponse.hpp"
 # include "Server.hpp"
+# include "Client.hpp"
+
 # include "log.hpp"
 
 //! Anonymous namespace: Everything declared here is only accesible in this file
@@ -49,6 +51,7 @@ namespace {
 		if (msg.getParam().size() == 0) {
 			serv.respond(*(client.getFd()), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 			war_log("sent ERR_NEEDMOREPARAMS to Client %d", *(client.getFd()));
+			return ;
 		}
 
 		std::vector<std::string>					channel_name;
@@ -74,6 +77,7 @@ namespace {
 			 *       - Add client to channel
 			 *       - Send appropriate response
 			 */
+			// ch = serv.findChannel(*channel_it);
 
 			//! Error Checking
 			ch = serv.findChannel(*channel_it);
