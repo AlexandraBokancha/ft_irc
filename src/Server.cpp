@@ -6,14 +6,18 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 23:22:01 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/23 13:42:39 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "Message.hpp"
+#include "Client.hpp"
+#include "Channel.hpp"
+#include "CommandExecutor.hpp"
+
 
 /* FOR TESTING PURPOSE */
-#include "Channel.hpp"
 # include "log.hpp"
 #include <stdexcept>
 void	print_client(std::vector<Client> v) {
@@ -146,7 +150,7 @@ Client&	Server::findClient( int client_sock ) {
  * @param name Channel name to find
  * @return Channel pointer if found, else NULL
  */
-Channel*	Server::findChannel( const std::string& name ) const {
+Channel*	Server::findChannel( const std::string& name ) {
 	std::vector<Channel>::iterator	it;
 
 	for (it = this->_channel.begin(); it != this->_channel.end(); it++) {

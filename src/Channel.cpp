@@ -6,13 +6,12 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 23:08:46 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/23 13:41:45 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Channel.hpp"
-#include <list>
-#include <string>
+#include "Client.hpp"
 
 /* ************************************************************************** */
 /* *                       Constructors && Destructors                      * */

@@ -6,13 +6,14 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 23:16:25 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/23 13:43:04 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
+#include "Client.hpp"
 # include "Colors.hpp"
 # include <iostream>
 # include <unistd.h>
@@ -29,12 +30,10 @@
 # include <netinet/in.h>
 # include <arpa/inet.h>
 
-# include "Message.hpp"
-# include "Client.hpp"
-# include "Channel.hpp"
-# include "CommandExecutor.hpp"
-
 extern int g_signal;
+
+class Channel;
+class Client;
 
 class Server {
 public:
@@ -59,7 +58,7 @@ public:
 
 	int		comparePassword(const std::string& str) const;
 
-	Channel*	findChannel( const std::string& name ) const;
+	Channel*	findChannel( const std::string& name );
 
 	void	startServer( const char *port_str ); //!< Start the server
 	void	runServer( void );

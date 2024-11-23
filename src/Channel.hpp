@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 23:08:28 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/23 13:41:53 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,14 @@
 
 # include <string>
 # include <list>
-# include "Client.hpp"
 
-# define o 0x01 //!< Give/take channel operator privileges
-# define i 0x04 //!< Invite-only channel
-# define t 0x05 //!< Topic settable by channel operator only
-# define l 0x08 //!< User limit for the channel
-# define k 0x0B //!< Set/remove the channel key (password)
+# define O 0x01 //!< Give/take channel operator privileges
+# define I 0x04 //!< Invite-only channel
+# define T 0x05 //!< Topic settable by channel operator only
+# define L 0x08 //!< User limit for the channel
+# define K 0x0B //!< Set/remove the channel key (password)
+
+class Client;
 
 class Channel {
 public:
