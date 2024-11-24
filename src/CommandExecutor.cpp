@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/24 15:01:39 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/24 15:10:12 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,17 +28,6 @@
 
 //! Anonymous namespace: Everything declared here is only accesible in this file
 namespace {
-
-	std::string	safeChannelPrefix( void ) {
-		time_t	now = std::time(NULL);
-		std::string	result;
-
-		for (int i = 0;i < 5; i++) {
-			result += "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"[now & 36];
-			now /= 36;
-		}
-		return (std::string(result.rbegin(), result.rend()));
-	}
 
 	/**
 	 * @brief PASS command gandler
@@ -125,6 +114,8 @@ namespace {
 			}
 
 			//! SUCCESS
+			//! add client to server
+			ch->addClient(&client);
 			serv.respond(*(client.getFd()), "JOIN %s", channel_it->c_str());
 
 			return ;

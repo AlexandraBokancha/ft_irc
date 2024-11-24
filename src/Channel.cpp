@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/24 14:32:52 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/24 15:09:52 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,4 +141,15 @@ bool		Channel::validPassword( const std::string& password ) const {
 	if (this->_password.compare(password) == 0)
 		return (true);
 	return (false);
+}
+
+/**
+ * @brief Add new client to server
+ *
+ * Used on JOIN command
+ *
+ * @param Client pointer to add
+ */
+void		Channel::addClient( Client* const& client ) {
+	this->_client.push_back(client);
 }

@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/24 11:42:06 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/24 15:09:50 by dbaladro         ###   ########.fr       */
 /* ************************************************************************** */
 
 #ifndef CHANNEL_HPP
@@ -41,6 +41,8 @@ public:
 
 	bool				isFull( void ) const;
 	bool				validPassword( const std::string& password ) const;
+
+	void				addClient( Client* const& client );
 
 	//! FOR TESTING PURPOSE
 	void	printChannel( void ) const;
