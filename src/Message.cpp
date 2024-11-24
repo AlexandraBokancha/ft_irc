@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:49 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/23 22:48:57 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/24 08:57:25 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,34 +131,11 @@ std::string	Message::toString( void ) const {
 	str.append(this->_command);
 
 	for (std::vector<std::string>::const_iterator it = this->_param.begin(); it != this->_param.end(); it++) {
-		str.append(*it + SPACE);
+		str.append(SPACE + *it);
 	}
 	str.append("\r\n");
 	return (str);
 }
-
-/**
-<<<<<<< HEAD
- * @brief Check if c is a special char according to RFC2812
- *
- * RFC2812: 2000 IRC Protocol */
-static int	isspecial(const char c) {
-	switch (c) {
-		case LEFT_CURLY_BRACE :
-		case RIGHT_CURLY_BRACE :
-		case LEFT_BRACKET :
-		case RIGHT_BRACKET :
-		case CARET :
-		case BACKTICK :
-		case BACKSLASH :
-		case UNDERSCORE :
-		case PIPE :
-			return (1);
-		default :
-			return (0);
-	}
-}
-
 /**
  * @brief Init the Message at construction
  *

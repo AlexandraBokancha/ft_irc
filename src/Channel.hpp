@@ -6,15 +6,14 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/23 17:35:49 by dbaladro         ###   ########.fr       */
-/*                                                                            */
+/*   Updated: 2024/11/24 11:42:06 by dbaladro         ###   ########.fr       */
 /* ************************************************************************** */
 
 #ifndef CHANNEL_HPP
 # define CHANNEL_HPP
 
 # include <string>
-# include <list>
+# include <vector>
 
 # define O 0x01 //!< Give/take channel operator privileges
 # define I 0x02 //!< Invite-only channel
@@ -38,21 +37,26 @@ public:
 
 	std::string			getName( void ) const;
 	int					getMode( void ) const;
+	Client*				getClient( const int client_socket ) const;
 
 	bool				isFull( void ) const;
 	bool				validPassword( const std::string& password ) const;
 
+	//! FOR TESTING PURPOSE
+	void	printChannel( void ) const;
 
 private:
-	std::string			_name; //!< Channel name
-	std::string			_topic;
+	std::string				_name; //!< Channel name
+	std::string				_topic;
 
-	std::list<Client*>	_client; //!< Reference to connected clients to the channel
-	Client*				_operator; //!< Channel operator
+	std::vector<Client*>	_client; //!< Reference to connected clients to the channel
+	Client*					_operator; //!< Channel operator
 
-	int					_mode; //!< Mode flag
-	int					_userLimit; //!< 0: no User limit
-	std::string			_password;
+	int						_mode; //!< Mode flag
+	int						_userLimit; //!< 0: no User limit
+	std::string				_password;
 };
+
+std::ostream&	operator<<( std::ostream& os, const Channel& rhs );
 
 #endif // !CHANNEL_HPP

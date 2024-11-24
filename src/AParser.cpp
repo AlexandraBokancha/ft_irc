@@ -394,19 +394,23 @@ std::vector<std::string>	AParser::getParam( const char* buf, int& i, const int l
 
 std::string	AParser::getChannelName( const std::string& arg, std::string::const_iterator& pos ) {
 	const std::string	banned = " \a\n\r\0";
+	int					start = pos - arg.begin();
+	int					skip = (std::string("&#!+").find(*pos) == std::string::npos ? 1 : 0);
 
 	for ( ; pos != arg.end() && *pos != ','; pos++) {
 		if (banned.find(*pos) != std::string::npos)
 			throw (AParser::IllegalChannelNameException()); //!< Invalid channel name
 	}
-	return (arg.substr(pos - arg.begin()));
+	if (skip)
+		return ("");
+	return (arg.substr(start, (pos - arg.begin()) - start));
 }
 
 std::vector<std::string>	AParser::getChannelList( const std::string& arg ) {
 	std::vector<std::string>	channelList;
-	std::string::const_iterator	it;	
+	std::string::const_iterator	it = arg.begin();
 
-	for (it = arg.begin(); it != arg.end(); it++) {
+	while (it != arg.end()) {
 		try {
 			channelList.push_back(getChannelName(arg, it));
 		}
@@ -420,6 +424,7 @@ std::vector<std::string>	AParser::getChannelList( const std::string& arg ) {
 
 std::string	AParser::getKey( const std::string& arg, std::string::const_iterator& pos ) {
 	const std::string	banned = " \t\v\f\n\r\0";
+	int					start = pos - arg.begin();
 	int					len;
 
 	for ( ; pos != arg.end() && *pos != ','; pos++) {
@@ -428,19 +433,18 @@ std::string	AParser::getKey( const std::string& arg, std::string::const_iterator
 			return ("");
 		}
 	}
-	return (arg.substr((pos - arg.begin() > 24 ? 24 : pos - arg.begin())));
+	return (arg.substr(start, (pos - arg.begin() - start > 24 ? 24 : pos - arg.begin() - start)));
 }
 
 std::vector<std::string>	AParser::getKeyList(const std::string &arg) {
 	std::vector<std::string>	channelList;
-	std::string::const_iterator	it;	
+	std::string::const_iterator	it = arg.begin();
 
-	for (it = arg.begin(); it != arg.end(); it++) {
+	while (it != arg.end()) {
 		channelList.push_back(getKey(arg, it));
 		for( ; it != arg.end() && *it == ','; it++) {} //!< Skip coma
 	}
 	return (channelList);
-
 }
 
 /* ************************************************************************** */

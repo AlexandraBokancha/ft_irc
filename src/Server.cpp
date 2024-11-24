@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/23 17:40:50 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/24 14:53:45 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,14 @@
 
 /* FOR TESTING PURPOSE */
 # include "log.hpp"
+#include <cstring>
+
+void	Server::printChannel( void ) const {
+	std::cout << "Channel :" << std::endl;
+	for (std::vector<Channel>::const_iterator it = _channel.begin(); it != _channel.end(); it++) {
+		it->printChannel();
+	}
+}
 
 void	print_client(std::vector<Client> v) {
 	for (std::vector<Client>::const_iterator it = v.begin(); it < v.end(); it++) {
@@ -181,6 +189,7 @@ void	Server::respond(const int& client_sock, const char* fmt, ...) const {
 						   break ;
 			}
 			fmt++;
+			continue ;
 		}
 		buffer.append(1, *fmt);
 		fmt++;
@@ -213,8 +222,15 @@ void	Server::addChannel( Channel& channel ) {
  */
 Channel*	Server::findChannel( const std::string& name ) {
 	std::vector<Channel>::iterator	it;
+	int								safe_channel = (name[0] == '!' ? 1 : 0);
+	std::string						channel_name;
 
 	for (it = this->_channel.begin(); it != this->_channel.end(); it++) {
+		channel_name = it->getName();
+		//! Used to check if a safe channel with the same shortname exist
+		if (channel_name[0] == '!' && safe_channel
+			&& (strcmp(channel_name.c_str() + 6, name.c_str() + 1) == 0))
+			return (&(*it));
 		if (name.compare(it->getName()) == 0)
 			return (&(*it));
 	}

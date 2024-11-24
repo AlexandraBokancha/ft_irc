@@ -1,6 +1,6 @@
 ### COMPILATION ###
 CPP = c++
-CPPFLAGS = -std=c++98 -g3
+CPPFLAGS = -std=c++98 -g
 #-Wall -Wextra -Werror -g3
 
 ### PROJECT NAME ###

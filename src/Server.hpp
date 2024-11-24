@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/23 17:39:50 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/24 14:30:19 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include <unistd.h>
 # include <sstream>
 # include <cstring>
+# include <ctime>
 # include <string>
 # include <errno.h>
 # include <signal.h>
@@ -30,6 +31,8 @@
 # include <arpa/inet.h>
 
 # include "NumericResponse.hpp"
+
+# define MAX_CHANNEL_PER_CLIENT 10
 
 extern int g_signal;
 
@@ -71,6 +74,10 @@ public:
 	void	stopServer( void );
 
 	void	respond(const int& client_sock, const char* fmr, ...) const;
+
+
+	//! FOR TESTING PURPOSE
+	void	printChannel( void ) const;
 
 private:
 	//! Private member

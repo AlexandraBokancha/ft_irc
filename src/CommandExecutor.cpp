@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/23 22:50:30 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/24 15:01:39 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,9 +24,21 @@
 # include "Client.hpp"
 
 # include "log.hpp"
+#include <cstring>
 
 //! Anonymous namespace: Everything declared here is only accesible in this file
 namespace {
+
+	std::string	safeChannelPrefix( void ) {
+		time_t	now = std::time(NULL);
+		std::string	result;
+
+		for (int i = 0;i < 5; i++) {
+			result += "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"[now & 36];
+			now /= 36;
+		}
+		return (std::string(result.rbegin(), result.rend()));
+	}
 
 	/**
 	 * @brief PASS command gandler
@@ -68,43 +80,52 @@ namespace {
 		key_it = key.begin();
 		
 		for (channel_it = channel_name.begin(); channel_it != channel_name.end(); channel_it++) {
-			/**
-			 * Check if channel exist
-			 *   - if not create it
-			 *   - if yes :
-			 *     - Check for errors :
-			 *     - If no error :
-			 *       - Add client to channel
-			 *       - Send appropriate response
-			 */
-			// ch = serv.findChannel(*channel_it);
+			if (channel_it->size() <= 1) //!< Invalid channel name
+				continue ;
 
 			//! Error Checking
 			ch = serv.findChannel(*channel_it);
-			if (ch == NULL) {
-				*ch = Channel(&client, *channel_it);
-				serv.addChannel(*ch);
-				serv.respond(*(client.getFd()), "JOIN %s", channel_it);
-				return ;
-				// return (serv.respond(*(client.getFd()), ERR_NOSUCHCHANNEL, channel_it));
+			if (ch == NULL) { //! Create new channel
+				Channel	new_channel(&client, *channel_it);
+				serv.addChannel(new_channel);
+				serv.respond(*(client.getFd()), "JOIN %s", channel_it->c_str());
+				serv.printChannel();
+				continue; ;
+			}
+
+			if (ch->getClient(*client.getFd())) //!< Client already in channel
+				continue ;
+
+			//!< TOOMANYTARGET ERROR
+			if (ch->getName()[0] == '!' && channel_it->c_str()[0] == '!'
+					&& std::strcmp(ch->getName().c_str() + 6, channel_it->c_str() + 1) == 0) {
+				serv.respond(*(client.getFd()), ERR_TOOMANYTARGETS, channel_it->c_str(), 471, "Safe channel already exist");
+				continue ;
 			}
 
 			channel_mode = ch->getMode();
-			if (channel_mode & INVITE_ONLY) //!< Invite only channel
-				return (serv.respond(*(client.getFd()), ERR_INVITEONLYCHAN, channel_it));
-			if (ch->isFull()) //!< User limit set and reached
-				return (serv.respond(*(client.getFd()), ERR_CHANNELISFULL, channel_it));
+			if (channel_mode & INVITE_ONLY) { //!< Invite only channel
+				serv.respond(*(client.getFd()), ERR_INVITEONLYCHAN, channel_it->c_str());
+				continue ;
+			}
+			if (ch->isFull()) { //!< User limit set and reached
+				serv.respond(*(client.getFd()), ERR_CHANNELISFULL, channel_it->c_str());
+				continue ;
+			}
 			if (key_it != key.end()) { //!< Invalid key
-				if (!ch->validPassword(*key_it))
-					return (serv.respond(*(client.getFd()), ERR_BADCHANNELKEY, channel_it));
+				if (!ch->validPassword(*key_it)) {
+					serv.respond(*(client.getFd()), ERR_BADCHANNELKEY, channel_it->c_str());
+					continue ;
+				}
 				key_it++;
 			}
-			if (client.getJoinedChannel() >= 10) //!< Maximum channel joined
-				return (serv.respond(*(client.getFd()), ERR_TOOMANYCHANNELS, channel_it));
-
-			//!< TOOMANYTARGET ERROR
+			if (client.getJoinedChannel() >= MAX_CHANNEL_PER_CLIENT) { //!< Maximum channel joined
+				serv.respond(*(client.getFd()), ERR_TOOMANYCHANNELS, channel_it->c_str());
+				continue ;
+			}
 
 			//! SUCCESS
+			serv.respond(*(client.getFd()), "JOIN %s", channel_it->c_str());
 
 			return ;
 		}

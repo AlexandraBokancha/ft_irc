@@ -6,18 +6,31 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/23 17:36:14 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/24 14:32:52 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Channel.hpp"
 #include "Client.hpp"
 
+//! FOR TESTING PURPOSE
+# include <iostream>
+#include <ostream>
+#include <string>
+void	Channel::printChannel( void ) const {
+	std::cout << "[ " << this->_name << " ]" << std::endl
+		<< "[ @" << this->_operator->getNickname() << " ]" << std::endl;
+	for (std::vector<Client*>::const_iterator it = _client.begin(); it != _client.end(); it++) {
+		std::cout << "  [ " << (*it)->getNickname() << " ]" << std::endl;
+	}
+	std::cout << std::endl;
+}
+
 /* ************************************************************************** */
 /* *                       Constructors && Destructors                      * */
 /* ************************************************************************** */
 Channel::Channel( void )
-	: _name(""), _topic(""), _client(std::list<Client*>()), _operator(NULL),
+	: _name(""), _topic(""), _client(std::vector<Client*>()), _operator(NULL),
 		_mode(0), _userLimit(10), _password("")
 {
 		return ;
@@ -34,6 +47,23 @@ Channel::Channel( Client* creator, const std::string& name )
 	: _name(name), _topic(""), _client(1, creator), _operator(creator),
 		_mode(0), _userLimit(0), _password("")
 {
+	this->_name = name;
+	if (name[0] == '!') {
+		time_t now = time(NULL);
+		std::string	result = "";
+
+		for (int i = 0;i < 5; i++) {
+			result += "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"[now & 36];
+			now /= 36;
+		}
+		this->_name = ("!" + std::string(result.rbegin(), result.rend()) + name.substr(1, name.size()));
+	}
+	this->_topic = "";
+	this->_client = (std::vector<Client*>(1, creator));
+	this->_operator = (name[0] == '+' ? NULL : creator);
+	this->_mode = 0;
+	this->_userLimit = 0;
+	this->_password = "";
 	return ;
 }
 
@@ -58,6 +88,11 @@ Channel&	Channel::operator=( const Channel& rhs ) {
 	return (*this);
 }
 
+std::ostream&	operator<<( std::ostream& os, const Channel& rhs ) {
+	rhs.printChannel();
+	return (os);
+}
+
 /* ************************************************************************** */
 /* *                            Getters and Setters                         * */
 /* ************************************************************************** */
@@ -69,6 +104,15 @@ int			Channel::getMode( void ) const {
 	return (this->_mode);
 }
 
+Client*		Channel::getClient( const int client_socket ) const {
+	std::vector<Client*>::const_iterator it;
+
+	for (it = this->_client.begin(); it != this->_client.end(); it++) {
+		if (client_socket == (*(*it)->getFd()))
+			return (*it);
+	}
+	return (NULL);
+}
 /* ************************************************************************** */
 /* *                        Public member functions                         * */
 /* ************************************************************************** */
