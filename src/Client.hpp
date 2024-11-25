@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/21 19:39:05 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/25 15:51:08 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,11 +18,12 @@
 # include <string>
 # include <ostream>
 # include <iostream>
-# include "Message.hpp"
-# include "log.hpp"
-# include "numericReplies.hpp"
 # include <unistd.h>
 # include <vector>
+
+# include "log.hpp"
+# include "numericReplies.hpp"
+# include "Message.hpp"
 
 class Client {
 public:
@@ -40,16 +41,17 @@ public:
 	std::string			getPassword( void ) const;
 	std::string			getRealname( void ) const;
 	std::string			getServername( void ) const;
-
-	int					*getFd( void ) const;
 	bool				getRegistred( void ) const;
+	bool				getValidPass( void ) const;
+	bool				getValidUser( void ) const;
+	bool				getValidNick( void ) const;
+	int					*getFd( void ) const;
 	void				setRegistred( bool status );
-
-	void	setNetId( struct sockaddr_in addr );
-	void	setFd( int *fd );
-	int		setNickname( const  Message & obj, std::vector<Client> clients );
-	int		setUsername( const Message & obj );
-	int		setPassword( const Message & obj, std::string serverPasswd );
+	void				setNetId( struct sockaddr_in addr );
+	void				setFd( int *fd );
+	int					setPassword( const Message & msg, const std::string & serverPasswd );
+	int					setNickname( const  Message & msg, const std::vector<Client> & clients );
+	int					setUsername( const Message & msg );
 
 private:
 	struct sockaddr_in	_netId;		//!< Client addr
@@ -60,6 +62,9 @@ private:
 	std::string			_servername;
 	std::string			_realname;
 	bool				_isRegistred;
+	bool				_validPass;
+	bool				_validNick;
+	bool				_validUser;
 	int					*_fd; //!< Pointer to server_poll fd
 };
 

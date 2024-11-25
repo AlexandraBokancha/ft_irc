@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/21 20:38:51 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/25 16:52:19 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+
+void replyToClient(std::string msg, int *fd); // a voir comment on modifie cette fonction
 
 /* ************************************************************************** */
 /* *                       Constructors && Destructors                      * */
@@ -26,16 +28,20 @@ Client::Client( void ) {
 	this->_nickname = "";
 	this->_servername = "";
 	this->_realname = "";
-	this->_fd = NULL;
 	this->_isRegistred = false;
+	this->_validPass = false;
+	this->_validNick = false;
+	this->_validUser = false;
+	this->_fd = NULL;
 	//std::cout << "Default constructor called" << std::endl;
 	return ;
 }
 
-Client::Client( const Client& rhs )
+Client::Client( const Client & rhs )
 	: _netId(rhs._netId), _nickname(rhs._nickname), _password(rhs._password),_hostname(rhs._hostname), 
 	_username(rhs._username), _fd(rhs._fd), _isRegistred(rhs._isRegistred),
-	_realname(rhs._realname), _servername(rhs._servername) {
+	_realname(rhs._realname), _servername(rhs._servername), _validNick(rhs._validNick), _validPass(rhs._validPass),
+	_validUser(rhs._validNick) {
 	return ;
 }
 
@@ -62,20 +68,32 @@ std::string	Client::getNickname( void ) const {
 	return (this->_nickname);
 }
 
-std::string Client::getPassword( void ) const{
+std::string Client::getPassword( void ) const {
 	return (this->_password);
 }
 
-std::string Client::getRealname( void ) const{
+std::string Client::getRealname( void ) const {
 	return (this->_realname);
 }
 
-std::string Client::getServername( void ) const{
+std::string Client::getServername( void ) const {
 	return (this->_servername);
 }
 
-bool Client::getRegistred( void ) const{
+bool Client::getRegistred( void ) const {
 	return (this->_isRegistred);
+}
+
+bool Client::getValidPass( void ) const {
+	return (this->_validPass);
+}
+
+bool Client::getValidUser( void ) const {
+	return (this->_validUser);
+}
+
+bool Client::getValidNick( void ) const {
+	return (this->_validNick);
 }
 
 int*	Client::getFd( void ) const {
@@ -86,35 +104,33 @@ void Client::setRegistred( bool status ){
 	this->_isRegistred = status;
 }
 
-void	Client::setFd( int *fd ) {
-	this->_fd = fd;
-}
-
 void	Client::setNetId( struct sockaddr_in netId) {
 	this->_netId = netId;
 }
 
-void replyToClient(std::string msg, int *fd);
+void	Client::setFd( int *fd ) {
+	this->_fd = fd;
+}
 
-int	Client::setUsername( const Message & obj ){
-	if (obj.getCommand() == "USER"){
+
+int	Client::setUsername( const Message & msg ){
+	if (msg.getCommand() == "USER"){ // a enlever ce if apres le merge
 		if (this->_isRegistred){
 			replyToClient(ERR_ALREADYREGISTRED(this->_nickname), _fd);
 			throw std::runtime_error("Client is already registred");
 		}
-		if (obj.getParam().size() == 4){
-			std::list<std::string> tmp = obj.getParam();
+		if (msg.getParam().size() == 4){
+			std::list<std::string> tmp = msg.getParam();
 			std::list<std::string>::const_iterator it = tmp.begin();
 			this->_username = *it++;
 			this->_hostname = *it++;
 			this->_servername = *it++;
 			this->_realname = *it;
-			success_log("User %i. enregistred", getFd());
+			this->_validUser = true;
 			return (1);
 		}
 		else{
-			replyToClient(ERR_NEEDMOREPARAMS(obj.getCommand()), _fd);
-			throw std::runtime_error("Wrong PASS cmd format");
+			replyToClient(ERR_NEEDMOREPARAMS(msg.getCommand()), _fd);
 		}
 	}
 	return (0);
@@ -127,25 +143,26 @@ int	Client::setUsername( const Message & obj ){
  * - The nickname must be unique among connected clients.
  * - The nickname must not exceed 9 characters in length.
  * 
- * @param obj Pointer to the Message object
+ * @param msg Pointer to the Message object
  * @param clients A vector of connected clients
  */
-int	Client::setNickname( const Message & obj, std::vector<Client> clients ){
-	if (obj.getCommand() == "NICK"){ // a enlever ce "if" apres
-		if (obj.getParam().size() == 1 || obj.getParam().size() == 2){
+int	Client::setNickname( const Message & msg, const std::vector<Client> & clients ){
+	if (msg.getCommand() == "NICK"){ // a enlever ce "if" apres le merge
+		if (msg.getParam().size() == 1 || msg.getParam().size() == 2){
 			for (int i = 0; i < clients.size(); ++i){
-				if (clients[i].getNickname() == obj.getParam().front()){
-					replyToClient(ERR_NICKNAMEINUSE(obj.getParam().front()), _fd);
-					throw std::runtime_error("Nick rejected");
+				if (clients[i].getNickname() == msg.getParam().front()){
+					replyToClient(ERR_NICKNAMEINUSE(msg.getParam().front()), _fd);
+					throw std::runtime_error("Nick is in use");
 				}
 			}
-			if (obj.getParam().front().length() <= 9){ // est-ce qu'il y a dautres chose a check ? 
-				this->_nickname = obj.getParam().front();
-				success_log("NICK of %i enregistred", getFd());
+			if (msg.getParam().front().length() <= 9){ // est-ce qu'il y a dautres chose a check ? 
+				this->_nickname = msg.getParam().front();
+				this->_validNick = true;
+				success_log("NICK %s enregistred", this->_nickname.c_str());
 				return (1);
 			}
 			else{
-				replyToClient(ERR_ERRONEUSNICKNAME(obj.getParam().front()), _fd);
+				replyToClient(ERR_ERRONEUSNICKNAME(msg.getParam().front()), _fd);
 				throw std::runtime_error("Nick rejected");
 			}
 		}	
@@ -166,18 +183,19 @@ int	Client::setNickname( const Message & obj, std::vector<Client> clients ){
  * Otherwise, it sends an `ERR_PASSWDMISMATCH` response and throws an exception. 
  * If the `PASS` command is missing parameters, an `ERR_NEEDMOREPARAMS` response is sent.
  *
- * @param obj Pointer to the Message object
+ * @param msg Pointer to the Message object
  * @param serverPasswd The server’s correct password
  */
-int	Client::setPassword( const Message & obj, std::string serverPasswd){
-	if (obj.getCommand() == "PASS"){ // a voir si je laisse ce "if" (si on fait le tableau des pointeurs sur les fonctions)
+int	Client::setPassword( const Message & msg, const std::string & serverPasswd){
+	if (msg.getCommand() == "PASS"){ // a enlever ce "if" apre le merge
 		if (this->_isRegistred){
 			replyToClient(ERR_ALREADYREGISTRED(this->_nickname), _fd);
 			throw std::runtime_error("Client is already registred");
 		}
-		if (obj.getParam().size() == 1){
-			if (obj.getParam().front() == serverPasswd){
-				this->_password = obj.getParam().front();
+		if (msg.getParam().size() == 1){
+			if (msg.getParam().front() == serverPasswd){
+				this->_password = msg.getParam().front();
+				this->_validPass = true;
 				success_log("Password confirmed");
 				return (1);
 			}
@@ -187,7 +205,7 @@ int	Client::setPassword( const Message & obj, std::string serverPasswd){
 			}
 		}
 		else{
-			replyToClient(ERR_NEEDMOREPARAMS(obj.getCommand()), _fd);
+			replyToClient(ERR_NEEDMOREPARAMS(msg.getCommand()), _fd);
 			throw std::runtime_error("Wrong PASS cmd format");
 		}
 	}	
@@ -208,6 +226,9 @@ Client&	Client::operator=( Client const& rhs ) {
 		this->_servername = rhs._servername;
 		this->_realname = rhs._realname;
 		this->_isRegistred = rhs._isRegistred;
+		this->_validPass = rhs._validPass;
+		this->_validNick = rhs._validNick;
+		this->_validUser = rhs._validUser;
 		this->_fd = rhs._fd;
 	}
 	return (*this);

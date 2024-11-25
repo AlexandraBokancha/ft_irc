@@ -6,14 +6,13 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/21 20:02:07 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/25 16:58:50 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include "Colors.hpp"
 # include <iostream>
 # include <unistd.h>
 # include <sstream>
@@ -29,16 +28,17 @@
 # include <netinet/in.h>
 # include <arpa/inet.h>
 
+# include "Colors.hpp"
 # include "Client.hpp"
-# include "irc.hpp"
 # include "Message.hpp"
+# include "irc.hpp"
 
 extern int g_signal;
 
 class Server {
 public:
 	Server( void );
-	Server( int port, std::string password);
+	Server( int port, std::string password );
 	Server( Server const & rhs );
 	~Server();
 
@@ -55,15 +55,10 @@ public:
 	};
 
 	void	pollPushBack( int fd, short events );
-
+	
 	void	startServer( const char *port_str ); //!< Start the server
 	void	runServer( void );
-	void	stopServer( void );
-	std::string  getPassword( void )  const;
-
-	//! Commands
-
-	
+	void	stopServer( void );	
 
 private:
 	//! Private member
@@ -73,26 +68,25 @@ private:
 	int							_socket;
 
 	std::vector<Client>			_client;
-
 	std::vector<struct pollfd>	_pollFd;
+	
 	unsigned int				_clientNbr;
 
 	struct addrinfo				*_serverInfo;
-	bool						 _validPass;
-	bool						 _validNick;
-	bool						 _validUser;
-	
 
 	//! Private member function
+	void						disconnectClient( long unsigned int & i );
 	void						acceptNewClient( void );
-	void						disconnectClient( long unsigned int& index );
-
-	void						checkEvent( long unsigned int& i );
-	void						receiveMsg( long unsigned int& i );
-	int							sendMsg(int socket, const char *buf, int len) const;
-	void						broadcast(const char *buffer, int len, int fd) const;
-	int							authentification(long unsigned int & i, const Message & msg);
-
+	
+	void						checkEvent( long unsigned int & i );
+	void						receiveMsg( long unsigned int & i );
+	int							sendMsg( int socket, const char *buf, int len ) const;
+	void						broadcast( const char *buffer, int len, int fd ) const;
+	int							authentification( long unsigned int & i, const Message & msg );
+	
+	void						timeCmd( int fd ) const;
+	void						infoCmd( int fd ) const;
+	void						pongCmd( int fd ) const;
 };
 
 #endif // !SERVER_HPP

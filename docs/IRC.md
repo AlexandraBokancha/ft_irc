@@ -49,33 +49,8 @@ A channel is a group of one or more client chatting within eachother
 
 ## AUTHENTIFICATION
 
-Upon connecting to an IRC server, a client is sent the MOTD (if
-present) as well as the current user/server count (as per the LUSER
-command). The server is also required to give an unambiguous message
-to the client which states its name and version as well as any other
+Upon connecting to an IRC server, a client is sent the MOTD (if present) as well as the current user/server count (as per the LUSER command). The server is also required to give an unambiguous message to the client which states its name and version as well as any other
 introductory messages which may be deemed appropriate.
 
-After dealing with this, the server must then send out the **new user’s nickname**
-and other information as supplied by itself (USER command)
-and as the server could discover (from DNS/authentication servers).
+After dealing with this, the server must then send out the **new user’s nickname** and other information as supplied by itself (USER command) and as the server could discover (from DNS/authentication servers).
 The server must send this information out with **NICK first followed by **USER**.
-
-
-Assuming you’ve chosen a nick that is not already taken, the IRC server will send back a RPL_WELCOME reply (which is assigned code 001). This reply has the following components:
-
-:bar.example.com: The prefix. 
-
-001: The numeric code for RPL_WELCOME.
-
-amy: The first parameter which, in reply messages, must always be the nick of the user this reply is intended for.
-
-:Welcome to the Internet Relay Network borja!borja@polaris.cs.uchicago.edu:
- The second parameter.
-
-001    RPL_WELCOME
-       "Welcome to the Internet Relay Network
-        <nick>!<user>@<host>"
-
-test:
-
-:lindbohm.freenode.net 001 sorandom29 :Welcome to the freenode Internet Relay Chat Network sorandom29

@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/22 20:01:50 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/25 17:16:00 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,11 +52,9 @@ Server::Server( void )
 	this->_socket = -1;
 	this->_client = std::vector<Client>();
 	this->_pollFd = std::vector<struct pollfd>();
-	this->_validPass = false;
-	this->_validNick = false;
-	this->_validUser = false;
 	return ;
-}
+} //! A mon avis on peut tege ce constructeur, vu que le main prends 2 parametres qu'on doit parser
+
 
 Server::Server(const int port, const std::string password )
 	: _port(port), _passwd(password)
@@ -66,9 +64,6 @@ Server::Server(const int port, const std::string password )
 	this->_socket = -1;
 	this->_client = std::vector<Client>();
 	this->_pollFd = std::vector<struct pollfd>();
-	this->_validPass = false;
-	this->_validNick = false;
-	this->_validUser = false;
 	return ;
 }
 
@@ -99,7 +94,6 @@ Server& Server::operator=( Server const & rhs ) {
 /* ************************************************************************** */
 /* *                              Member function                           * */
 /* ************************************************************************** */
-
 /**
  * @brief Add new <struct pollfd> to server poll
  *
@@ -130,17 +124,17 @@ void	Server::pollPushBack(int fd, short events) {
  *
  * @param index	The client index in the pollFd
  */
-void	Server::disconnectClient( long unsigned int& index ) {
-	if (index == 0)
+void	Server::disconnectClient( long unsigned int & i ) {
+	if (i == 0)
 		return ;
-	log("Closing socket %d.", this->_pollFd[index].fd);
-	close(this->_pollFd[index].fd);
-	this->_pollFd.erase(this->_pollFd.begin() + index);
+	log("Closing socket %d.", this->_pollFd[i].fd);
+	close(this->_pollFd[i].fd);
+	this->_pollFd.erase(this->_pollFd.begin() + i);
 
 	//! Remove client from client vector
-	this->_client.erase(this->_client.begin() + index - 1);
+	this->_client.erase(this->_client.begin() + i - 1);
 
-	index--;
+	i--;
 
 }
 
@@ -305,9 +299,11 @@ it checks :
 
 */
 int Server::authentification(long unsigned int &i, const Message &msg) {
-    if (!_validPass) {
-        if (_client[i - 1].setPassword(msg, this->_passwd)) {
-            this->_validPass = true;
+    
+	Client &client = _client[i - 1];
+	
+	if (!client.getValidPass()) {
+        if (client.setPassword(msg, this->_passwd)) {
             return 0;
         } else {
             err_log("Password validation failed for client %lu", i);
@@ -315,31 +311,27 @@ int Server::authentification(long unsigned int &i, const Message &msg) {
         }
     }
 
-    // Validate nickname if password is valid
-    if (!_validNick) {
-        if (_client[i - 1].setNickname(msg, this->_client)) {
-            this->_validNick = true;
+    if (!client.getValidNick()) {
+        if (client.setNickname(msg, this->_client)) {
             return (0);
         } else {
             err_log("Nickname validation failed for client %lu", i);
         }
     }
 
-    // Validate username if password is valid
-    if (!_validUser) {
-        if (_client[i - 1].setUsername(msg)) {
-            this->_validUser = true;
+    if (!client.getValidUser()) {
+        if (client.setUsername(msg)) {
+			success_log("User %s registred", client.getUsername().c_str());
         } else {
             err_log("Username validation failed for client %lu", i);
             return (0);
         }
     }
 
-    if (this->_validPass && this->_validNick && this->_validUser) {
-		_client[i - 1].setRegistred(true);
-		replyToClient(RPL_WELCOME(_client[i - 1].getNickname(), _client[i - 1].getUsername(), \
-			_client[i - 1].getHostname()), &this->_pollFd[i].fd);
-		success_log("Client %s was enregistred", _client[i - 1].getNickname());
+    if (client.getValidPass() && client.getValidNick() && client.getValidUser()) {
+		replyToClient(RPL_WELCOME(client.getNickname(), client.getUsername(), \
+			client.getHostname()), &this->_pollFd[i].fd);
+		success_log("Client %s was enregistred", client.getNickname().c_str());
 		return (1);
 	}
     return (0);
@@ -362,18 +354,31 @@ void	Server::receiveMsg( long unsigned int& i ) {
 	/* TESTING */
 	if (buffer_size > 0) { //!< Received msg
 		try{
-			// buffer[buffer_size] = '\0';
+			buffer[buffer_size] = '\0';
 			int msg_i = 0;
 			int start = 0;
 			log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
 			while (msg_i < buffer_size - 2){
 				Message msg(buffer, msg_i, buffer_size);
+				
+				/* FOR TESTING PURPOSE -> map with cmds here */
 				if (!_client[i - 1].getRegistred()){
 					if (authentification(i, msg)){
-						break;
+						_client[i - 1].setRegistred(true);
 					}
 				}
-				print_client(_client);
+				else if (_client[i - 1].getRegistred()){
+					if (msg.getCommand() == "time"){
+						timeCmd(this->_pollFd[i].fd);
+					}
+					else if (msg.getCommand() == "info"){
+						infoCmd(this->_pollFd[i].fd);
+					}
+					else if (msg.getCommand() == "PING"){
+						pongCmd(this->_pollFd[i].fd);
+					}
+				}
+				
 				//broadcast(buffer, buffer_size, this->_pollFd[i].fd);
 				start = msg_i;
 			}
@@ -407,9 +412,7 @@ void	Server::checkEvent( long unsigned int& i ) {
 	//! Receive data
 	if (this->_pollFd[i].revents & POLLIN)
 		return (this->receiveMsg(i));	
-		
-	// if (this->_pollFd[i].revents & POLLIN & this->_client[i].getRegistred() == true)
-		
+				
 	//! received error
 	if (this->_pollFd[i].revents & POLLHUP)
 		err_log("Client hang up on socket %d.", this->_pollFd[i].fd);
@@ -430,10 +433,7 @@ void	Server::runServer( void ) {
 
 	//! Perform poll check until error or signal catch
 	while ((status = poll(this->_pollFd.data(), this->_pollFd.size(), -1)) > 0) {
-
-		// std::cout << "Print client :" << std::endl;
-		// print_client(this->_client);
-
+		
 		if (this->_pollFd[0].revents == POLLIN) //!< New client connecting
 			this->acceptNewClient();
 
@@ -454,8 +454,34 @@ void	Server::runServer( void ) {
 	}
 }
 
-std::string Server::getPassword( void ) const{
-	return (this->_passwd);
+
+/* ************************************************************************** */
+/* *                             Server Commands                           	* */
+/* ************************************************************************** */
+void Server::timeCmd( int fd ) const {
+	std::time_t now = std::time(NULL);
+	std::string timeStr = std::ctime(&now);
+
+	replyToClient(RPL_TIME(timeStr), &fd);
+}
+
+void Server::infoCmd( int fd ) const {
+	std::vector<std::string> infoMessages;
+    
+	infoMessages.push_back("Welcome to IRC Server!");
+    infoMessages.push_back("Version : ft_irc 1.0.0");
+    infoMessages.push_back("Supported commands : JOIN, INFO, PRIVMSG, etc.");
+	
+	for (std::vector<std::string>::const_iterator it = infoMessages.begin(); it \
+			!= infoMessages.end(); ++it) {
+        replyToClient(RPL_INFO(*it), &fd);
+    }
+	replyToClient(RPL_ENDOFINFO(), &fd);
+}
+
+//! la fonciton pour faire plaisir a irssi qui envoie chaque minute des PING
+void Server::pongCmd( int fd ) const {
+	replyToClient("PONG\r\n", &fd); 
 }
 
 /* ************************************************************************** */
