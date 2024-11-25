@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/22 01:32:27 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/24 19:00:35 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,11 +34,11 @@ public:
 	std::string			getHostname( void ) const;
 	std::string			getUsername( void ) const;
 	std::string			getNickname( void ) const;
-	int					*getFd( void ) const;
+	int					getFd( void ) const;
 	int					getJoinedChannel( void ) const;
 
 	void	setNetId( struct sockaddr_in addr );
-	void	setFd( int *fd );
+	void	setFd( int fd );
 
 private:
 	struct sockaddr_in	_netId;		//!< Client addr
@@ -46,7 +46,7 @@ private:
 	std::string			_username;
 	std::string			_nickname;
 
-	int					*_fd; //!< Pointer to server_poll fd
+	int					_fd; //!< Pointer to server_poll fd
 
 	int					_joinedChannel;
 };

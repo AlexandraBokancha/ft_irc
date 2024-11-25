@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/24 14:30:19 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/24 15:37:30 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,6 +67,7 @@ public:
 	int		comparePassword(const std::string& str) const;
 
 	void		addChannel(Channel& channel);
+	void		delChannel(Channel& channel);
 	Channel*	findChannel( const std::string& name );
 
 	void	startServer( const char *port_str ); //!< Start the server

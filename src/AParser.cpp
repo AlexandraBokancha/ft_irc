@@ -392,6 +392,15 @@ std::vector<std::string>	AParser::getParam( const char* buf, int& i, const int l
 
 							//! MISC
 
+/**
+ * @brief Extract channel name from channel list
+ *
+ * Used in JOIN channel parsing and maybe others...
+ *
+ * @param arg String containing the list of channel
+ * @param pos Position in arg
+ * @return String containg channel name with prefix or thrown error
+ */
 std::string	AParser::getChannelName( const std::string& arg, std::string::const_iterator& pos ) {
 	const std::string	banned = " \a\n\r\0";
 	int					start = pos - arg.begin();
@@ -406,6 +415,14 @@ std::string	AParser::getChannelName( const std::string& arg, std::string::const_
 	return (arg.substr(start, (pos - arg.begin()) - start));
 }
 
+/**
+ * @brief Extract channel list fronm messgae parameter
+ *
+ * Used in JOIN channel parsing and maybe others...
+ *
+ * @param arg String containing the list of channel
+ * @return Vector containg every channel
+ */
 std::vector<std::string>	AParser::getChannelList( const std::string& arg ) {
 	std::vector<std::string>	channelList;
 	std::string::const_iterator	it = arg.begin();
@@ -422,6 +439,15 @@ std::vector<std::string>	AParser::getChannelList( const std::string& arg ) {
 	return (channelList);
 }
 
+/**
+ * @brief Extract key from key list
+ *
+ * Used in JOIN key parsing and maybe others...
+ *
+ * @param arg String containing the key list
+ * @param pos Position in arg
+ * @return String containg key
+ */
 std::string	AParser::getKey( const std::string& arg, std::string::const_iterator& pos ) {
 	const std::string	banned = " \t\v\f\n\r\0";
 	int					start = pos - arg.begin();
@@ -436,6 +462,14 @@ std::string	AParser::getKey( const std::string& arg, std::string::const_iterator
 	return (arg.substr(start, (pos - arg.begin() - start > 24 ? 24 : pos - arg.begin() - start)));
 }
 
+/**
+ * @brief Extract key list fronm messgae parameter
+ *
+ * Used in JOIN key parsing and maybe others...
+ *
+ * @param arg String containing the key list
+ * @return Vector containg every key
+ */
 std::vector<std::string>	AParser::getKeyList(const std::string &arg) {
 	std::vector<std::string>	channelList;
 	std::string::const_iterator	it = arg.begin();

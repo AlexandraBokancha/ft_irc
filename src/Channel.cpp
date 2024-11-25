@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/24 15:09:52 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/24 19:00:09 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,17 @@
 #include "Client.hpp"
 
 //! FOR TESTING PURPOSE
+# include "log.hpp"
 # include <iostream>
 #include <ostream>
 #include <string>
 void	Channel::printChannel( void ) const {
-	std::cout << "[ " << this->_name << " ]" << std::endl
-		<< "[ @" << this->_operator->getNickname() << " ]" << std::endl;
+	std::cout << "[ " << this->_name << " ]" << std::endl;
+	for (std::vector<Client*>::const_iterator it = _operator.begin(); it != _operator.end(); it++) {
+		std::cout << "  [ @" << (*it)->getNickname() << " ] : " << (*it)->getFd() << std::endl;
+	}
 	for (std::vector<Client*>::const_iterator it = _client.begin(); it != _client.end(); it++) {
-		std::cout << "  [ " << (*it)->getNickname() << " ]" << std::endl;
+		std::cout << "  [ " << (*it)->getNickname() << " ] : " << (*it)->getFd() << std::endl;
 	}
 	std::cout << std::endl;
 }
@@ -30,7 +33,7 @@ void	Channel::printChannel( void ) const {
 /* *                       Constructors && Destructors                      * */
 /* ************************************************************************** */
 Channel::Channel( void )
-	: _name(""), _topic(""), _client(std::vector<Client*>()), _operator(NULL),
+	: _name(""), _topic(""), _client(std::vector<Client*>()), _operator(std::vector<Client*>()),
 		_mode(0), _userLimit(10), _password("")
 {
 		return ;
@@ -44,7 +47,7 @@ Channel::Channel( const Channel& rhs )
 
 
 Channel::Channel( Client* creator, const std::string& name )
-	: _name(name), _topic(""), _client(1, creator), _operator(creator),
+	: _name(name), _topic(""), _client(1, creator), _operator(1, creator),
 		_mode(0), _userLimit(0), _password("")
 {
 	this->_name = name;
@@ -60,7 +63,7 @@ Channel::Channel( Client* creator, const std::string& name )
 	}
 	this->_topic = "";
 	this->_client = (std::vector<Client*>(1, creator));
-	this->_operator = (name[0] == '+' ? NULL : creator);
+	this->_operator = (name[0] == '+' ? std::vector<Client*>() : std::vector<Client*>(1, creator));
 	this->_mode = 0;
 	this->_userLimit = 0;
 	this->_password = "";
@@ -108,7 +111,7 @@ Client*		Channel::getClient( const int client_socket ) const {
 	std::vector<Client*>::const_iterator it;
 
 	for (it = this->_client.begin(); it != this->_client.end(); it++) {
-		if (client_socket == (*(*it)->getFd()))
+		if (client_socket == (*it)->getFd())
 			return (*it);
 	}
 	return (NULL);
@@ -125,6 +128,17 @@ Client*		Channel::getClient( const int client_socket ) const {
  */
 bool		Channel::isFull( void ) const {
 	return (this->_mode & L && this->_client.size() >= this->_userLimit);
+}
+
+/**
+ * @brief Check if channel is empty
+ *
+ * Check if channel has to be removed
+ *
+ * @return True when channel empty, else false
+ */
+bool		Channel::isEmpty( void ) const {
+	return (this->_client.size() == 0);
 }
 
 /**
@@ -152,4 +166,35 @@ bool		Channel::validPassword( const std::string& password ) const {
  */
 void		Channel::addClient( Client* const& client ) {
 	this->_client.push_back(client);
+}
+
+/**
+ * @brief Remove client from channel
+ *
+ * Remove client only if he is in channel, else do nothing
+ *
+ * @param Client address
+ */
+void		Channel::removeClient( int client_sock ) {
+	std::vector<Client*>::iterator it;
+
+	//! remove operator
+	for (it = this->_operator.begin(); it != this->_operator.end(); it++) {
+		if ((*it)->getFd() == client_sock) {
+			log("removing operator %d on channel %s", client_sock, this->getName().c_str());
+			this->_operator.erase(it);
+			it--;
+			break ;
+		}
+
+	}
+
+	//! remove client
+	for (it = this->_client.begin(); it != this->_client.end(); it++) {
+		if ((*it)->getFd() == client_sock) {
+			log("removing client %d on channel %s", client_sock, this->getName().c_str());
+			this->_client.erase(it);
+			return ;
+		}
+	}
 }

@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/24 15:09:50 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/24 15:33:07 by dbaladro         ###   ########.fr       */
 /* ************************************************************************** */
 
 #ifndef CHANNEL_HPP
@@ -40,9 +40,11 @@ public:
 	Client*				getClient( const int client_socket ) const;
 
 	bool				isFull( void ) const;
+	bool				isEmpty( void ) const;
 	bool				validPassword( const std::string& password ) const;
 
 	void				addClient( Client* const& client );
+	void				removeClient( int client_sock );
 
 	//! FOR TESTING PURPOSE
 	void	printChannel( void ) const;
@@ -52,7 +54,7 @@ private:
 	std::string				_topic;
 
 	std::vector<Client*>	_client; //!< Reference to connected clients to the channel
-	Client*					_operator; //!< Channel operator
+	std::vector<Client*>	_operator; //!< Channel operator
 
 	int						_mode; //!< Mode flag
 	int						_userLimit; //!< 0: no User limit

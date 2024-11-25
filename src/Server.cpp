@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/24 14:53:45 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/25 01:37:26 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,6 +107,11 @@ Server& Server::operator=( Server const & rhs ) {
 /* *                            Getters and Setters                         * */
 /* ************************************************************************** */
 
+/**
+ * @brief Created server prefix for server response
+ *
+ * @return Server prefix
+ */
 std::string	Server::getPrefix( void ) const {
 	return ("localhost");
 }
@@ -146,19 +151,29 @@ int Server::comparePassword(const std::string& str) const {
 
 /**
  * @brief return client based on client socket
+ *
+ * Get client base on client socket
+ *
+ * @param client_socket Client socket
+ * @preturn The client which the sockt is refering to
  */
 Client&	Server::findClient( int client_sock ) {
 	std::vector<Client>::iterator it;
 	for (it = this->_client.begin(); it != this->_client.end(); it++) {
-		if (*(it->getFd()) == client_sock)
+		if (it->getFd() == client_sock)
 			return (*it);
 	}
 	throw (std::runtime_error("Server.findClient(): Client not found"));
 }
 
 /**
- * @brief Server reponse
+ * @brief Server response to client command
  *
+ * This is a way to snend formated repomse to client comand in a formatted way
+ *
+ * @pram client_sock Client socket to send message to
+ * @param fmt The formated message to send (defined in Numericresponse.hpp)
+ * @param ... The fmt argument
  */
 void	Server::respond(const int& client_sock, const char* fmt, ...) const {
 	va_list		args;
@@ -213,6 +228,15 @@ void	Server::addChannel( Channel& channel ) {
 }
 
 /**
+ * @brief Delete channel
+ *
+ * To be used when a client disconnect
+ *
+ * @param Channel to be deleted
+ */
+
+
+/**
  * @brief find channel by name
  *
  * Find channel identified by name passed in paramters
@@ -253,6 +277,20 @@ Channel*	Server::findChannel( const std::string& name ) {
 void	Server::disconnectClient( int& index ) {
 	if (index == 0)
 		return ;
+	
+	int	client_sock = this->_pollFd[index].fd;
+	//! Find every channel were client is connected
+	if (client_sock > 0) {
+		for (std::vector<Channel>::iterator it = _channel.begin(); it != _channel.end(); it++) {
+			it->removeClient(client_sock);
+			if (it->isEmpty()) {
+				this->_channel.erase(it);
+				log("Removing channel %s", it->getName().c_str());
+				it--;
+			}
+		}
+	}
+
 	log("Closing socket %d.", this->_pollFd[index].fd);
 	close(this->_pollFd[index].fd);
 	this->_pollFd.erase(this->_pollFd.begin() + index);
@@ -269,6 +307,8 @@ void	Server::disconnectClient( int& index ) {
  * @brief Start the server
  *
  * Init server variable and signals, create socket, bind it and start listening
+ *
+ * @param Port in char* format just for an easier access to get_addr
  */
 void	Server::startServer( const char *port_str ) {
 	struct addrinfo	hints;
@@ -355,13 +395,12 @@ void	Server::acceptNewClient( void ) {
 		this->pollPushBack(client_socket, POLLIN); //!< add client fd to poll
 
 		//! Add client
-		new_client.setFd(&(this->_pollFd.end() - 1)->fd);
+		new_client.setFd(client_socket);
 		// new_client.setFd(&client_socket);
 		new_client.setNetId(client_addr);
 		this->_client.push_back(new_client);
 
 }
-
 
 /**
  * @brief Send the complete message to Client
@@ -392,6 +431,17 @@ int Server::sendMsg(int socket, const char *buf, int len) const {
     return (b == -1 ? -1 : 0); // return -1 on error, 0 on success
 }
 
+
+/**
+ * @brief Send a message to client socket
+ *
+ * Just on easier way to send a msg object directly instead of buffer
+ *
+ * @param socket Client socket to send message to
+ * @param msg Message to send
+ *
+ * @return 0 on SUCCESS; -1 on ERROR
+ */
 int Server::sendMsg(int socket, const Message& msg ) const {
 	std::string	buffer = msg.toString();
 
@@ -476,6 +526,8 @@ void	Server::receiveMsg( int& i ) {
  * It either catch a POLLIN event and will read the client Msg.
  * Or it received on ERROR and will display a log according to the error
  * Or it do nothing @param i The pollFd index
+ *
+ * @param server poll index
  */
 void	Server::checkEvent( int& i ) {
 	//! Receive nothing

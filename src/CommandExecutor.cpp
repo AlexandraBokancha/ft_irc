@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/24 15:10:12 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/25 01:49:26 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,10 +48,19 @@ namespace {
 		success_log("In PASS command");
 	}
 
+	/**
+	 * @brief IRC JOIN command
+	 *
+	 * Perform IRC JOIN command and respond
+	 *
+	 * @param serv Actual server
+	 * @param client Client who send comand
+	 * @param msg Msg sent to server from client
+	 */
 	void	join(Server& serv, Client& client, Message& msg) {
 		if (msg.getParam().size() == 0) {
-			serv.respond(*(client.getFd()), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
-			war_log("sent ERR_NEEDMOREPARAMS to Client %d", *(client.getFd()));
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			war_log("sent ERR_NEEDMOREPARAMS to Client %d", client.getFd());
 			return ;
 		}
 
@@ -77,46 +86,46 @@ namespace {
 			if (ch == NULL) { //! Create new channel
 				Channel	new_channel(&client, *channel_it);
 				serv.addChannel(new_channel);
-				serv.respond(*(client.getFd()), "JOIN %s", channel_it->c_str());
+				serv.respond(client.getFd(), "JOIN %s", channel_it->c_str());
 				serv.printChannel();
 				continue; ;
 			}
 
-			if (ch->getClient(*client.getFd())) //!< Client already in channel
+			if (ch->getClient(client.getFd())) //!< Client already in channel
 				continue ;
 
 			//!< TOOMANYTARGET ERROR
 			if (ch->getName()[0] == '!' && channel_it->c_str()[0] == '!'
 					&& std::strcmp(ch->getName().c_str() + 6, channel_it->c_str() + 1) == 0) {
-				serv.respond(*(client.getFd()), ERR_TOOMANYTARGETS, channel_it->c_str(), 471, "Safe channel already exist");
+				serv.respond(client.getFd(), ERR_TOOMANYTARGETS, channel_it->c_str(), 471, "Safe channel already exist");
 				continue ;
 			}
 
 			channel_mode = ch->getMode();
 			if (channel_mode & INVITE_ONLY) { //!< Invite only channel
-				serv.respond(*(client.getFd()), ERR_INVITEONLYCHAN, channel_it->c_str());
+				serv.respond(client.getFd(), ERR_INVITEONLYCHAN, channel_it->c_str());
 				continue ;
 			}
 			if (ch->isFull()) { //!< User limit set and reached
-				serv.respond(*(client.getFd()), ERR_CHANNELISFULL, channel_it->c_str());
+				serv.respond(client.getFd(), ERR_CHANNELISFULL, channel_it->c_str());
 				continue ;
 			}
 			if (key_it != key.end()) { //!< Invalid key
 				if (!ch->validPassword(*key_it)) {
-					serv.respond(*(client.getFd()), ERR_BADCHANNELKEY, channel_it->c_str());
+					serv.respond(client.getFd(), ERR_BADCHANNELKEY, channel_it->c_str());
 					continue ;
 				}
 				key_it++;
 			}
 			if (client.getJoinedChannel() >= MAX_CHANNEL_PER_CLIENT) { //!< Maximum channel joined
-				serv.respond(*(client.getFd()), ERR_TOOMANYCHANNELS, channel_it->c_str());
+				serv.respond(client.getFd(), ERR_TOOMANYCHANNELS, channel_it->c_str());
 				continue ;
 			}
 
 			//! SUCCESS
 			//! add client to server
 			ch->addClient(&client);
-			serv.respond(*(client.getFd()), "JOIN %s", channel_it->c_str());
+			serv.respond(client.getFd(), "JOIN %s", channel_it->c_str());
 
 			return ;
 		}
@@ -149,6 +158,16 @@ namespace {
 
 namespace CommandExecutor {
 
+	/**
+	 * @brief Server command executor
+	 *
+	 * This function is used to perform every command (PASS, NICK, JOIN...)
+	 * For simplicity and clarity it is the only one accesible from namespace CommandExecutor
+	 *
+	 * @param serv Actual server
+	 * @param client Client who send comand
+	 * @param msg Msg sent to server from client
+	 */
 	void	execute(Server& serv, Client& client, Message& msg) {
 		std::vector< std::pair< std::string, void(*)(Server&, Client&, Message&) > >::const_iterator it;
 		for (it = commandMap.begin(); it != commandMap.end(); it++) {

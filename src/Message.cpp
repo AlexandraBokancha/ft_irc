@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:49 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/24 08:57:25 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/25 01:39:37 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,9 +90,6 @@ std::vector<std::string>	Message::getParam( void ) const {
 	return (this->_param);
 }
 
-/* ************************************************************************** */
-/* *                           Getters and Setters                         * */
-/* ************************************************************************** */
 void	Message::setPrefix( std::string prefix ) {
 	int	start = 0;
 
@@ -120,6 +117,15 @@ void	Message::setContent( std::string content ) {
 /* ************************************************************************** */
 /* *                              Member function                           * */
 /* ************************************************************************** */
+/**
+ * @brief message to one string
+ *
+ * Convert messgae object to one string that can be directly send to client
+ * CARREFUL This function does not check errros
+ *
+ *
+ * @return The IRC formatted message
+ */
 std::string	Message::toString( void ) const {
 	std::string	str;
 
@@ -136,6 +142,7 @@ std::string	Message::toString( void ) const {
 	str.append("\r\n");
 	return (str);
 }
+
 /**
  * @brief Init the Message at construction
  *
