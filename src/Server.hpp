@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/24 15:37:30 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/25 18:06:09 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,7 @@ private:
 
 	std::vector<Channel>		_channel;
 
-	std::vector<Client>			_client;
+	std::vector<Client*>			_client;
 
 	std::vector<struct pollfd>	_pollFd;
 	unsigned int				_clientNbr;
@@ -100,7 +100,7 @@ private:
 	void						acceptNewClient( void );
 	void						disconnectClient( int& index );
 
-	Client&						findClient( int client_sock );
+	Client*						findClient( int client_sock );
 
 	void						checkEvent( int& i );
 	void						receiveMsg( int& i );

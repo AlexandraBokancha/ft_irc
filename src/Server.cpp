@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/25 01:37:26 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/25 18:11:49 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,7 @@ Server::Server( void )
 	this->_serverInfo = NULL;
 	this->_socket = -1;
 	this->_channel = std::vector<Channel>();
-	this->_client = std::vector<Client>();
+	this->_client = std::vector<Client*>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
 }
@@ -73,7 +73,7 @@ Server::Server(const int port, const std::string password )
 	this->_serverInfo = NULL;
 	this->_socket = -1;
 	this->_channel = std::vector<Channel>();
-	this->_client = std::vector<Client>();
+	this->_client = std::vector<Client*>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
 }
@@ -84,7 +84,7 @@ Server::Server( Server const &rhs )
 	this->_serverInfo = NULL;
 	this->_socket = -1;
 	this->_channel = std::vector<Channel>();
-	this->_client = std::vector<Client>();
+	this->_client = std::vector<Client*>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
 }
@@ -157,10 +157,10 @@ int Server::comparePassword(const std::string& str) const {
  * @param client_socket Client socket
  * @preturn The client which the sockt is refering to
  */
-Client&	Server::findClient( int client_sock ) {
-	std::vector<Client>::iterator it;
+Client*	Server::findClient( int client_sock ) {
+	std::vector<Client*>::iterator it;
 	for (it = this->_client.begin(); it != this->_client.end(); it++) {
-		if (it->getFd() == client_sock)
+		if ((*it)->getFd() == client_sock)
 			return (*it);
 	}
 	throw (std::runtime_error("Server.findClient(): Client not found"));
@@ -296,6 +296,7 @@ void	Server::disconnectClient( int& index ) {
 	this->_pollFd.erase(this->_pollFd.begin() + index);
 
 	//! Remove client from client vector
+	delete (this->_client[index - 1]);
 	this->_client.erase(this->_client.begin() + index - 1);
 
 	index--;
@@ -379,7 +380,7 @@ void		Server::stopServer( void ) {
  * Accept new client after a POLLIN event have been caught on the Server socket
  */
 void	Server::acceptNewClient( void ) {
-	Client				new_client;
+	Client				*new_client = new Client();
 
 	int					client_socket;
 	struct sockaddr_in	client_addr;
@@ -395,9 +396,9 @@ void	Server::acceptNewClient( void ) {
 		this->pollPushBack(client_socket, POLLIN); //!< add client fd to poll
 
 		//! Add client
-		new_client.setFd(client_socket);
+		new_client->setFd(client_socket);
 		// new_client.setFd(&client_socket);
-		new_client.setNetId(client_addr);
+		new_client->setNetId(client_addr);
 		this->_client.push_back(new_client);
 
 }
@@ -491,13 +492,13 @@ void	Server::receiveMsg( int& i ) {
 		try {
 			int msg_i = 0;
 			int	start = 0;
-			Client& sender = findClient(this->_pollFd[i].fd);
+			Client* sender = findClient(this->_pollFd[i].fd);
 
 			log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
 			while (msg_i < buffer_size - 2) {
 				Message msg(buffer, msg_i, buffer_size);
 				
-				CommandExecutor::execute(*this, sender, msg);
+				CommandExecutor::execute(*this, *sender, msg);
 
 				broadcast(buffer + start, msg_i - start - 2, this->_pollFd[i].fd);
 				start = msg_i;
