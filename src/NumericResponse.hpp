@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/22 01:43:47 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/25 21:32:47 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,10 @@
 # define ERR_INVITEONLYCHAN  "473 %s :Cannot join channel (+i)"
 # define ERR_BADCHANNELKEY   "475 %s :Cannot join channel (+k)"
 
-// NICK
+//! PART
+# define ERR_NOTONCHANNEL "442 %s :You're not on that channel"
 
+// NICK
 # define ERR_NONICKNAMEGIVEN() (":localhost 431 :No nickname given\r\n")
 # define ERR_NICKNAMEINUSE(nick) (std::string(":localhost 433 * ") + nick + std::string(" :Nickname is already in use\r\n")) 
 # define ERR_ERRONEUSNICKNAME(nick) (std::string(":localhost 432 * ") + nick + std::string(" :Erroneus nickname"))

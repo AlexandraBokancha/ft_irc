@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/25 18:11:49 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/25 21:47:53 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -210,6 +210,9 @@ void	Server::respond(const int& client_sock, const char* fmt, ...) const {
 		fmt++;
 	}
 	va_end(args);
+
+	log("Sending :%s to client: %d", buffer.c_str(), client_sock);
+
 	response.setContent(buffer);
 	std::cout << response << std::endl;
 	sendMsg(client_sock, response);
@@ -234,7 +237,17 @@ void	Server::addChannel( Channel& channel ) {
  *
  * @param Channel to be deleted
  */
+void	Server::delChannel( Channel& channel ) {
+	std::vector<Channel>::iterator	it;
 
+	for (it = this->_channel.begin(); it != this->_channel.end(); it++) {
+		if (it->getName() == channel.getName()) {
+			this->_channel.erase(it);
+			log("Deleting channel: %s", it->getName().c_str());
+			return ;
+		}
+	}
+}
 
 /**
  * @brief find channel by name

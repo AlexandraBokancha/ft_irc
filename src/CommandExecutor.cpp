@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/25 01:49:26 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/25 21:45:34 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@
 
 # include "log.hpp"
 #include <cstring>
+#include <string>
 
 //! Anonymous namespace: Everything declared here is only accesible in this file
 namespace {
@@ -60,7 +61,6 @@ namespace {
 	void	join(Server& serv, Client& client, Message& msg) {
 		if (msg.getParam().size() == 0) {
 			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
-			war_log("sent ERR_NEEDMOREPARAMS to Client %d", client.getFd());
 			return ;
 		}
 
@@ -132,6 +132,48 @@ namespace {
 	}
 
 	/**
+	 * @brief IRC PART command
+	 *
+	 * Perform IRC PART command and respond
+	 * Quit the channel specified in parameterd
+	 *
+	 * @param serv Actual server
+	 * @param client Client who send comand
+	 * @param msg Msg sent to server from client
+	 */
+	void	part( Server& serv, Client& client, Message& msg) {
+		std::vector<std::string>					channel_name;
+		std::vector<std::string>::const_iterator	channel_it;
+		Channel										*channel;
+		std::string									part_msg;
+
+		if (msg.getParam().size() == 0) { //!< No parameter
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
+
+		part_msg = (msg.getParam().size() > 1 ? msg.getParam()[1] : client.getNickname());
+		channel_name = AParser::getChannelList(msg.getParam()[0]);
+		for (channel_it = channel_name.begin(); channel_it != channel_name.end(); channel_it++) {
+			channel = serv.findChannel(*channel_it);
+			if (!channel) { //!< Channel not found
+				serv.respond(client.getFd(), ERR_NOSUCHCHANNEL, channel_it->c_str());
+				continue ;
+			}
+			if (!channel->getClient(client.getFd())) { //!< Client not in channel
+				serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+				continue ;
+			}
+			//! Remov efrom channel
+			channel->removeClient(client.getFd());
+			// BROADCAST TO CHANNEL
+			if (channel->isEmpty()) //!< Remove channel
+				serv.delChannel(*channel);
+		}
+	}
+
+
+	/**
 	 * @brief Init the commandMap
 	 *
 	 * This function is needed because of cpp98 restriction.
@@ -149,6 +191,7 @@ namespace {
 		
 		commandMap.push_back(std::make_pair("PASS", pass));
 		commandMap.push_back(std::make_pair("JOIN", join));
+		commandMap.push_back(std::make_pair("PART", part));
 
 		return (commandMap);
 	}
