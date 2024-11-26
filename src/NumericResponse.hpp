@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/25 22:36:50 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/26 12:34:23 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,5 +53,9 @@
 // INFO
 # define RPL_INFO				"371 %s"
 # define RPL_ENDOFINFO			"374 : End of /INFO"
+
+// OPER
+# define ERR_NOOPERHOST			"491 :No O-lines for your host"
+# define RPL_YOUREOPER			"381 :You are now an IRC operator"
 
 #endif // !NUMERIC_RESPONSE_HPP

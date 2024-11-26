@@ -1,6 +1,6 @@
 ### COMPILATION ###
 CPP = c++
-CPPFLAGS = -std=c++98 -Wall -Wextra -Werror -g3
+CPPFLAGS = -std=c++98 -g3 -Wall -Wextra -Werror
 
 ### PROJECT NAME ###
 PROJECT = ircserv
@@ -16,7 +16,6 @@ SRC_FILE = main.cpp \
 			AParser.cpp \
 			CommandExecutor.cpp \
 			log.cpp
-			# utils.cpp
 
 ## OBJECT FILE ###
 OBJ_DIR = .obj

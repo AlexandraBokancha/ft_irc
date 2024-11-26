@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 11:18:13 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/26 12:32:10 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,7 +108,6 @@ private:
 	int							sendMsg(int socket, const Message& msg ) const;
 	int							sendMsg( int socket, const char *buf, int len ) const;
 	void						broadcast( const char *buffer, int len, int fd ) const;
-	// int							authentification( long unsigned int & i, const Message & msg );
 
 };
 
