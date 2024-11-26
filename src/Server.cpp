@@ -6,23 +6,33 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/25 17:16:00 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/26 12:18:05 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "Message.hpp"
+#include "Client.hpp"
+#include "Channel.hpp"
+#include "CommandExecutor.hpp"
 
-void replyToClient(std::string msg, int *fd);
 
 /* FOR TESTING PURPOSE */
 # include "log.hpp"
+#include <cstring>
+
+void	Server::printChannel( void ) const {
+	std::cout << "Channel :" << std::endl;
+	for (std::vector<Channel>::const_iterator it = _channel.begin(); it != _channel.end(); it++) {
+		it->printChannel();
+	}
+}
+
 void	print_client(std::vector<Client> v) {
 	for (std::vector<Client>::const_iterator it = v.begin(); it < v.end(); it++) {
 		std::cout << *it << std::endl;
 	}
 }
-
-
 
 /* ************************************************************************** */
 /* *                             Signal Handling                            * */
@@ -50,7 +60,8 @@ Server::Server( void )
 {
 	this->_serverInfo = NULL;
 	this->_socket = -1;
-	this->_client = std::vector<Client>();
+	this->_channel = std::vector<Channel>();
+	this->_client = std::vector<Client*>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
 } //! A mon avis on peut tege ce constructeur, vu que le main prends 2 parametres qu'on doit parser
@@ -62,7 +73,8 @@ Server::Server(const int port, const std::string password )
 	std::cout << "Created Server object using port " << port << std::endl;
 	this->_serverInfo = NULL;
 	this->_socket = -1;
-	this->_client = std::vector<Client>();
+	this->_channel = std::vector<Channel>();
+	this->_client = std::vector<Client*>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
 }
@@ -72,7 +84,8 @@ Server::Server( Server const &rhs )
 {
 	this->_serverInfo = NULL;
 	this->_socket = -1;
-	this->_client = std::vector<Client>();
+	this->_channel = std::vector<Channel>();
+	this->_client = std::vector<Client*>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
 }
@@ -89,6 +102,19 @@ Server& Server::operator=( Server const & rhs ) {
 		*this = rhs;
 	}
 	return (*this);
+}
+
+/* ************************************************************************** */
+/* *                            Getters and Setters                         * */
+/* ************************************************************************** */
+
+/**
+ * @brief Created server prefix for server response
+ *
+ * @return Server prefix
+ */
+std::string	Server::getPrefix( void ) const {
+	return ("localhost");
 }
 
 /* ************************************************************************** */
@@ -112,6 +138,159 @@ void	Server::pollPushBack(int fd, short events) {
 }
 
 /**
+ * @brief Compare param to server password
+ *
+ * This function make the password access more secure by never directly returning it
+ *
+ * @param str The client pass argument to be compared with server password
+ * @return 0 when match password, else 1
+ */
+int Server::comparePassword(const std::string& str) const {
+	return ((str.compare(this->_passwd) == 0 ? 0 : 1));
+}
+
+/**
+ * @brief return client based on client socket
+ *
+ * Get client base on client socket
+ *
+ * @param client_socket Client socket
+ * @preturn The client which the sockt is refering to, NULL if not found
+ */
+Client*	Server::findClient( int client_sock ) {
+	std::vector<Client*>::iterator it;
+	for (it = this->_client.begin(); it != this->_client.end(); it++) {
+		if ((*it)->getFd() == client_sock)
+			return (*it);
+	}
+	return (NULL);
+}
+
+/**
+ * @brief Return lient based on client nickname
+ *
+ * Find client based on nickname (Check client existence)
+ *
+ * @param nick Nickname to search
+ * @return Client pointer if found, else NULL
+ */
+Client*	Server::findClient( const std::string& nick ) {
+	std::vector<Client*>::iterator it;
+	for (it = this->_client.begin(); it != this->_client.end(); it++) {
+		if ((*it)->getNickname() == nick)
+			return (*it);
+	}
+	return (NULL);
+}
+/**
+ * @brief Server response to client command
+ *
+ * This is a way to snend formated repomse to client comand in a formatted way
+ *
+ * @pram client_sock Client socket to send message to
+ * @param fmt The formated message to send (defined in Numericresponse.hpp)
+ * @param ... The fmt argument
+ */
+void	Server::respond(const int& client_sock, const char* fmt, ...) const {
+	va_list		args;
+	std::string	buffer;
+	Message		response;
+
+	response.setPrefix(this->getPrefix());
+
+	buffer.reserve(512);
+	va_start(args, fmt);
+	while (*fmt) {
+		if (*fmt == '%') {
+			fmt++;
+			switch (*fmt) {
+				case 's' : { //!< string
+					char* s = va_arg(args, char* );
+					buffer.append(s);
+					break ;
+				}
+				case 'd' : { //!< int 
+					int d = va_arg(args, int);
+					std::stringstream ss;
+					ss << d;
+					buffer.append(ss.str());
+					break ;
+				}
+				default :
+				   break ;
+			}
+			fmt++;
+			continue ;
+		}
+		buffer.append(1, *fmt);
+		fmt++;
+	}
+	va_end(args);
+
+	log("Sending :%s to client: %d", buffer.c_str(), client_sock);
+
+	response.setContent(buffer);
+	std::cout << response << std::endl;
+	sendMsg(client_sock, response);
+}
+
+/**
+ * @brief Add new channel to server
+ *
+ * Used when joining a channel that doesn't exst
+ *
+ * @param channel The channel to add to server
+ */
+void	Server::addChannel( Channel& channel ) {
+	this->_channel.push_back(channel);
+	return ;
+}
+
+/**
+ * @brief Delete channel
+ *
+ * To be used when a client disconnect
+ *
+ * @param Channel to be deleted
+ */
+void	Server::delChannel( Channel& channel ) {
+	std::vector<Channel>::iterator	it;
+
+	for (it = this->_channel.begin(); it != this->_channel.end(); it++) {
+		if (it->getName() == channel.getName()) {
+			this->_channel.erase(it);
+			log("Deleting channel: %s", it->getName().c_str());
+			return ;
+		}
+	}
+}
+
+/**
+ * @brief find channel by name
+ *
+ * Find channel identified by name passed in paramters
+ *
+ * @param name Channel name to find
+ * @return Channel pointer if found, else NULL
+ */
+Channel*	Server::findChannel( const std::string& name ) {
+	std::vector<Channel>::iterator	it;
+	int								safe_channel = (name[0] == '!' ? 1 : 0);
+	std::string						channel_name;
+
+	for (it = this->_channel.begin(); it != this->_channel.end(); it++) {
+		channel_name = it->getName();
+		//! Used to check if a safe channel with the same shortname exist
+		if (channel_name[0] == '!' && safe_channel
+			&& (strcmp(channel_name.c_str() + 6, name.c_str() + 1) == 0))
+			return (&(*it));
+		if (name.compare(it->getName()) == 0)
+			return (&(*it));
+	}
+	return (NULL);
+}
+
+/**
  * @brief Disconnect client and remove it from poll
  *
  * This function remove the client-index from poll.
@@ -124,17 +303,32 @@ void	Server::pollPushBack(int fd, short events) {
  *
  * @param index	The client index in the pollFd
  */
-void	Server::disconnectClient( long unsigned int & i ) {
-	if (i == 0)
+void	Server::disconnectClient( int& index ) {
+	if (index == 0)
 		return ;
-	log("Closing socket %d.", this->_pollFd[i].fd);
-	close(this->_pollFd[i].fd);
-	this->_pollFd.erase(this->_pollFd.begin() + i);
+	
+	int	client_sock = this->_pollFd[index].fd;
+	//! Find every channel were client is connected
+	if (client_sock > 0) {
+		for (std::vector<Channel>::iterator it = _channel.begin(); it != _channel.end(); it++) {
+			it->removeClient(client_sock);
+			if (it->isEmpty()) {
+				this->_channel.erase(it);
+				log("Removing channel %s", it->getName().c_str());
+				it--;
+			}
+		}
+	}
+
+	log("Closing socket %d.", this->_pollFd[index].fd);
+	close(this->_pollFd[index].fd);
+	this->_pollFd.erase(this->_pollFd.begin() + index);
 
 	//! Remove client from client vector
-	this->_client.erase(this->_client.begin() + i - 1);
+	delete (this->_client[index - 1]);
+	this->_client.erase(this->_client.begin() + index - 1);
 
-	i--;
+	index--;
 
 }
 
@@ -143,6 +337,8 @@ void	Server::disconnectClient( long unsigned int & i ) {
  * @brief Start the server
  *
  * Init server variable and signals, create socket, bind it and start listening
+ *
+ * @param Port in char* format just for an easier access to get_addr
  */
 void	Server::startServer( const char *port_str ) {
 	struct addrinfo	hints;
@@ -191,7 +387,7 @@ void	Server::startServer( const char *port_str ) {
 void		Server::stopServer( void ) {
 	if (this->_pollFd.size() > 1) {
 		log("Disconecting every client...");
-		unsigned long int i = this->_pollFd.size() - 1;
+		int i = this->_pollFd.size() - 1;
 		while (i > 0)
 			disconnectClient(i);
 	}
@@ -213,7 +409,7 @@ void		Server::stopServer( void ) {
  * Accept new client after a POLLIN event have been caught on the Server socket
  */
 void	Server::acceptNewClient( void ) {
-	Client				new_client;
+	Client				*new_client = new Client();
 
 	int					client_socket;
 	struct sockaddr_in	client_addr;
@@ -229,9 +425,9 @@ void	Server::acceptNewClient( void ) {
 		this->pollPushBack(client_socket, POLLIN); //!< add client fd to poll
 
 		//! Add client
-		new_client.setFd(&(this->_pollFd.end() - 1)->fd);
+		new_client->setFd(client_socket);
 		// new_client.setFd(&client_socket);
-		new_client.setNetId(client_addr);
+		new_client->setNetId(client_addr);
 		this->_client.push_back(new_client);
 
 }
@@ -265,6 +461,23 @@ int Server::sendMsg(int socket, const char *buf, int len) const {
     return (b == -1 ? -1 : 0); // return -1 on error, 0 on success
 }
 
+
+/**
+ * @brief Send a message to client socket
+ *
+ * Just on easier way to send a msg object directly instead of buffer
+ *
+ * @param socket Client socket to send message to
+ * @param msg Message to send
+ *
+ * @return 0 on SUCCESS; -1 on ERROR
+ */
+int Server::sendMsg(int socket, const Message& msg ) const {
+	std::string	buffer = msg.toString();
+
+    return (this->sendMsg(socket, buffer.c_str(), buffer.size()));
+}
+
 /**
  * @brief Send msg to all client except the one specified by fd
  *
@@ -275,9 +488,6 @@ int Server::sendMsg(int socket, const char *buf, int len) const {
  * @param fd The client exluded from receiving the message (the sender)
  */
 void	Server::broadcast(const char *buffer, int len, int fd) const {
-	int	total = 0; // bytes sent
-	int	send_result;
-
 	for (unsigned long int i = 1; i < this->_pollFd.size(); i++) {
 		if (this->_pollFd[i].fd == fd)
 			continue ;
@@ -289,55 +499,6 @@ void	Server::broadcast(const char *buffer, int len, int fd) const {
 	}
 }
 
-
-/**  @brief Function handling authetification of a new client
-
-it checks :
-
-->PASS (precede toutes les autres commandes)
-->NICK/USER
-
-*/
-int Server::authentification(long unsigned int &i, const Message &msg) {
-    
-	Client &client = _client[i - 1];
-	
-	if (!client.getValidPass()) {
-        if (client.setPassword(msg, this->_passwd)) {
-            return 0;
-        } else {
-            err_log("Password validation failed for client %lu", i);
-            return (0); // Do not proceed to NICK/USER without a valid PASS
-        }
-    }
-
-    if (!client.getValidNick()) {
-        if (client.setNickname(msg, this->_client)) {
-            return (0);
-        } else {
-            err_log("Nickname validation failed for client %lu", i);
-        }
-    }
-
-    if (!client.getValidUser()) {
-        if (client.setUsername(msg)) {
-			success_log("User %s registred", client.getUsername().c_str());
-        } else {
-            err_log("Username validation failed for client %lu", i);
-            return (0);
-        }
-    }
-
-    if (client.getValidPass() && client.getValidNick() && client.getValidUser()) {
-		replyToClient(RPL_WELCOME(client.getNickname(), client.getUsername(), \
-			client.getHostname()), &this->_pollFd[i].fd);
-		success_log("Client %s was enregistred", client.getNickname().c_str());
-		return (1);
-	}
-    return (0);
-}
-
-
 /**
  * @brief Receive client message after POLLIN event
  *
@@ -346,7 +507,7 @@ int Server::authentification(long unsigned int &i, const Message &msg) {
  *
  * @param i The pollFd index
  */
-void	Server::receiveMsg( long unsigned int& i ) {
+void	Server::receiveMsg( int& i ) {
 	
 	char	buffer[512]; //<! 512 = max irc message size
 	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
@@ -356,31 +517,18 @@ void	Server::receiveMsg( long unsigned int& i ) {
 		try{
 			buffer[buffer_size] = '\0';
 			int msg_i = 0;
-			int start = 0;
+			Client* sender = findClient(this->_pollFd[i].fd);
+
 			log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
 			while (msg_i < buffer_size - 2){
 				Message msg(buffer, msg_i, buffer_size);
 				
 				/* FOR TESTING PURPOSE -> map with cmds here */
-				if (!_client[i - 1].getRegistred()){
-					if (authentification(i, msg)){
-						_client[i - 1].setRegistred(true);
-					}
-				}
-				else if (_client[i - 1].getRegistred()){
-					if (msg.getCommand() == "time"){
-						timeCmd(this->_pollFd[i].fd);
-					}
-					else if (msg.getCommand() == "info"){
-						infoCmd(this->_pollFd[i].fd);
-					}
-					else if (msg.getCommand() == "PING"){
-						pongCmd(this->_pollFd[i].fd);
-					}
-				}
 				
 				//broadcast(buffer, buffer_size, this->_pollFd[i].fd);
-				start = msg_i;
+				CommandExecutor::execute(*this, *sender, msg);
+
+				// broadcast(buffer + start, msg_i - start - 2, this->_pollFd[i].fd);
 			}
 		}
 		catch (std::exception & e){
@@ -403,8 +551,10 @@ void	Server::receiveMsg( long unsigned int& i ) {
  * It either catch a POLLIN event and will read the client Msg.
  * Or it received on ERROR and will display a log according to the error
  * Or it do nothing @param i The pollFd index
+ *
+ * @param server poll index
  */
-void	Server::checkEvent( long unsigned int& i ) {
+void	Server::checkEvent( int& i ) {
 	//! Receive nothing
 	if (this->_pollFd[i].revents == 0)
 		return ;
@@ -433,12 +583,12 @@ void	Server::runServer( void ) {
 
 	//! Perform poll check until error or signal catch
 	while ((status = poll(this->_pollFd.data(), this->_pollFd.size(), -1)) > 0) {
-		
+
 		if (this->_pollFd[0].revents == POLLIN) //!< New client connecting
 			this->acceptNewClient();
 
 		//! Check if data has been received on client socket
-		for (long unsigned int i = 1; i < this->_pollFd.size(); i++) {
+		for (int i = 1; i < static_cast<int>(this->_pollFd.size()); i++) {
 			if (this->_pollFd[i].fd > 0)
 				this->checkEvent(i);
 			else if (this->_pollFd[i].fd == 0) { //! Case unused fd
@@ -452,36 +602,6 @@ void	Server::runServer( void ) {
         if (status < 0)
 			fatal_log("poll(): %s.", std::strerror(errno));
 	}
-}
-
-
-/* ************************************************************************** */
-/* *                             Server Commands                           	* */
-/* ************************************************************************** */
-void Server::timeCmd( int fd ) const {
-	std::time_t now = std::time(NULL);
-	std::string timeStr = std::ctime(&now);
-
-	replyToClient(RPL_TIME(timeStr), &fd);
-}
-
-void Server::infoCmd( int fd ) const {
-	std::vector<std::string> infoMessages;
-    
-	infoMessages.push_back("Welcome to IRC Server!");
-    infoMessages.push_back("Version : ft_irc 1.0.0");
-    infoMessages.push_back("Supported commands : JOIN, INFO, PRIVMSG, etc.");
-	
-	for (std::vector<std::string>::const_iterator it = infoMessages.begin(); it \
-			!= infoMessages.end(); ++it) {
-        replyToClient(RPL_INFO(*it), &fd);
-    }
-	replyToClient(RPL_ENDOFINFO(), &fd);
-}
-
-//! la fonciton pour faire plaisir a irssi qui envoie chaque minute des PING
-void Server::pongCmd( int fd ) const {
-	replyToClient("PONG\r\n", &fd); 
 }
 
 /* ************************************************************************** */

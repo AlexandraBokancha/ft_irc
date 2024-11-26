@@ -1,20 +1,22 @@
 ### COMPILATION ###
 CPP = c++
-CPPFLAGS = -std=c++98 -g3
-#-Wall -Wextra -Werror -g3
+CPPFLAGS = -std=c++98 -Wall -Wextra -Werror -g3
 
 ### PROJECT NAME ###
 PROJECT = ircserv
 PROJECT_DIR = ./
 
 ### SOURCE FILE ###
-SRC_DIR = ./src/
+SRC_DIR = ./src
 SRC_FILE = main.cpp \
 			Server.cpp \
+			Channel.cpp \
 			Client.cpp \
 			Message.cpp \
-			log.cpp \
-			utils.cpp
+			AParser.cpp \
+			CommandExecutor.cpp \
+			log.cpp
+			# utils.cpp
 
 ## OBJECT FILE ###
 OBJ_DIR = .obj

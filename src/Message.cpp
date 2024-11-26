@@ -6,13 +6,11 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:49 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/20 09:46:50 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/26 11:33:22 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Message.hpp"
-#include <ostream>
-#include <string>
 
 /* ************************************************************************** */
 /* *                       Constructors && Destructors                      * */
@@ -33,7 +31,7 @@ Message::Message( const char *buf, int& i, const int len ) {
 	//! Setting default value in case of error
 	this->_prefix = "";
 	this->_command = "";
-	this->_param = std::list<std::string>();
+	this->_param = std::vector<std::string>();
 
 	this->_init(buf, i, len);
 	return ;
@@ -56,8 +54,9 @@ Message&	Message::operator=( const Message& rhs ) {
 	return (*this);
 }
 
+							//! FOR TESTING PURPOSE 
 std::ostream&	Message::printParam( std::ostream& os ) const {
-	for (std::list<std::string>::const_iterator it = this->_param.begin(); it != this->_param.end(); it++) {
+	for (std::vector<std::string>::const_iterator it = this->_param.begin(); it != this->_param.end(); it++) {
 		os << "[ " << *it << " ] ";
 	}
 	return (os);
@@ -73,6 +72,7 @@ std::ostream&	operator<<(std::ostream& os, const Message& rhs) {
 	return (os);
 }
 
+
 /* ************************************************************************** */
 /* *                            Getters and Setters                         * */
 /* ************************************************************************** */
@@ -80,174 +80,67 @@ std::string	Message::getPrefix( void ) const {
 	return (this->_prefix);
 }
 
+
 std::string	Message::getCommand( void ) const {
 	return (this->_command);
 }
 
-std::list<std::string>	Message::getParam( void ) const {
+
+std::vector<std::string>	Message::getParam( void ) const {
 	return (this->_param);
+}
+
+void	Message::setPrefix( std::string prefix ) {
+	int	start = 0;
+
+	while (prefix[start] == ':') //! Skip ':'
+		start++;
+	this->_prefix = prefix.substr(start, prefix.size());
+}
+
+void	Message::setContent( std::string content ) {
+	const char	*buf = content.c_str();
+	int			i = 0;
+	int			len = content.size();
+
+	if (buf[i] == ':') {
+		this->_prefix = AParser::getPrefix(buf, i, len);
+		i++; //!< Skip Space after prefix
+	}
+
+	this->_command = AParser::getCommand(buf, i, len);
+	this->_param = AParser::getParam(buf, i, len);
+
+	return ;
 }
 
 /* ************************************************************************** */
 /* *                              Member function                           * */
 /* ************************************************************************** */
 /**
- * @brief Check if c is a special char according to RFC2812
+ * @brief message to one string
  *
- * RFC2812: 2000 IRC Protocol
+ * Convert messgae object to one string that can be directly send to client
+ * CARREFUL This function does not check errros
+ *
+ *
+ * @return The IRC formatted message
  */
-static int	isspecial(const char c) {
-	switch (c) {
-		case LEFT_CURLY_BRACE :
-		case RIGHT_CURLY_BRACE :
-		case LEFT_BRACKET :
-		case RIGHT_BRACKET :
-		case CARET :
-		case BACKTICK :
-		case BACKSLASH :
-		case UNDERSCORE :
-		case PIPE :
-			return (1);
-		default :
-			return (0);
+std::string	Message::toString( void ) const {
+	std::string	str;
+
+	str.reserve(512);
+	if (this->_prefix[0] != ':')
+		str.append(1, ':');
+	str.append(this->_prefix + SPACE);
+
+	str.append(this->_command);
+
+	for (std::vector<std::string>::const_iterator it = this->_param.begin(); it != this->_param.end(); it++) {
+		str.append(SPACE + *it);
 	}
-}
-
-/**
- * @brief Check if end of message is reached
- *
- * Check if buf[i] currently pointing on CRLF (IRC termination character)
- * Check for various error at this moment
- *
- * @param buf The message buffer
- * @param i The index in the buffer buf
- * @param len The buffer len
- */
-int	crlf(const char *buf, int& i, const int len) {
-	if (i >= len - 1)
-		throw (Message::IncompleteMessageException());
-	if (buf[i] == CR && buf[i + 1] == LF)
-		return (1);
-	return (0);
-}
-
-/**
- * @brief Get the <prefix> part of the message
- *
- * @param buf The message buffer
- * @param i The index in buffer
- * @param len The buffer len
- */
-void Message::_parsePrefix(const char *buf, int& i, const int len) {
-	int	type = -1; //!< 0: nickname | 1: servername | -1: can be both
-
-	i = 1;
-	if (isspecial(buf[i])) //<! nickname parsing
-		type = NICKNAME_PREFIX;
-	else if (std::isdigit(buf[i]))
-		type = SERVER_PREFIX;
-	else if (std::isalpha(buf[i]))
-		type = -1;
-	else
-		throw (Message::InvalidPrefixException());
-
-	while (i < len && buf[i] != SPACE) {
-		if (buf[i] == POINT) { //!< Nickname only character encontered
-			if (type == NICKNAME_PREFIX)
-				throw (Message::InvalidPrefixException());
-			type = SERVER_PREFIX;
-		}
-		if (isspecial(buf[i])) { //!< Server only char
-			if (type == SERVER_PREFIX)
-				throw (Message::InvalidPrefixException());
-			type = NICKNAME_PREFIX;
-		}
-		if (!std::isalnum(buf[i] && buf[i] != MINUS))
-			throw (Message::InvalidPrefixException());
-		i++;
-	}
-	if (type == NICKNAME_PREFIX && std::isdigit(buf[1]))
-		throw (Message::InvalidPrefixException());
-	if (type == SERVER_PREFIX && isspecial(buf[1]))
-		throw (Message::InvalidPrefixException());
-	this->_prefix.assign(buf, buf + i); //!< Return prefix 
-}
-
-/**
- * @brief Get the <command> part of the message
- *
- * @param buf The message buffer
- * @param i The index in buffer
- * @param len The buffer len
- */
-void	Message::_parseCommand(const char *buf, int& i, const int len) {
-	int			cmd_len = 0;
-	std::string	sep = " \r"; //!< Define SPACE and CR has separator
-
-	if (std::isdigit(buf[i])) {
-		for (cmd_len = 0; cmd_len < 3; cmd_len++) {
-			if (!isdigit(buf[i + cmd_len]))
-				throw (Message::InvalidCommandException());
-		}
-	}
-	else if (std::isalpha(buf[i])) {
-		for (cmd_len = 0; i + cmd_len < len && sep.find(buf[i + cmd_len]) == std::string::npos; cmd_len++) {
-			if (!std::isalpha(buf[i + cmd_len]))
-				throw (Message::InvalidCommandException());
-		}
-	}
-	else
-		throw (Message::InvalidCommandException());
-	this->_command.assign(buf + i, buf + i + cmd_len);
-	i += cmd_len;
-}
-
-/**
- * @brief Extract one param from the message
- *
- * This function extract only one parameter
- *
- * @param buf The message buffer
- * @param i The index in buffer
- * @param len The buffer len
- */
-void	Message::_parseOneParam(const char *buf, int& i, const int len) {
-	int	param_len;
-
-	for (param_len = 0; param_len + i < len && buf[i + param_len] != SPACE
-			&& buf[i + param_len] != CR; param_len++) {
-		if (buf[i + param_len] == LF || buf[i + param_len] == 0)
-			throw (Message::InvalidParamException());
-	}
-	// param_len--;
-	this->_param.push_back(std::string().assign(buf + i, buf + i + param_len));
-	i += param_len;
-	return ;
-}
-
-/**
- * @brief Get the <param> part of the message
- *
- * Extract the parameters list fromn message
- *
- * @param buf The message buffer
- * @param i The index in buffer
- * @param len The buffer len
- */
-void	Message::_parseParam(const char *buf, int& i, const int len) {
-	std::string	param;
-
-	while (i < len && buf[i] != CR) {
-		if (buf[i] != SPACE)
-			throw (Message::InvalidParamException());
-		i++;
-		if (buf[i] == COLON) { //!< Trailling param
-			this->_parseOneParam(buf, ++i, len);
-			return ;
-		}
-		this->_parseOneParam(buf, i, len); //!< Middle param
-		// i++;
-	}
+	str.append("\r\n");
+	return (str);
 }
 
 /**
@@ -256,27 +149,22 @@ void	Message::_parseParam(const char *buf, int& i, const int len) {
  * Parse the buffer as a Message throwing error when needed
  *
  * @param buf The buffer containg the message to parse
+ * @param i The buffer index (in case of multile messages in the same buffer)
  * @param len The message len
  */
 void	Message::_init(const char *buf, int& i, const int len) {
 	if (len == 0) //! security but shouldn't happen
 		return ;
-	
-	//! get message prefix
-	if (buf[0] == ':') {
-		this->_parsePrefix(buf, i, len);
-		if (buf[i++] != SPACE)
-			throw (Message::InvalidMessageException());
+
+	if (buf[i] == ':') {
+		this->_prefix = AParser::getPrefix(buf, i, len);
+		i++; //!< Skip Space after prefix
 	}
 
-	//! Get command
-	this->_parseCommand(buf, i, len);
-	if (crlf(buf, i, len)) //!< End of mesage reached
-		return ;
+	this->_command = AParser::getCommand(buf, i, len);
+	this->_param = AParser::getParam(buf, i, len);
 
-	//! Get comand parameters
-	this->_parseParam(buf, i, len);
-	if (!crlf(buf, i, len))
+	if (std::strncmp(buf + i, "\r\n", 2) != 0)
 		throw (Message::InvalidMessageException());
 	i += 2; //!< Skip CRLF
 	return ;
@@ -287,28 +175,4 @@ void	Message::_init(const char *buf, int& i, const int len) {
 /* ************************************************************************** */
 const char*	Message::InvalidMessageException::what() const throw() {
 	return ("Invalid message");
-}
-
-const char*	Message::InvalidPrefixException::what() const throw() {
-	return ("Invalid prefix");
-}
-
-const char*	Message::InvalidNicknamePrefixException::what() const throw() {
-	return ("Invalid nickname prefix");
-}
-
-const char*	Message::InvalidServerNamePrefixException::what() const throw() {
-	return ("Invalid servername prefix");
-}
-
-const char*	Message::InvalidCommandException::what() const throw() {
-	return ("Invalid command");
-}
-
-const char*	Message::InvalidParamException::what() const throw() {
-	return ("Invalid parameter");
-}
-
-const char*	Message::IncompleteMessageException::what() const throw() {
-	return ("Incomplete message: Missing CRLF");
 }
