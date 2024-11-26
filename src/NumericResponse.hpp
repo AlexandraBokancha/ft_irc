@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   NumericResponse.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 12:34:23 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/26 16:17:58 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

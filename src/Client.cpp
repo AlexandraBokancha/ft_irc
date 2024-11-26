@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 11:49:57 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/26 15:57:27 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ Client::Client( void ) {
 	this->_realname = "";
 	this->_connected = false;
 	this->_registred = false;
+	this->_isOperator = false;
 	this->_fd = -1;
 	return ;
 }
@@ -36,6 +37,7 @@ Client::Client( const Client & rhs ) {
 	this->_realname = rhs._realname;
 	this->_connected = rhs._connected;
 	this->_registred = rhs._registred;
+	this->_isOperator = rhs._isOperator;
 	this->_fd = rhs._fd;
 	return ;
 }
@@ -95,12 +97,21 @@ void	Client::setNetId( struct sockaddr_in netId) {
 	this->_netId = netId;
 }
 
+
 void	Client::setFd( int fd ) {
 	this->_fd = fd;
 }
 
 void	Client::setNickname( const std::string& nick ) {
 	this->_nickname = nick;
+}
+
+void	Client::setOperator( void ){
+	this->_isOperator = true;
+}
+
+bool Client::isOperator( void ) const {
+	return (this->_isOperator);
 }
 
 int		Client::getJoinedChannel( void ) const {

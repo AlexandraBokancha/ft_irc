@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CommandExecutor.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 12:28:42 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/26 16:22:12 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,11 +32,6 @@ namespace {
 	/**
 	 * @brief Handle client password verification during registration
 	 *
-	 * If the client is already registered, it sends an `ERR_ALREADYREGISTRED` response.
-	 * If the password matches the server's password, the registration succeeds.
-	 * Otherwise, it sends an `ERR_PASSWDMISMATCH` response and throws an exception. 
-	 * If the `PASS` command is missing parameters, an `ERR_NEEDMOREPARAMS` response is sent.
-	 *
 	 * @param serv Actual server
 	 * @param client Client who send comand
 	 * @param msg Msg sent to server from client
@@ -47,24 +42,18 @@ namespace {
 		if (client.getRegistred() == true){
 			serv.respond(client.getFd(), ERR_ALREADYREGISTRED, client.getNickname().c_str());
 			return ;
-			// throw std::runtime_error("Client is already registred");
 		}
 		if (msg.getParam().size() >= 1){
 			if (serv.comparePassword(msg.getParam()[0]) == 0) {
-				// client.setPassword(const Message &msg, const std::string &serverPasswd);
-				// this->_validPass = true;
 				client.setConnected();
 				success_log("Password confirmed");
-				// return ;
 			}
 			else{
 				serv.respond(client.getFd(), ERR_PASSWDMISMATCH);
-				// throw std::runtime_error("Wrong password");
 			}
 		}
 		else{
 			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
-			// throw std::runtime_error("Wrong PASS cmd format");
 		}
 		return ;
 	}
@@ -126,7 +115,6 @@ namespace {
 				client.setRegistred();
 				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), client.getUsername().c_str(), client.getHostname().c_str());
 			}
-			// client.getValidUser() = true;
 		}
 		else
 			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
@@ -247,7 +235,7 @@ namespace {
 				serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
 				continue ;
 			}
-			//! Remov efrom channel
+			//! Remove from channel
 			channel->removeClient(client.getFd());
 			// BROADCAST TO CHANNEL
 			if (channel->isEmpty()) //!< Remove channel
@@ -310,6 +298,38 @@ namespace {
 		serv.respond(client.getFd(), "PONG");
 	}
 
+	/** @brief IRC OPER command
+	 * 
+		OPER message is used by a normal user to obtain operator privileges.
+		The combination of <user> and <password> are required to gain Operator privileges.
+			
+		If the client sending the OPER command supplies the correct password
+		for the given user, the server then informs the rest of the network
+		of the new operator by issuing a "MODE +o" for the clients nickname.
+		The OPER message is client-server only.
+	*/
+	void oper( Server & serv, Client & client, Message & msg ){
+		if (msg.getParam().size() == 2){
+			std::vector<std::string> tmp = msg.getParam();
+			
+			if (tmp[0] != serv.getOpUser()){
+				serv.respond(client.getFd(), ERR_NOOPERHOST);
+				return(war_log("ERR_NOOPERHOST sent to Client %d", client.getFd()));
+			}
+			if (tmp[1] != serv.getOpPasswd()){
+				serv.respond(client.getFd(), ERR_PASSWDMISMATCH);
+				return (war_log("ERR_PASSWDMISMATCH sent to Client %d", client.getFd()));
+			}
+			client.setOperator(); // !< this client is now Server operator
+			serv.respond(client.getFd(), RPL_YOUREOPER);
+			success_log("MODE +o %s", client.getNickname().c_str());
+		}
+		else{
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return (war_log("ERR_NEEDMOREPARAMS sent to Client %d", client.getFd()));
+		}
+	}
+	
 	/**
 	 * @brief Init the commandMap
 	 *
@@ -331,9 +351,10 @@ namespace {
 		commandMap.push_back(std::make_pair("USER", user));
 		commandMap.push_back(std::make_pair("JOIN", join));
 		commandMap.push_back(std::make_pair("PART", part));
-		commandMap.push_back(std::make_pair("TIME", time));
-		commandMap.push_back(std::make_pair("INFO", info));
-		commandMap.push_back(std::make_pair("PONG", pong));
+		commandMap.push_back(std::make_pair("time", time)); // irssi l'envoi en minuscule
+		commandMap.push_back(std::make_pair("info", info)); // irssi l'envoie en minuscule
+		commandMap.push_back(std::make_pair("PING", pong)); // PONG reagit a la cmd PING envoye par le client
+		commandMap.push_back(std::make_pair("OPER", oper));
 
 		return (commandMap);
 	}

@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 12:32:51 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/26 15:31:36 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 
 /* FOR TESTING PURPOSE */
 # include "log.hpp"
-#include <cstring>
+# include <cstring>
 
 void	Server::printChannel( void ) const {
 	std::cout << "Channel :" << std::endl;
@@ -28,11 +28,6 @@ void	Server::printChannel( void ) const {
 	}
 }
 
-void	print_client(std::vector<Client> v) {
-	for (std::vector<Client>::const_iterator it = v.begin(); it < v.end(); it++) {
-		std::cout << *it << std::endl;
-	}
-}
 
 /* ************************************************************************** */
 /* *                             Signal Handling                            * */
@@ -56,7 +51,7 @@ void	set_signal( void ) {
 /* *                       Constructors && Destructors                      * */
 /* ************************************************************************** */
 Server::Server( void )
-	: _port(8080), _passwd("0000")
+	: _port(8080), _passwd("0000"), _opPasswd("admin"), _opUser("admin")
 {
 	this->_serverInfo = NULL;
 	this->_socket = -1;
@@ -64,11 +59,10 @@ Server::Server( void )
 	this->_client = std::vector<Client*>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
-} //! A mon avis on peut tege ce constructeur, vu que le main prends 2 parametres qu'on doit parser
-
+}
 
 Server::Server(const int port, const std::string password )
-	: _port(port), _passwd(password)
+	: _port(port), _passwd(password), _opPasswd("admin"), _opUser("admin")
 {
 	std::cout << "Created Server object using port " << port << std::endl;
 	this->_serverInfo = NULL;
@@ -115,6 +109,14 @@ Server& Server::operator=( Server const & rhs ) {
  */
 std::string	Server::getPrefix( void ) const {
 	return ("localhost");
+}
+
+std::string Server::getOpPasswd( void ) const {
+	return (this->_opPasswd);
+}
+
+std::string Server::getOpUser( void ) const {
+	return (this->_opUser);
 }
 
 /* ************************************************************************** */
@@ -185,9 +187,9 @@ Client*	Server::findClient( const std::string& nick ) {
 /**
  * @brief Server response to client command
  *
- * This is a way to snend formated repomse to client comand in a formatted way
+ * This is a way to snend formated response to client command in a formatted way
  *
- * @pram client_sock Client socket to send message to
+ * @param client_sock Client socket to send message to
  * @param fmt The formated message to send (defined in Numericresponse.hpp)
  * @param ... The fmt argument
  */
@@ -283,7 +285,7 @@ Channel*	Server::findChannel( const std::string& name ) {
 		//! Used to check if a safe channel with the same shortname exist
 		if (channel_name[0] == '!' && safe_channel
 			&& (strcmp(channel_name.c_str() + 6, name.c_str() + 1) == 0))
-			return (&(*it));
+			return (&(*it)); // on peut remplacer par -> channel_name.substr(6).compare(name.substr(1)) == 0
 		if (name.compare(it->getName()) == 0)
 			return (&(*it));
 	}
@@ -523,9 +525,6 @@ void	Server::receiveMsg( int& i ) {
 			while (msg_i < buffer_size - 2){
 				Message msg(buffer, msg_i, buffer_size);
 				
-				/* FOR TESTING PURPOSE -> map with cmds here */
-				
-				//broadcast(buffer, buffer_size, this->_pollFd[i].fd);
 				CommandExecutor::execute(*this, *sender, msg);
 
 				// broadcast(buffer + start, msg_i - start - 2, this->_pollFd[i].fd);
