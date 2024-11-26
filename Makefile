@@ -1,7 +1,6 @@
 ### COMPILATION ###
 CPP = c++
-CPPFLAGS = -std=c++98 -g3
-#-Wall -Wextra -Werror -g3
+CPPFLAGS = -std=c++98 -g3 -Wall -Wextra -Werror -g3
 
 ### PROJECT NAME ###
 PROJECT = ircserv

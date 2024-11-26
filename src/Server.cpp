@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/25 17:16:00 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/26 11:19:10 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -482,6 +482,56 @@ void Server::infoCmd( int fd ) const {
 //! la fonciton pour faire plaisir a irssi qui envoie chaque minute des PING
 void Server::pongCmd( int fd ) const {
 	replyToClient("PONG\r\n", &fd); 
+}
+
+/** @brief Handle OPER command according to IRC protocol
+
+	Command: OPER
+	Parameters: <user> <password>
+	
+	OPER message is used by a normal user to obtain operator privileges.
+	The combination of <user> and <password> are required to gain Operator privileges.
+		
+	If the client sending the OPER command supplies the correct password
+	for the given user, the server then informs the rest of the network
+	of the new operator by issuing a "MODE +o" for the clients nickname.
+	The OPER message is client-server only.
+
+	Numeric Replies:
+
+	ERR_NEEDMOREPARAMS
+	ERR_NOOPERHOST
+	RPL_YOUREOPER
+	ERR_PASSWDMISMATCH
+*/
+void operCmd(Server & serv, Client & client, Message & msg){
+	// //! for testing purpose -> need to have an acces to Channel attributes
+	// Channel channel;
+	// if (msg.getParam().size() == 2){
+	// 	std::list<std::string> tmp = msg.getParam();
+	// 	std::list<std::string>::const_iterator it = tmp.begin();
+		
+	// 	if (*it++ != channel.getPassword()){
+	// 		replyToClient(ERR_PASSWDMISMATCH(), client.getFd());
+	// 		war_log("ERR_PASSWDMISMATCH sent to Client %d", client.getFd());
+	// 		return ;
+	// 	}
+		
+	// 	if (*it++ != channel.getOperator()){
+	// 		replyToClient(ERR_NOOPERHOST(), client.getFd());
+	// 		war_log("ERR_NOOPERHOST sent to Client %d", client.getFd());
+	// 		return ;
+	// 	}
+	// 	client.setPrivilege('O'); // macro 'O' dans Channel.hpp 
+	// 	//! need to inform everyone -> broadcast msg
+	// 	success_log("Client %d has operator privileges from now", client.getFd());
+	// }
+	// else{
+	// 	replyToClient(ERR_NEEDMOREPARAMS(msg.getCommand()), client.getFd());
+	// 	war_log("ERR_NEEDMOREPARAMS sent to Client %d", client.getFd());
+	// 	return ;
+	// }
+	
 }
 
 /* ************************************************************************** */

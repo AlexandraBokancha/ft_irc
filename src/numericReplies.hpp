@@ -24,6 +24,10 @@
 
 // INFO
 # define RPL_INFO(str) (":localhost 371 "  + str + "\r\n")
-# define RPL_ENDOFINFO() (":localhost 374 : End of /INFO\r\n")
+# define RPL_ENDOFINFO() (":localhost 374 :End of /INFO\r\n")
+
+// OPER
+# define ERR_NOOPERHOST() (":localhost 491 :No O-lines for your host\r\n")
+# define RPL_YOUREOPER() ("localhost 381 :You are now an IRC operator")
 
 #endif                                                                       

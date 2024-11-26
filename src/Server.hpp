@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/25 16:58:50 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/25 19:50:43 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@
 # include "Client.hpp"
 # include "Message.hpp"
 # include "irc.hpp"
+# include "Channel.hpp"
 
 extern int g_signal;
 
