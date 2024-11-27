@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/27 14:03:12 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/27 14:17:47 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -366,7 +366,7 @@ namespace {
 		
 		success_log("KILL %s. Comment: %s", tmp[0].c_str(), tmp[1].c_str());
 		
-		int index = serv.findClientIndex(client.getNickname());
+		int index = serv.findClientIndex(tmp[0]);
 		serv.disconnectClient(index); //!< this client was deconnected from the server
 	}
 
