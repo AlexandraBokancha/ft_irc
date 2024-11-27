@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/27 14:17:47 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/27 15:27:18 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -369,7 +369,44 @@ namespace {
 		int index = serv.findClientIndex(tmp[0]);
 		serv.disconnectClient(index); //!< this client was deconnected from the server
 	}
-
+	
+	/** @brief IRC RESTART command
+	 * 
+	 * No parameters.
+	 * 
+	 * The restart message can only be used by an operator
+	 * to force a server restart itself.
+	 *  
+	*/
+	void restart( Server & serv, Client & client, Message & msg ){
+		(void) msg;
+		if (!client.isOperator()){
+			serv.respond(client.getFd(), ERR_NOPRIVILEGES);
+			return (war_log("ERR_NOPRIVILEGES sent to Client %d", client.getFd()));
+		}
+		
+		//<! will notify all clients and IRC operators about restarting a server
+		war_log("Server will be restarted by %s", client.getNickname().c_str());
+		serv.broadcast(":localhost :Server will be restarted\r\n", 39, -1);
+    
+		serv.stopServer(); //<! will stop the server and deconnect every client before restart the server
+		
+		std::stringstream ss;
+		ss << serv.getPort();	
+    	const char *program = "./ircserv";
+    	const char *const args[] = { "./ircserv", ss.str().c_str(), serv.getPasswd().c_str(), NULL};
+	
+    	if (execv(program, const_cast<char *const*>(args)) == -1) { //<! will restart the server with the same port/password
+        	fatal_log("Failed to restart server");
+        	exit(1);
+    	}
+	}
+	
+	
+	/* ************************************************************************** */
+	/* *                         Command Executor Init                          * */
+	/* ************************************************************************** */
+	
 	/**
 	 * @brief Init the commandMap
 	 *
@@ -396,6 +433,7 @@ namespace {
 		commandMap.push_back(std::make_pair("PING", pong)); // PONG reagit a la cmd PING envoye par le client
 		commandMap.push_back(std::make_pair("OPER", oper));
 		commandMap.push_back(std::make_pair("kill", kill));
+		commandMap.push_back(std::make_pair("restart", restart));
 
 		return (commandMap);
 	}

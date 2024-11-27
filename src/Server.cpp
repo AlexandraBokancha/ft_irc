@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/27 13:49:21 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/27 15:05:40 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,6 +117,14 @@ std::string Server::getOpPasswd( void ) const {
 
 std::string Server::getOpUser( void ) const {
 	return (this->_opUser);
+}
+
+std::string Server::getPasswd( void ) const{
+	return (this->_passwd);
+}
+
+int Server::getPort( void ) const{
+	return (this->_port);
 }
 
 /* ************************************************************************** */

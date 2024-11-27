@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/27 13:49:30 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/27 15:18:26 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,8 @@ public:
 	std::string					getPrefix( void ) const;
 	std::string					getOpPasswd( void ) const;
 	std::string					getOpUser( void ) const;
+	std::string					getPasswd( void ) const;
+	int							getPort( void ) const;
 
 	//! Server exceptions
 	class InvalidArgException : public std::exception {
@@ -81,6 +83,7 @@ public:
 	void		addChannel(Channel& channel);
 
 	void		respond( const int& client_sock, const char* fmr, ... ) const;
+	void		broadcast( const char *buffer, int len, int fd ) const;
 
 
 	//! FOR TESTING PURPOSE
@@ -113,7 +116,6 @@ private:
 	void						receiveMsg( int& i );
 	int							sendMsg(int socket, const Message& msg ) const;
 	int							sendMsg( int socket, const char *buf, int len ) const;
-	void						broadcast( const char *buffer, int len, int fd ) const;
 
 };
 
