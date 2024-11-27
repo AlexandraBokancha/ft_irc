@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 16:17:58 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/26 17:46:45 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,16 +19,16 @@
 #ifndef NUMERIC_RESPONSE_HPP
 # define NUMERIC_RESPONSE_HPP
 
-// PASS
-
+//! GENERAL
 # define ERR_NEEDMOREPARAMS		"461 %s :Not enough parameters"
 # define ERR_ALREADYREGISTRED	"462 %s :You may not reregister."
 # define ERR_PASSWDMISMATCH		"464 * :Password incorrect." // avec "*" a la place de nick car pass est 
                                                               // une premiere cmd a executer (logiquement 
                                                               // on peut pas avoir le nick)
+# define ERR_NOPRIVILEGES       "481 :Permission Denied- You're not an IRC opertator"
+# define ERR_NOSUCHNICK         "401 %s :No such nick/channel"
 
-// NICK
-
+//! NICK
 # define ERR_NONICKNAMEGIVEN	"431 :No nickname given"
 # define ERR_ERRONEUSNICKNAME	"432 * %s :Erroneus nickname"
 # define ERR_NICKNAMEINUSE		"433 * %s :Nickname is already in use" 
@@ -47,14 +47,14 @@
 //! SUCCESS_RESPONSE
 # define RPL_WELCOME			"001 %s :Welcome to the Inernet Relay Network, %s!%s@%s"
 
-// TIME
+//! TIME
 # define RPL_TIME				"391 %s"
 
-// INFO
+//! INFO
 # define RPL_INFO				"371 %s"
 # define RPL_ENDOFINFO			"374 : End of /INFO"
 
-// OPER
+//! OPER
 # define ERR_NOOPERHOST			"491 :No O-lines for your host"
 # define RPL_YOUREOPER			"381 :You are now an IRC operator"
 

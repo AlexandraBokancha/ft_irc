@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 15:31:36 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/27 13:49:21 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,6 +184,17 @@ Client*	Server::findClient( const std::string& nick ) {
 	}
 	return (NULL);
 }
+
+int Server::findClientIndex( const std::string & nick ){
+	for (std::size_t i = 0; i < _client.size(); ++i){
+		if (_client[i]->getNickname() == nick){
+			return (static_cast<int>(i));
+		}
+	}
+	return (-1);
+}
+
+
 /**
  * @brief Server response to client command
  *

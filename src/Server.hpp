@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 15:30:37 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/27 13:49:30 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@
 # include <netdb.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
+# include <algorithm>
 # include "NumericResponse.hpp"
 
 # define MAX_CHANNEL_PER_CLIENT 10
@@ -64,12 +65,15 @@ public:
 
 
 	Client*		findClient( const std::string& nick );
+	Client*		findClient( int client_sock );
+	int			findClientIndex( const std::string & nick);	
 
 	void		pollPushBack( int fd, short events );
 	int			comparePassword( const std::string& str ) const;
 
 	Channel*	findChannel( const std::string& name );
 	void		delChannel( Channel& channel );
+	void		disconnectClient( int& index );
 
 	void		startServer( const char *port_str ); //!< Start the server
 	void		runServer( void );
@@ -103,8 +107,6 @@ private:
 
 	//! Private member function
 	void						acceptNewClient( void );
-	void						disconnectClient( int& index );
-	Client*						findClient( int client_sock );
 	
 	
 	void						checkEvent( int& i );

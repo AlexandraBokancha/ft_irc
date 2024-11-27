@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 16:22:12 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/27 14:03:12 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -298,6 +298,10 @@ namespace {
 		serv.respond(client.getFd(), "PONG");
 	}
 
+	/* ************************************************************************** */
+	/* *                         IRC Operator's commands                        * */
+	/* ************************************************************************** */
+
 	/** @brief IRC OPER command
 	 * 
 		OPER message is used by a normal user to obtain operator privileges.
@@ -309,27 +313,63 @@ namespace {
 		The OPER message is client-server only.
 	*/
 	void oper( Server & serv, Client & client, Message & msg ){
-		if (msg.getParam().size() == 2){
-			std::vector<std::string> tmp = msg.getParam();
-			
-			if (tmp[0] != serv.getOpUser()){
-				serv.respond(client.getFd(), ERR_NOOPERHOST);
-				return(war_log("ERR_NOOPERHOST sent to Client %d", client.getFd()));
-			}
-			if (tmp[1] != serv.getOpPasswd()){
-				serv.respond(client.getFd(), ERR_PASSWDMISMATCH);
-				return (war_log("ERR_PASSWDMISMATCH sent to Client %d", client.getFd()));
-			}
-			client.setOperator(); // !< this client is now Server operator
-			serv.respond(client.getFd(), RPL_YOUREOPER);
-			success_log("MODE +o %s", client.getNickname().c_str());
-		}
-		else{
+		if (msg.getParam().size() < 2){
 			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 			return (war_log("ERR_NEEDMOREPARAMS sent to Client %d", client.getFd()));
 		}
+		
+		std::vector<std::string> tmp = msg.getParam();	
+		
+		if (tmp[0] != serv.getOpUser()){
+			serv.respond(client.getFd(), ERR_NOOPERHOST);
+			return(war_log("ERR_NOOPERHOST sent to Client %d", client.getFd()));
+		}
+		
+		if (tmp[1] != serv.getOpPasswd()){
+			serv.respond(client.getFd(), ERR_PASSWDMISMATCH);
+			return (war_log("ERR_PASSWDMISMATCH sent to Client %d", client.getFd()));
+		}
+		
+		client.setOperator(); // !< this client is now Server operator
+		serv.respond(client.getFd(), RPL_YOUREOPER);
+		
+		success_log("MODE +o %s", client.getNickname().c_str());
 	}
 	
+	/** @brief IRC KILL command
+	 * 
+	 * <nickname> <comment>
+	 * 
+	 * normally this command is used if there is a dublicate entry in 
+	 * the list of valid nicknames
+	 * 
+	 * NOTE:
+	 * It is recommended that only Operators be allowed to kill other users
+	 * with KILL message. In an ideal world not even operators would need
+	 * to do this and it would be left to servers to deal with.
+	 * 
+	 */
+	void kill( Server & serv, Client & client, Message & msg){
+		if (!client.isOperator()){
+			serv.respond(client.getFd(), ERR_NOPRIVILEGES);
+			return (war_log("ERR_NOPRIVILEGES sent to Client %d", client.getFd()));
+		}
+		if (msg.getParam().size() < 2){
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return (war_log("ERR_NEEDMOREPARAMS sent to Client %d", client.getFd()));
+		}
+		std::vector<std::string> tmp = msg.getParam();
+		if (serv.findClient(tmp[0]) == NULL){
+			serv.respond(client.getFd(), ERR_NOSUCHNICK, tmp[0].c_str());
+			return (war_log("ERR_NOSUCHNICK sent to Client %d", client.getFd()));
+		}
+		
+		success_log("KILL %s. Comment: %s", tmp[0].c_str(), tmp[1].c_str());
+		
+		int index = serv.findClientIndex(client.getNickname());
+		serv.disconnectClient(index); //!< this client was deconnected from the server
+	}
+
 	/**
 	 * @brief Init the commandMap
 	 *
@@ -351,10 +391,11 @@ namespace {
 		commandMap.push_back(std::make_pair("USER", user));
 		commandMap.push_back(std::make_pair("JOIN", join));
 		commandMap.push_back(std::make_pair("PART", part));
-		commandMap.push_back(std::make_pair("time", time)); // irssi l'envoi en minuscule
+		commandMap.push_back(std::make_pair("time", time)); // irssi l'envoie en minuscule
 		commandMap.push_back(std::make_pair("info", info)); // irssi l'envoie en minuscule
 		commandMap.push_back(std::make_pair("PING", pong)); // PONG reagit a la cmd PING envoye par le client
 		commandMap.push_back(std::make_pair("OPER", oper));
+		commandMap.push_back(std::make_pair("kill", kill));
 
 		return (commandMap);
 	}
