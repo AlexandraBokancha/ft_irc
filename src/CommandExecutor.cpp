@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/27 15:27:18 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 16:05:55 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,7 +83,8 @@ namespace {
 			success_log("NICK %s enregistred", client.getNickname().c_str());
 			if (!client.getUsername().empty()) {
 				client.setRegistred();
-				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), client.getUsername().c_str(), client.getHostname().c_str());
+				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), \
+					client.getUsername().c_str(), client.getHostname().c_str());
 			}
 		}
 		else
@@ -113,7 +114,8 @@ namespace {
 			client.getRealname() = tmp[3];
 			if (!client.getNickname().empty()) {
 				client.setRegistred();
-				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), client.getUsername().c_str(), client.getHostname().c_str());
+				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), \
+					client.getUsername().c_str(), client.getHostname().c_str());
 			}
 		}
 		else
@@ -243,6 +245,29 @@ namespace {
 		}
 	}
 
+	/** 
+	 * @brief IRC TOPIC command
+	 * 
+	 * <channel> [<topic>]
+	 * 
+	 * Message is used to change or view the topic of a channel.
+	 * If there is no "topic" parameter -> view
+	 * If there is "topic" -> change
+	 * 
+	 * need to check channel modes; ex. "t" flag -> topic can be
+	 * settable only by channel operator
+	 * 
+	 */
+	// void topic( Server& serv, Client& client, Message& msg ) {
+	// 	if (msg.getParam().size() == 0) { //!< No parameter
+	// 		serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+	// 		return ;
+	// 	}
+	// 	if (msg.getParam().size() == 1){
+			
+	// 	}
+	// }
+	
 	/**
 	 * @brief IRC TIME command
 	 *
@@ -257,6 +282,10 @@ namespace {
 		std::time_t now = std::time(NULL);
 		std::string timeStr = std::ctime(&now);
 
+	  	size_t pos = timeStr.find('\n');
+    	if (pos != std::string::npos) {
+        	timeStr.erase(pos, 1); //<! Supprime \n a la find de timeStr
+    	}
 		serv.respond(client.getFd(), RPL_TIME, timeStr.c_str());
 	}
 
@@ -295,9 +324,26 @@ namespace {
 	 */
 	void	pong( Server& serv, Client& client, Message& msg) {
 		(void) msg;
-		serv.respond(client.getFd(), "PONG");
+		serv.respond(client.getFd(), "PONG\r\n");
 	}
 
+
+	/** 
+	 * @brief IRC QUIT command
+	 * 
+	 * [<Quit message>] is optional
+	 * 
+	 */
+	void quit( Server& serv, Client& client, Message& msg ) {
+		if (!msg.getParam().empty()){
+			log("Client %s quit the server with next message: %s", client.getNickname().c_str(), msg.getParam()[0].c_str());
+		}
+		int index = serv.findClientIndex(client.getNickname());
+		index++; // -> disconnectClient() fait -1 de l'index
+		success_log("Client %s will be disconnected from the server", client.getNickname().c_str());
+		serv.disconnectClient(index);
+	}
+	
 	/* ************************************************************************** */
 	/* *                         IRC Operator's commands                        * */
 	/* ************************************************************************** */
@@ -367,6 +413,8 @@ namespace {
 		success_log("KILL %s. Comment: %s", tmp[0].c_str(), tmp[1].c_str());
 		
 		int index = serv.findClientIndex(tmp[0]);
+		index++; // -> disconnectClient() fait -1 de l'index
+		std::cout << "index : " << index << std::endl;
 		serv.disconnectClient(index); //!< this client was deconnected from the server
 	}
 	
@@ -392,8 +440,9 @@ namespace {
 		serv.stopServer(); //<! will stop the server and deconnect every client before restart the server
 		
 		std::stringstream ss;
-		ss << serv.getPort();	
-    	const char *program = "./ircserv";
+		ss << serv.getPort();
+		
+		const char *program = "./ircserv";
     	const char *const args[] = { "./ircserv", ss.str().c_str(), serv.getPasswd().c_str(), NULL};
 	
     	if (execv(program, const_cast<char *const*>(args)) == -1) { //<! will restart the server with the same port/password
@@ -434,6 +483,7 @@ namespace {
 		commandMap.push_back(std::make_pair("OPER", oper));
 		commandMap.push_back(std::make_pair("kill", kill));
 		commandMap.push_back(std::make_pair("restart", restart));
+		commandMap.push_back(std::make_pair("QUIT", quit));
 
 		return (commandMap);
 	}

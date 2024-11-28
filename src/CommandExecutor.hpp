@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/19 09:11:20 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/27 15:12:24 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 14:37:12 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@
 # include <vector>
 # include <iterator>
 # include <sstream>
+# include <string>
 # include "AParser.hpp"
 
 class Server;
