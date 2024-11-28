@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 16:05:55 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 16:52:23 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
  */
 
 # include "CommandExecutor.hpp"
+#include "AParser.hpp"
 # include "Channel.hpp"
 # include "NumericResponse.hpp"
 # include "Server.hpp"
@@ -123,6 +124,62 @@ namespace {
 	}
 
 	/**
+	 * @brief Handle MODE command
+	 *
+	 * IRC MODE cmd
+	 * 
+	 * @param serv Actual server
+	 * @param client Client who send comand
+	 * @param msg Msg sent to server from client
+	 */
+	void	mode(Server& serv, Client& client, Message& msg) {
+		if (msg.getParam().size() == 0) { //!< No parameters
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
+		if (msg.getParam()[0].compare(client.getNickname()) != 0) { //!< Nickname not matching user
+			serv.respond(client.getFd(), ERR_USERSDONTMATCH);
+			return ;
+		}
+		if (msg.getParam().size() == 1) { //!< Send User mode
+			serv.respond(client.getFd(), RPL_UMODEIS, client.getNickname().c_str(), client.getModeStr().c_str());
+			return ;
+		}
+
+		int	sign = 0; //<! MODE sign ('-' < 0 | ??? == 0 | '+' > 0)
+		int flag = client.getMode();
+		std::vector<std::string>::const_iterator it;
+		std::vector<std::string>	mode_list = AParser::getModeList(msg.getParam()[1]);
+		for (it = mode_list.begin(); it != mode_list.end(); it++) {
+			sign = (it->begin()[0] == '+' ? 1 : -1);
+			for (std::string::const_iterator s_it = it->begin() + 1; s_it != it->end(); s_it++) {
+				switch (*s_it) {
+					case 'i' :
+						flag = (sign > 0 ? flag | INVISIBLE : flag & ~INVISIBLE);
+						break ;
+					case 'w' :
+						flag = (sign > 0 ? flag | WALLOPS : flag & ~WALLOPS);
+						break ;
+					case 'r' :
+						flag = (sign > 0 ? flag | RESTRICTED_USER : flag);
+						break ;
+					case 'o' :
+						flag = (sign > 0 ? flag : flag & ~OPERRATOR);
+						break ;
+					case 'O' :
+						flag = (sign > 0 ? flag : flag & ~LOCAL_OPERATOR);
+						break ;
+					default :
+						serv.respond(client.getFd(), ERR_UMODEUNKNOWNFLAG);
+						return ;
+				}
+			}
+		}
+		log("Changed client %d mode", client.getFd());
+		client.setMode(flag);
+	}
+
+	/**
 	 * @brief IRC JOIN command
 	 *
 	 * Perform IRC JOIN command and respond
@@ -160,7 +217,6 @@ namespace {
 				Channel	new_channel(&client, *channel_it);
 				serv.addChannel(new_channel);
 				serv.respond(client.getFd(), "JOIN %s", channel_it->c_str());
-				serv.printChannel();
 				continue; ;
 			}
 
@@ -324,7 +380,7 @@ namespace {
 	 */
 	void	pong( Server& serv, Client& client, Message& msg) {
 		(void) msg;
-		serv.respond(client.getFd(), "PONG\r\n");
+		serv.respond(client.getFd(), "PONG\r\n :localhost");
 	}
 
 

@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 16:08:11 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 16:47:47 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,12 +20,19 @@
 # include <iostream>
 # include <unistd.h>
 # include <vector>
+#include <arpa/inet.h>		//!< Just for struct sockaddr_in operator<<
+#include <sys/socket.h>		//!< Just for struct sockaddr_in operator<<
+#include <bitset> //<! To print mode in baniry format
 
 # include "log.hpp"
 # include "Message.hpp"
 
-#include <arpa/inet.h>		//!< Just for struct sockaddr_in operator<<
-#include <sys/socket.h>		//!< Just for struct sockaddr_in operator<<
+# define INVISIBLE		 0x01
+# define WALLOPS   		 0x02
+# define OPERRATOR 		 0x04
+# define LOCAL_OPERATOR  0x08
+# define RESTRICTED_USER 0x10
+# define AWAY            0x20
 
 class Client {
 public:
@@ -37,7 +44,6 @@ public:
 
 	//* Getters and Setters *//
 	struct sockaddr_in	getNetId( void ) const;
-	// std::string			getPassword( void ) const;
 	std::string			getHostname( void ) const;
 	std::string			getUsername( void ) const;
 	std::string			getNickname( void ) const;
@@ -47,6 +53,8 @@ public:
 	bool				getRegistred( void ) const;
 	int					getFd( void ) const;
 	int					getJoinedChannel( void ) const;
+	int					getMode( void ) const;
+	std::string			getModeStr( void ) const;
 
 	void				setRegistred( void );
 	void				setConnected( void );
@@ -55,6 +63,7 @@ public:
 	void				setNickname( const std::string& s );
 	void				setOperator( void );
 	bool				isOperator( void ) const;
+	void				setMode( const short mode );
 
 private:
 	struct sockaddr_in	_netId;		//!< Client addr
@@ -67,9 +76,11 @@ private:
 	bool				_connected; //! Entered right PASS
 	bool				_registred; //! User fully registered
 	
+	bool				_isOperator;
+
 	int					_fd; //!< Pointer to server_poll fd
 	int					_joinedChannel; //!< Number of joinend channel
-	bool				_isOperator;
+	short				_mode;
 
 };
 

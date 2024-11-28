@@ -6,11 +6,13 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 15:57:27 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 16:46:44 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+
 #include "Client.hpp"
+#include <string>
 
 /* ************************************************************************** */
 /* *                       Constructors && Destructors                      * */
@@ -26,6 +28,7 @@ Client::Client( void ) {
 	this->_registred = false;
 	this->_isOperator = false;
 	this->_fd = -1;
+	this->_mode = 0;
 	return ;
 }
 
@@ -39,6 +42,7 @@ Client::Client( const Client & rhs ) {
 	this->_registred = rhs._registred;
 	this->_isOperator = rhs._isOperator;
 	this->_fd = rhs._fd;
+	this->_mode = 0;
 	return ;
 }
 
@@ -85,6 +89,29 @@ int	Client::getFd( void ) const {
 	return (this->_fd);
 }
 
+int		Client::getJoinedChannel( void ) const {
+	return (this->_joinedChannel);
+}
+
+int		Client::getMode( void ) const {
+	return (this->_mode);
+}
+
+std::string	Client::getModeStr( void ) const {
+	std::string	result = "";
+	if (this->_mode & INVISIBLE)
+		result += "+i";
+	if (this->_mode & WALLOPS)
+		result += "+w";
+	if (this->_mode & OPERRATOR)
+		result += "+o";
+	if (this->_mode & LOCAL_OPERATOR)
+		result += "+O";
+	if (this->_mode & RESTRICTED_USER)
+		result += "+r";
+	return (result);
+}
+
 void Client::setConnected( void ){
 	this->_connected = true;
 }
@@ -114,8 +141,8 @@ bool Client::isOperator( void ) const {
 	return (this->_isOperator);
 }
 
-int		Client::getJoinedChannel( void ) const {
-	return (this->_joinedChannel);
+void	Client::setMode(const short mode) {
+	this->_mode = mode;
 }
 
 
@@ -152,7 +179,8 @@ std::ostream&	operator<<( std::ostream& os, const Client& rhs ) {
 		<< "  - NICK: " << rhs.getNickname() << std::endl
 		<< "  - USER: " << rhs.getUsername() << std::endl
 		<< "  - REALNAME: " << rhs.getRealname() << std::endl
-		<< "  - SERVERNAME: " << rhs.getServername() << std::endl;
+		<< "  - SERVERNAME: " << rhs.getServername() << std::endl
+		<< "  - MODE: << " << std::bitset<8>(rhs.getMode()) << std::endl;
 		// << "  - SOCK: " << (rhs.getFd() == NULL ? 0 : *rhs.getFd()) << std::endl;
 	return (os);
 }

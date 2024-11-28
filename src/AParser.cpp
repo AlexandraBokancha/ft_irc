@@ -503,6 +503,59 @@ std::vector<std::string>	AParser::getKeyList(const std::string &arg) {
 	return (channelList);
 }
 
+/**
+ * @brief Extract one mode from mode list
+ *
+ * Used in MODE parsing
+ * result is as follow :
+ * <'+' / '-'> *(charachter)
+ *
+ * @param arg String containing the mode list
+ * @return A string containing one mode prefixed by it's flag (+ or -)
+ */
+std::string	AParser::getMode( const std::string& arg, std::string::const_iterator& pos ) {
+	//! Error check
+	// while (pos != arg.end() && !(*pos == PLUS || *pos == MINUS))
+	// 	pos++;
+	// if (pos == arg.end())
+	// 	return ("");
+
+	std::string	result(1, *pos);
+	pos++;
+	for ( ; pos != arg.end() && !(*pos == PLUS || *pos == MINUS); pos++) {
+		result.append(1, *pos);
+	}
+	return (result);
+}
+
+/**
+ * @brief Extract mode list from messgae parameter
+ *
+ * Used in MODE key parsing and maybe others...
+ * result is as follow :
+ * {
+ *	{"<( + / - )> <a/i/o...>"},
+ *	{"<( + / - )> <a/i/o...>"},
+ *	{"<( + / - )> <a/i/o...>"},
+ *	 ...
+ * }
+ *
+ * @param arg String containing the mode list
+ * @return Vector containg every mode param
+ */
+std::vector<std::string>	AParser::getModeList( const std::string &arg) {
+	std::vector<std::string>	result;
+	std::string					tmp;
+	std::string::const_iterator	pos;
+
+	for (pos = arg.begin(); pos != arg.end(); ) {
+		tmp = AParser::getMode(arg, pos);
+		if (tmp.length() > 1)
+			result.push_back(tmp);
+	}
+	return (result);
+}
+
 /* ************************************************************************** */
 /* *                            Exception handler                           * */
 /* ************************************************************************** */

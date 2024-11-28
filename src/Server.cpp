@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 13:23:35 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 16:54:19 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,8 @@
 
 /* FOR TESTING PURPOSE */
 # include "log.hpp"
-# include <cstring>
+#include <cstring>
+#include <netdb.h>
 
 void	Server::printChannel( void ) const {
 	std::cout << "Channel :" << std::endl;
@@ -28,6 +29,11 @@ void	Server::printChannel( void ) const {
 	}
 }
 
+void	print_client(std::vector<Client> v) {
+	for (std::vector<Client>::const_iterator it = v.begin(); it < v.end(); it++) {
+		std::cout << *it << std::endl;
+	}
+}
 
 /* ************************************************************************** */
 /* *                             Signal Handling                            * */
@@ -251,7 +257,6 @@ void	Server::respond(const int& client_sock, const char* fmt, ...) const {
 	log("Sending :%s to client: %d", buffer.c_str(), client_sock);
 
 	response.setContent(buffer);
-	std::cout << response << std::endl;
 	sendMsg(client_sock, response);
 }
 
@@ -373,9 +378,10 @@ void	Server::startServer( const char *port_str ) {
 									 //!< connexion on any of the host net adresses
 	if (getaddrinfo(NULL, port_str, &hints, &servInfo) != 0)
 		throw (std::runtime_error(std::string("getaddrinfo: ") + std::strerror(errno)));
+
 	this->_serverInfo = servInfo;
 
-
+	// this->_socket = socket(this->_serverInfo->ai_family, this->_serverInfo->ai_socktype, this->_serverInfo->ai_protocol);
 	this->_socket = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
 	if (this->_socket == -1)
 		throw (std::runtime_error(std::string("socket: ") + std::strerror(errno)));
@@ -550,7 +556,7 @@ void	Server::receiveMsg( int& i ) {
 			}
 		}
 		catch (std::exception & e){
-			err_log("MESSAGE: %s", e.what());
+			err_log("MESSAGE: %s : %s", buffer, e.what());
 		}
 		return;
 	}
