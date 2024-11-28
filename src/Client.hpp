@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 16:47:47 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 17:14:51 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,11 +56,15 @@ public:
 	int					getMode( void ) const;
 	std::string			getModeStr( void ) const;
 
+	void				setHostname( const std::string& hostname );
+	void				setUsername( const std::string& username );
+	void				setNickname( const std::string& nickname );
+	void				setServername( const std::string& servername );
+	void				setRealname( const std::string& realname );
 	void				setRegistred( void );
 	void				setConnected( void );
 	void				setNetId( struct sockaddr_in addr );
 	void				setFd( int fd );
-	void				setNickname( const std::string& s );
 	void				setOperator( void );
 	bool				isOperator( void ) const;
 	void				setMode( const short mode );

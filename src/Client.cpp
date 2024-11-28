@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 16:46:44 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 17:12:40 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,6 +129,14 @@ void	Client::setFd( int fd ) {
 	this->_fd = fd;
 }
 
+void	Client::setHostname( const std::string& hostname ) {
+	this->_hostname = hostname;
+}
+
+void	Client::setUsername( const std::string& username ) {
+	this->_username = username;
+}
+
 void	Client::setNickname( const std::string& nick ) {
 	this->_nickname = nick;
 }
@@ -139,6 +147,14 @@ void	Client::setOperator( void ){
 
 bool Client::isOperator( void ) const {
 	return (this->_isOperator);
+}
+
+void	Client::setServername( const std::string& servername ) {
+	this->_servername = servername;
+}
+
+void	Client::setRealname( const std::string& realname ) {
+	this->_realname = realname;
 }
 
 void	Client::setMode(const short mode) {

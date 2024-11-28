@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 16:58:11 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 17:14:25 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,10 +109,11 @@ namespace {
 		}
 		if (msg.getParam().size() == 4){
 			std::vector<std::string> tmp = msg.getParam();
-			client.getUsername() = tmp[0];
-			client.getHostname() = tmp[1];
-			client.getServername() = tmp[2];
-			client.getRealname() = tmp[3];
+			client.setUsername(tmp[0]);
+			client.setHostname(tmp[1]);
+			client.setServername(tmp[2]);
+			client.setRealname(tmp[3]);
+			success_log("USER %s enregistred", client.getUsername().c_str());
 			if (!client.getNickname().empty()) {
 				client.setRegistred();
 				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), \
@@ -541,6 +542,9 @@ namespace {
 		commandMap.push_back(std::make_pair("restart", restart));
 		commandMap.push_back(std::make_pair("QUIT", quit));
 		commandMap.push_back(std::make_pair("MODE", mode));
+		commandMap.push_back(std::make_pair("time", time));
+		commandMap.push_back(std::make_pair("INFO", info));
+		commandMap.push_back(std::make_pair("PING", pong));
 
 		return (commandMap);
 	}
