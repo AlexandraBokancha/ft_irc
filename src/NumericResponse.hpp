@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 19:58:56 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 15:31:26 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,5 +61,6 @@
 // MODE
 # define ERR_UMODEUNKNOWNFLAG   "501 :Unknown MODE flag"
 # define ERR_USERSDONTMATCH     "502 :Cannot change mode for other users"
+# define RPL_UMODEIS            "221 %s :%s"
 
 #endif // !NUMERIC_RESPONSE_HPP

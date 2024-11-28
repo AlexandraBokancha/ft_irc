@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 14:54:41 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 15:38:36 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,15 +151,12 @@ namespace {
 			serv.respond(client.getFd(), ERR_USERSDONTMATCH);
 			return ;
 		}
-
-		//! Get user mode
-		// if (msg.getParam().size() == 1) {
-		// 	serv.respond(client.getFd(), RPL_UMODEIS);
-		// 	return ;
-		// }
+		if (msg.getParam().size() == 1) { //!< Send User mode
+			serv.respond(client.getFd(), RPL_UMODEIS, client.getNickname().c_str(), client.getModeStr().c_str());
+			return ;
+		}
 
 		int	sign = 0; //<! MODE sign ('-' < 0 | ??? == 0 | '+' > 0)
-		// int flag = 0;
 		int flag = client.getMode();
 		std::vector<std::string>::const_iterator it;
 		std::vector<std::string>	mode_list = AParser::getModeList(msg.getParam()[1]);
@@ -169,11 +166,9 @@ namespace {
 				switch (*s_it) {
 					case 'i' :
 						flag = (sign > 0 ? flag | INVISIBLE : flag & ~INVISIBLE);
-						// flag |= INVISIBLE;
 						break ;
 					case 'w' :
 						flag = (sign > 0 ? flag | WALLOPS : flag & ~WALLOPS);
-						// flag |= WALLOPS;
 						break ;
 					case 'r' :
 						flag = (sign > 0 ? flag | RESTRICTED_USER : flag);
@@ -189,13 +184,9 @@ namespace {
 						return ;
 				}
 			}
-			// if (sign == -1)
-			// 	flag = ~flag;
-			// client.setMode(flag);
 		}
 		log("Changed client %d mode", client.getFd());
 		client.setMode(flag);
-		std::cout << client << std::endl;
 	}
 
 	/**
