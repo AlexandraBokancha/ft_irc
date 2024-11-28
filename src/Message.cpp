@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:49 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 16:18:38 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 16:58:53 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,15 +62,15 @@ std::ostream&	Message::printParam( std::ostream& os ) const {
 	return (os);
 }
 
-std::ostream&	operator<<(std::ostream& os, const Message& rhs) {
-	// os << "Message:" << std::endl
-	// 	<< "  - Prefix : " << rhs.getPrefix()
-	// 	<< "  - Command: " << rhs.getCommand()
-	// 	<< "  - Param  : ";
-	// rhs.printParam(os);
-	// os << std::endl;
-	return (os);
-}
+// std::ostream&	operator<<(std::ostream& os, const Message& rhs) {
+// 	// os << "Message:" << std::endl
+// 	// 	<< "  - Prefix : " << rhs.getPrefix()
+// 	// 	<< "  - Command: " << rhs.getCommand()
+// 	// 	<< "  - Param  : ";
+// 	// rhs.printParam(os);
+// 	// os << std::endl;
+// 	return (os);
+// }
 
 
 /* ************************************************************************** */

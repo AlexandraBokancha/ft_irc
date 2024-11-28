@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 16:52:23 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 16:58:11 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -380,7 +380,7 @@ namespace {
 	 */
 	void	pong( Server& serv, Client& client, Message& msg) {
 		(void) msg;
-		serv.respond(client.getFd(), "PONG\r\n :localhost");
+		serv.respond(client.getFd(), "PONG :localhost");
 	}
 
 
@@ -540,6 +540,7 @@ namespace {
 		commandMap.push_back(std::make_pair("kill", kill));
 		commandMap.push_back(std::make_pair("restart", restart));
 		commandMap.push_back(std::make_pair("QUIT", quit));
+		commandMap.push_back(std::make_pair("MODE", mode));
 
 		return (commandMap);
 	}
