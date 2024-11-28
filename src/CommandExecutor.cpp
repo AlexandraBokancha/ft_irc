@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 15:38:36 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 16:45:38 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,15 +119,15 @@ namespace {
 		}
 		if (msg.getParam().size() == 4){
 			std::vector<std::string> tmp = msg.getParam();
-			client.getUsername() = tmp[0];
-			client.getHostname() = tmp[1];
-			client.getServername() = tmp[2];
-			client.getRealname() = tmp[3];
+			client.setUsername(tmp[0]);
+			client.setHostname(tmp[1]);
+			client.setServername(tmp[2]);
+			client.setRealname(tmp[3]);
+			success_log("USER %s enregistred", client.getUsername().c_str());
 			if (!client.getNickname().empty()) {
 				client.setRegistred();
 				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), client.getUsername().c_str(), client.getHostname().c_str());
 			}
-			// client.getValidUser() = true;
 		}
 		else
 			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
@@ -312,6 +312,17 @@ namespace {
 	}
 
 	/**
+	 * @brief IRC PRIVMSG command
+	 *
+	 * Perform IRC PRIVMSG command and respond
+	 * Send message to client or channel
+	 *
+	 * @param serv Actual server
+	 * @param client Client who send comand
+	 * @param msg Msg sent to server from client
+	 */
+
+	/**
 	 * @brief IRC TIME command
 	 *
 	 * Perform IRC TIME command and respond
@@ -388,7 +399,7 @@ namespace {
 		commandMap.push_back(std::make_pair("JOIN", join));
 		commandMap.push_back(std::make_pair("PART", part));
 		commandMap.push_back(std::make_pair("MODE", mode));
-		commandMap.push_back(std::make_pair("TIME", time));
+		commandMap.push_back(std::make_pair("time", time));
 		commandMap.push_back(std::make_pair("INFO", info));
 		commandMap.push_back(std::make_pair("PING", pong));
 
