@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/20 18:05:37 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 09:58:51 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 15:06:13 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@
 # define SPACE ' '
 # define POINT '.'
 # define MINUS '-'
+# define PLUS '+'
 # define COLON ':'
 # define CR 0x0D
 # define LF 0x0A
@@ -99,6 +100,9 @@ public:
 	static std::string					getKey( const std::string& arg, std::string::const_iterator& pos );
 	static std::vector<std::string>		getKeyList( const std::string& arg );
 
+	//! Mode parser
+	static std::string					getMode( const std::string& arg, std::string::const_iterator& pos  );
+	static std::vector<std::string>		getModeList( const std::string& arg );
 
 private:
 

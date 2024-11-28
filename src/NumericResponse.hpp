@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 12:34:23 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/26 19:58:56 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,5 +57,9 @@
 // OPER
 # define ERR_NOOPERHOST			"491 :No O-lines for your host"
 # define RPL_YOUREOPER			"381 :You are now an IRC operator"
+
+// MODE
+# define ERR_UMODEUNKNOWNFLAG   "501 :Unknown MODE flag"
+# define ERR_USERSDONTMATCH     "502 :Cannot change mode for other users"
 
 #endif // !NUMERIC_RESPONSE_HPP

@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 12:32:51 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/26 22:27:00 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 /* FOR TESTING PURPOSE */
 # include "log.hpp"
 #include <cstring>
+#include <netdb.h>
 
 void	Server::printChannel( void ) const {
 	std::cout << "Channel :" << std::endl;
@@ -32,6 +33,28 @@ void	print_client(std::vector<Client> v) {
 	for (std::vector<Client>::const_iterator it = v.begin(); it < v.end(); it++) {
 		std::cout << *it << std::endl;
 	}
+}
+
+void	printServerInfo(struct addrinfo *a) {
+	std::cout << "ServerInfo :" << a << std::endl;
+        for (struct addrinfo* p = a; p != NULL; p = p->ai_next) {
+            void* addr;
+            char ipstr[INET6_ADDRSTRLEN];
+
+            // Get the pointer to the address itself
+            if (p->ai_family == AF_INET) { // IPv4
+                struct sockaddr_in* ipv4 = (struct sockaddr_in*)p->ai_addr;
+                addr = &(ipv4->sin_addr);
+            } else { // IPv6
+                struct sockaddr_in6* ipv6 = (struct sockaddr_in6*)p->ai_addr;
+                addr = &(ipv6->sin6_addr);
+            }
+		
+
+            // Convert the IP to a string
+            inet_ntop(a->ai_family, addr, ipstr, sizeof(ipstr));
+			std::cout << "addr: " << ipstr << std::endl;
+		}
 }
 
 /* ************************************************************************** */
@@ -230,7 +253,6 @@ void	Server::respond(const int& client_sock, const char* fmt, ...) const {
 	log("Sending :%s to client: %d", buffer.c_str(), client_sock);
 
 	response.setContent(buffer);
-	std::cout << response << std::endl;
 	sendMsg(client_sock, response);
 }
 
@@ -352,9 +374,10 @@ void	Server::startServer( const char *port_str ) {
 									 //!< connexion on any of the host net adresses
 	if (getaddrinfo(NULL, port_str, &hints, &servInfo) != 0)
 		throw (std::runtime_error(std::string("getaddrinfo: ") + std::strerror(errno)));
+
 	this->_serverInfo = servInfo;
 
-
+	// this->_socket = socket(this->_serverInfo->ai_family, this->_serverInfo->ai_socktype, this->_serverInfo->ai_protocol);
 	this->_socket = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
 	if (this->_socket == -1)
 		throw (std::runtime_error(std::string("socket: ") + std::strerror(errno)));
@@ -532,7 +555,7 @@ void	Server::receiveMsg( int& i ) {
 			}
 		}
 		catch (std::exception & e){
-			err_log("MESSAGE: %s", e.what());
+			err_log("MESSAGE: %s : %s", buffer, e.what());
 		}
 		return;
 	}

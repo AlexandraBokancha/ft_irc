@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 11:49:57 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 14:44:15 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ Client::Client( void ) {
 	this->_connected = false;
 	this->_registred = false;
 	this->_fd = -1;
+	this->_mode = 0;
 	return ;
 }
 
@@ -37,6 +38,7 @@ Client::Client( const Client & rhs ) {
 	this->_connected = rhs._connected;
 	this->_registred = rhs._registred;
 	this->_fd = rhs._fd;
+	this->_mode = 0;
 	return ;
 }
 
@@ -83,6 +85,14 @@ int	Client::getFd( void ) const {
 	return (this->_fd);
 }
 
+int		Client::getJoinedChannel( void ) const {
+	return (this->_joinedChannel);
+}
+
+int		Client::getMode( void ) const {
+	return (this->_mode);
+}
+
 void Client::setConnected( void ){
 	this->_connected = true;
 }
@@ -103,10 +113,9 @@ void	Client::setNickname( const std::string& nick ) {
 	this->_nickname = nick;
 }
 
-int		Client::getJoinedChannel( void ) const {
-	return (this->_joinedChannel);
+void	Client::setMode(const short mode) {
+	this->_mode = mode;
 }
-
 
 /* ************************************************************************** */
 /* *                             Operator Overload                          * */
@@ -141,7 +150,8 @@ std::ostream&	operator<<( std::ostream& os, const Client& rhs ) {
 		<< "  - NICK: " << rhs.getNickname() << std::endl
 		<< "  - USER: " << rhs.getUsername() << std::endl
 		<< "  - REALNAME: " << rhs.getRealname() << std::endl
-		<< "  - SERVERNAME: " << rhs.getServername() << std::endl;
+		<< "  - SERVERNAME: " << rhs.getServername() << std::endl
+		<< "  - MODE: << " << std::bitset<8>(rhs.getMode()) << std::endl;
 		// << "  - SOCK: " << (rhs.getFd() == NULL ? 0 : *rhs.getFd()) << std::endl;
 	return (os);
 }

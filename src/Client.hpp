@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 11:50:31 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 14:20:21 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,12 +20,19 @@
 # include <iostream>
 # include <unistd.h>
 # include <vector>
+#include <arpa/inet.h>		//!< Just for struct sockaddr_in operator<<
+#include <sys/socket.h>		//!< Just for struct sockaddr_in operator<<
+#include <bitset> //<! To print mode in baniry format
 
 # include "log.hpp"
 # include "Message.hpp"
 
-#include <arpa/inet.h>		//!< Just for struct sockaddr_in operator<<
-#include <sys/socket.h>		//!< Just for struct sockaddr_in operator<<
+# define INVISIBLE		 0x01
+# define WALLOPS   		 0x02
+# define OPERRATOR 		 0x04
+# define LOCAL_OPERATOR  0x08
+# define RESTRICTED_USER 0x10
+# define AWAY            0x20
 
 class Client {
 public:
@@ -37,7 +44,6 @@ public:
 
 	//* Getters and Setters *//
 	struct sockaddr_in	getNetId( void ) const;
-	// std::string			getPassword( void ) const;
 	std::string			getHostname( void ) const;
 	std::string			getUsername( void ) const;
 	std::string			getNickname( void ) const;
@@ -47,22 +53,17 @@ public:
 	bool				getRegistred( void ) const;
 	int					getFd( void ) const;
 	int					getJoinedChannel( void ) const;
-
-	// bool				getValidPass( void ) const;
-	// bool				getValidUser( void ) const;
-	// bool				getValidNick( void ) const;
+	int					getMode( void ) const;
 
 	void				setRegistred( void );
 	void				setConnected( void );
 	void				setNetId( struct sockaddr_in addr );
 	void				setFd( int fd );
 	void				setNickname( const std::string& s );
-
-	// int					setUsername( const Message & msg );
+	void				setMode( const short mode );
 
 private:
 	struct sockaddr_in	_netId;		//!< Client addr
-	// std::string			_password;
 	std::string			_hostname;
 	std::string			_username;
 	std::string			_nickname;
@@ -71,11 +72,10 @@ private:
 
 	bool				_connected; //! Entered right PASS
 	bool				_registred; //! User fully registered
-	// bool				_validNick;
-	// bool				_validUser;
 
 	int					_fd; //!< Pointer to server_poll fd
 	int					_joinedChannel; //!< Number of joinend channel
+	short				_mode;
 
 };
 
