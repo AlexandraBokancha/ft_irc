@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 16:45:16 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 17:14:51 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,8 @@ public:
 	void				setConnected( void );
 	void				setNetId( struct sockaddr_in addr );
 	void				setFd( int fd );
+	void				setOperator( void );
+	bool				isOperator( void ) const;
 	void				setMode( const short mode );
 
 private:
@@ -77,6 +79,8 @@ private:
 
 	bool				_connected; //! Entered right PASS
 	bool				_registred; //! User fully registered
+	
+	bool				_isOperator;
 
 	int					_fd; //!< Pointer to server_poll fd
 	int					_joinedChannel; //!< Number of joinend channel

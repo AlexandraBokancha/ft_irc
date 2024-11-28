@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CommandExecutor.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 18:00:54 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 18:15:46 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,11 +36,6 @@ namespace {
 	/**
 	 * @brief Handle client password verification during registration
 	 *
-	 * If the client is already registered, it sends an `ERR_ALREADYREGISTRED` response.
-	 * If the password matches the server's password, the registration succeeds.
-	 * Otherwise, it sends an `ERR_PASSWDMISMATCH` response and throws an exception. 
-	 * If the `PASS` command is missing parameters, an `ERR_NEEDMOREPARAMS` response is sent.
-	 *
 	 * @param serv Actual server
 	 * @param client Client who send comand
 	 * @param msg Msg sent to server from client
@@ -51,24 +46,18 @@ namespace {
 		if (client.getRegistred() == true){
 			serv.respond(client.getFd(), ERR_ALREADYREGISTRED, client.getNickname().c_str());
 			return ;
-			// throw std::runtime_error("Client is already registred");
 		}
 		if (msg.getParam().size() >= 1){
 			if (serv.comparePassword(msg.getParam()[0]) == 0) {
-				// client.setPassword(const Message &msg, const std::string &serverPasswd);
-				// this->_validPass = true;
 				client.setConnected();
 				success_log("Password confirmed");
-				// return ;
 			}
 			else{
 				serv.respond(client.getFd(), ERR_PASSWDMISMATCH);
-				// throw std::runtime_error("Wrong password");
 			}
 		}
 		else{
 			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
-			// throw std::runtime_error("Wrong PASS cmd format");
 		}
 		return ;
 	}
@@ -98,7 +87,8 @@ namespace {
 			success_log("NICK %s enregistred", client.getNickname().c_str());
 			if (!client.getUsername().empty()) {
 				client.setRegistred();
-				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), client.getUsername().c_str(), client.getHostname().c_str());
+				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), \
+					client.getUsername().c_str(), client.getHostname().c_str());
 			}
 		}
 		else
@@ -129,7 +119,8 @@ namespace {
 			success_log("USER %s enregistred", client.getUsername().c_str());
 			if (!client.getNickname().empty()) {
 				client.setRegistred();
-				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), client.getUsername().c_str(), client.getHostname().c_str());
+				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), \
+					client.getUsername().c_str(), client.getHostname().c_str());
 			}
 		}
 		else
@@ -306,7 +297,7 @@ namespace {
 				serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
 				continue ;
 			}
-			//! Remov efrom channel
+			//! Remove from channel
 			channel->removeClient(client.getFd());
 			// BROADCAST TO CHANNEL
 			if (channel->isEmpty()) //!< Remove channel
@@ -314,17 +305,29 @@ namespace {
 		}
 	}
 
-	/**
-	 * @brief IRC PRIVMSG command
-	 *
-	 * Perform IRC PRIVMSG command and respond
-	 * Send message to client or channel
-	 *
-	 * @param serv Actual server
-	 * @param client Client who send comand
-	 * @param msg Msg sent to server from client
+	/** 
+	 * @brief IRC TOPIC command
+	 * 
+	 * <channel> [<topic>]
+	 * 
+	 * Message is used to change or view the topic of a channel.
+	 * If there is no "topic" parameter -> view
+	 * If there is "topic" -> change
+	 * 
+	 * need to check channel modes; ex. "t" flag -> topic can be
+	 * settable only by channel operator
+	 * 
 	 */
-
+	// void topic( Server& serv, Client& client, Message& msg ) {
+	// 	if (msg.getParam().size() == 0) { //!< No parameter
+	// 		serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+	// 		return ;
+	// 	}
+	// 	if (msg.getParam().size() == 1){
+			
+	// 	}
+	// }
+	
 	/**
 	 * @brief IRC TIME command
 	 *
@@ -337,10 +340,13 @@ namespace {
 	void	time( Server& serv, Client& client, Message& msg) {
 		(void) msg;
 		std::time_t now = std::time(NULL);
-		char *time = std::ctime(&now);
+		std::string timeStr = std::ctime(&now);
 
-		time[std::strlen(time) - 1] = '\0';
-		serv.respond(client.getFd(), RPL_TIME, time);
+	  	size_t pos = timeStr.find('\n');
+    	if (pos != std::string::npos) {
+        	timeStr.erase(pos, 1); //<! Supprime \n a la find de timeStr
+    	}
+		serv.respond(client.getFd(), RPL_TIME, timeStr.c_str());
 	}
 
 	/**
@@ -381,6 +387,135 @@ namespace {
 		serv.respond(client.getFd(), "PONG :localhost");
 	}
 
+
+	/** 
+	 * @brief IRC QUIT command
+	 * 
+	 * [<Quit message>] is optional
+	 * 
+	 */
+	void quit( Server& serv, Client& client, Message& msg ) {
+		if (!msg.getParam().empty()){
+			log("Client %s quit the server with next message: %s", client.getNickname().c_str(), msg.getParam()[0].c_str());
+		}
+		int index = serv.findClientIndex(client.getNickname());
+		index++; // -> disconnectClient() fait -1 de l'index
+		success_log("Client %s will be disconnected from the server", client.getNickname().c_str());
+		serv.disconnectClient(index);
+	}
+	
+	/* ************************************************************************** */
+	/* *                         IRC Operator's commands                        * */
+	/* ************************************************************************** */
+
+	/** @brief IRC OPER command
+	 * 
+		OPER message is used by a normal user to obtain operator privileges.
+		The combination of <user> and <password> are required to gain Operator privileges.
+			
+		If the client sending the OPER command supplies the correct password
+		for the given user, the server then informs the rest of the network
+		of the new operator by issuing a "MODE +o" for the clients nickname.
+		The OPER message is client-server only.
+	*/
+	void oper( Server & serv, Client & client, Message & msg ){
+		if (msg.getParam().size() < 2){
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return (war_log("ERR_NEEDMOREPARAMS sent to Client %d", client.getFd()));
+		}
+		
+		std::vector<std::string> tmp = msg.getParam();	
+		
+		if (tmp[0] != serv.getOpUser()){
+			serv.respond(client.getFd(), ERR_NOOPERHOST);
+			return(war_log("ERR_NOOPERHOST sent to Client %d", client.getFd()));
+		}
+		
+		if (tmp[1] != serv.getOpPasswd()){
+			serv.respond(client.getFd(), ERR_PASSWDMISMATCH);
+			return (war_log("ERR_PASSWDMISMATCH sent to Client %d", client.getFd()));
+		}
+		
+		client.setOperator(); // !< this client is now Server operator
+		serv.respond(client.getFd(), RPL_YOUREOPER);
+		
+		success_log("MODE +o %s", client.getNickname().c_str());
+	}
+	
+	/** @brief IRC KILL command
+	 * 
+	 * <nickname> <comment>
+	 * 
+	 * normally this command is used if there is a dublicate entry in 
+	 * the list of valid nicknames
+	 * 
+	 * NOTE:
+	 * It is recommended that only Operators be allowed to kill other users
+	 * with KILL message. In an ideal world not even operators would need
+	 * to do this and it would be left to servers to deal with.
+	 * 
+	 */
+	void kill( Server & serv, Client & client, Message & msg){
+		if (!client.isOperator()){
+			serv.respond(client.getFd(), ERR_NOPRIVILEGES);
+			return (war_log("ERR_NOPRIVILEGES sent to Client %d", client.getFd()));
+		}
+		if (msg.getParam().size() < 2){
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return (war_log("ERR_NEEDMOREPARAMS sent to Client %d", client.getFd()));
+		}
+		std::vector<std::string> tmp = msg.getParam();
+		if (serv.findClient(tmp[0]) == NULL){
+			serv.respond(client.getFd(), ERR_NOSUCHNICK, tmp[0].c_str());
+			return (war_log("ERR_NOSUCHNICK sent to Client %d", client.getFd()));
+		}
+		
+		success_log("KILL %s. Comment: %s", tmp[0].c_str(), tmp[1].c_str());
+		
+		int index = serv.findClientIndex(tmp[0]);
+		index++; // -> disconnectClient() fait -1 de l'index
+		std::cout << "index : " << index << std::endl;
+		serv.disconnectClient(index); //!< this client was deconnected from the server
+	}
+	
+	/** @brief IRC RESTART command
+	 * 
+	 * No parameters.
+	 * 
+	 * The restart message can only be used by an operator
+	 * to force a server restart itself.
+	 *  
+	*/
+	void restart( Server & serv, Client & client, Message & msg ){
+		(void) msg;
+		if (!client.isOperator()){
+			serv.respond(client.getFd(), ERR_NOPRIVILEGES);
+			return (war_log("ERR_NOPRIVILEGES sent to Client %d", client.getFd()));
+		}
+		
+		//<! will notify all clients and IRC operators about restarting a server
+		war_log("Server will be restarted by %s", client.getNickname().c_str());
+		serv.broadcast(":localhost :Server will be restarted\r\n", 39, -1);
+    
+		serv.stopServer(); //<! will stop the server and deconnect every client before restart the server
+		
+		std::stringstream ss;
+		ss << serv.getPort();
+		
+		const char *program = "./ircserv";
+    	const char *const args[] = { "./ircserv", ss.str().c_str(), serv.getPasswd().c_str(), NULL};
+	
+    	if (execv(program, const_cast<char *const*>(args)) == -1) { //<! will restart the server with the same port/password
+        	fatal_log("Failed to restart server");
+        	exit(1);
+    	}
+	}
+	
+	
+	/* ************************************************************************** */
+	/* *                         Command Executor Init                          * */
+	/* ************************************************************************** */
+	
 	/**
 	 * @brief Init the commandMap
 	 *
@@ -402,8 +537,14 @@ namespace {
 		commandMap.push_back(std::make_pair("USER", user));
 		commandMap.push_back(std::make_pair("JOIN", join));
 		commandMap.push_back(std::make_pair("PART", part));
+		commandMap.push_back(std::make_pair("time", time)); // irssi l'envoie en minuscule
+		commandMap.push_back(std::make_pair("info", info)); // irssi l'envoie en minuscule
+		commandMap.push_back(std::make_pair("PING", pong)); // PONG reagit a la cmd PING envoye par le client
+		commandMap.push_back(std::make_pair("OPER", oper));
+		commandMap.push_back(std::make_pair("kill", kill));
+		commandMap.push_back(std::make_pair("restart", restart));
+		commandMap.push_back(std::make_pair("QUIT", quit));
 		commandMap.push_back(std::make_pair("MODE", mode));
-		commandMap.push_back(std::make_pair("time", time));
 		commandMap.push_back(std::make_pair("INFO", info));
 		commandMap.push_back(std::make_pair("PING", pong));
 

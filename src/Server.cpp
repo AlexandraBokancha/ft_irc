@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 17:49:25 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 18:10:30 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,6 @@ void	printServerInfo(struct addrinfo *a) {
         for (struct addrinfo* p = a; p != NULL; p = p->ai_next) {
             void* addr;
             char ipstr[INET6_ADDRSTRLEN];
-
             // Get the pointer to the address itself
             if (p->ai_family == AF_INET) { // IPv4
                 struct sockaddr_in* ipv4 = (struct sockaddr_in*)p->ai_addr;
@@ -50,7 +49,6 @@ void	printServerInfo(struct addrinfo *a) {
                 addr = &(ipv6->sin6_addr);
             }
 		
-
             // Convert the IP to a string
             inet_ntop(a->ai_family, addr, ipstr, sizeof(ipstr));
 			std::cout << "addr: " << ipstr << std::endl;
@@ -79,7 +77,7 @@ void	set_signal( void ) {
 /* *                       Constructors && Destructors                      * */
 /* ************************************************************************** */
 Server::Server( void )
-	: _port(8080), _passwd("0000")
+	: _port(8080), _passwd("0000"), _opPasswd("admin"), _opUser("admin")
 {
 	this->_serverInfo = NULL;
 	this->_socket = -1;
@@ -87,11 +85,10 @@ Server::Server( void )
 	this->_client = std::vector<Client*>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
-} //! A mon avis on peut tege ce constructeur, vu que le main prends 2 parametres qu'on doit parser
-
+}
 
 Server::Server(const int port, const std::string password )
-	: _port(port), _passwd(password)
+	: _port(port), _passwd(password), _opPasswd("admin"), _opUser("admin")
 {
 	std::cout << "Created Server object using port " << port << std::endl;
 	this->_serverInfo = NULL;
@@ -138,6 +135,22 @@ Server& Server::operator=( Server const & rhs ) {
  */
 std::string	Server::getPrefix( void ) const {
 	return ("localhost");
+}
+
+std::string Server::getOpPasswd( void ) const {
+	return (this->_opPasswd);
+}
+
+std::string Server::getOpUser( void ) const {
+	return (this->_opUser);
+}
+
+std::string Server::getPasswd( void ) const{
+	return (this->_passwd);
+}
+
+int Server::getPort( void ) const{
+	return (this->_port);
 }
 
 /* ************************************************************************** */
@@ -205,12 +218,23 @@ Client*	Server::findClient( const std::string& nick ) {
 	}
 	return (NULL);
 }
+
+int Server::findClientIndex( const std::string & nick ){
+	for (std::size_t i = 0; i < _client.size(); ++i){
+		if (_client[i]->getNickname() == nick){
+			return (static_cast<int>(i));
+		}
+	}
+	return (-1);
+}
+
+
 /**
  * @brief Server response to client command
  *
- * This is a way to snend formated repomse to client comand in a formatted way
+ * This is a way to snend formated response to client command in a formatted way
  *
- * @pram client_sock Client socket to send message to
+ * @param client_sock Client socket to send message to
  * @param fmt The formated message to send (defined in Numericresponse.hpp)
  * @param ... The fmt argument
  */
@@ -312,7 +336,7 @@ Channel*	Server::findChannel( const std::string& name ) {
 		//! Used to check if a safe channel with the same shortname exist
 		if (channel_name[0] == '!' && safe_channel
 			&& (strcmp(channel_name.c_str() + 6, name.c_str() + 1) == 0))
-			return (&(*it));
+			return (&(*it)); // on peut remplacer par -> channel_name.substr(6).compare(name.substr(1)) == 0
 		if (name.compare(it->getName()) == 0)
 			return (&(*it));
 	}
@@ -553,9 +577,6 @@ void	Server::receiveMsg( int& i ) {
 			while (msg_i < buffer_size - 2){
 				Message msg(buffer, msg_i, buffer_size);
 				
-				/* FOR TESTING PURPOSE -> map with cmds here */
-				
-				//broadcast(buffer, buffer_size, this->_pollFd[i].fd);
 				CommandExecutor::execute(*this, *sender, msg);
 
 				// broadcast(buffer + start, msg_i - start - 2, this->_pollFd[i].fd);

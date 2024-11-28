@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CommandExecutor.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/19 09:11:20 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/22 00:07:42 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 14:37:12 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,8 @@
 # include <utility>
 # include <vector>
 # include <iterator>
+# include <sstream>
+# include <string>
 # include "AParser.hpp"
 
 class Server;
@@ -34,7 +36,5 @@ class Message;
 
 namespace CommandExecutor {
 	void	execute(Server& serv, Client& client, Message& msg);
-
-	void	pass(Server& serv, Client& client, Message& msg);
 }
 #endif // !COMMANDEXECUTOR_HPP
