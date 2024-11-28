@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 16:54:19 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 17:08:18 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,26 @@ void	print_client(std::vector<Client> v) {
 	for (std::vector<Client>::const_iterator it = v.begin(); it < v.end(); it++) {
 		std::cout << *it << std::endl;
 	}
+}
+
+void	printServerInfo(struct addrinfo *a) {
+	std::cout << "ServerInfo :" << a << std::endl;
+        for (struct addrinfo* p = a; p != NULL; p = p->ai_next) {
+            void* addr;
+            char ipstr[INET6_ADDRSTRLEN];
+            // Get the pointer to the address itself
+            if (p->ai_family == AF_INET) { // IPv4
+                struct sockaddr_in* ipv4 = (struct sockaddr_in*)p->ai_addr;
+                addr = &(ipv4->sin_addr);
+            } else { // IPv6
+                struct sockaddr_in6* ipv6 = (struct sockaddr_in6*)p->ai_addr;
+                addr = &(ipv6->sin6_addr);
+            }
+		
+            // Convert the IP to a string
+            inet_ntop(a->ai_family, addr, ipstr, sizeof(ipstr));
+			std::cout << "addr: " << ipstr << std::endl;
+		}
 }
 
 /* ************************************************************************** */
