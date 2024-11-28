@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 16:45:38 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 18:00:54 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,10 @@
 # include "Client.hpp"
 
 # include "log.hpp"
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <string>
 
 //! Anonymous namespace: Everything declared here is only accesible in this file
@@ -334,9 +337,10 @@ namespace {
 	void	time( Server& serv, Client& client, Message& msg) {
 		(void) msg;
 		std::time_t now = std::time(NULL);
-		std::string timeStr = std::ctime(&now);
+		char *time = std::ctime(&now);
 
-		serv.respond(client.getFd(), RPL_TIME, timeStr.c_str());
+		time[std::strlen(time) - 1] = '\0';
+		serv.respond(client.getFd(), RPL_TIME, time);
 	}
 
 	/**

@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 22:27:00 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 17:49:25 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -236,6 +236,13 @@ void	Server::respond(const int& client_sock, const char* fmt, ...) const {
 					int d = va_arg(args, int);
 					std::stringstream ss;
 					ss << d;
+					buffer.append(ss.str());
+					break ;
+				}
+				case 'l' : { //!< int 
+					long int l = va_arg(args, long int);
+					std::stringstream ss;
+					ss << l;
 					buffer.append(ss.str());
 					break ;
 				}

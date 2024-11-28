@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 15:31:26 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/28 18:01:02 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@
 # define RPL_WELCOME			"001 %s :Welcome to the Inernet Relay Network, %s!%s@%s"
 
 // TIME
-# define RPL_TIME				"391 %s"
+# define RPL_TIME				"391 :%s"
 
 // INFO
 # define RPL_INFO				"371 %s"
