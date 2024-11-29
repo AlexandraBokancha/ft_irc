@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 17:08:18 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/29 17:53:36 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -543,6 +543,16 @@ void	Server::broadcast(const char *buffer, int len, int fd) const {
 
 		if (sendMsg(this->_pollFd[i].fd, buffer, len) == -1)
 			err_log("Msg could not be sent on socket %d", this->_pollFd[i].fd);
+	}
+}
+
+void Server::broadcastToChannel(Channel* channel, const std::string & message, Client* sender){
+	(void) sender;
+	(void) message;
+	const std::vector<Client *>& clients = channel->getClients(); //!< clients connected to this channel
+	for (std::vector<Client *>::const_iterator it = clients.begin(); it != clients.end(); ++it){
+			std::string msg = ":" + (*it)->getNickname() + "!~" + (*it)->getUsername() + "@" + std::string(inet_ntoa((*it)->getNetId().sin_addr)) + " " + std::string("TOPIC") + " " + channel->getName() + " :" + channel->getTopic();
+			Server::respond((*it)->getFd(), msg.c_str());
 	}
 }
 

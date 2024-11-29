@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/26 11:58:00 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/29 17:12:41 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ void	Channel::printChannel( void ) const {
 /* ************************************************************************** */
 Channel::Channel( void )
 	: _name(""), _topic(""), _client(std::vector<Client*>()), _operator(std::vector<Client*>()),
-		_mode(0), _userLimit(10), _password("")
+		_mode(0), _channelMode(0), _userLimit(10), _password("")
 {
 		return ;
 }
@@ -48,7 +48,7 @@ Channel::Channel( const Channel& rhs )
 
 Channel::Channel( Client* creator, const std::string& name )
 	: _name(name), _topic(""), _client(1, creator), _operator(1, creator),
-		_mode(0), _userLimit(0), _password("")
+		_mode(0), _channelMode(0), _userLimit(0), _password("")
 {
 	this->_name = name;
 	if (name[0] == '!') {
@@ -65,6 +65,7 @@ Channel::Channel( Client* creator, const std::string& name )
 	this->_client = (std::vector<Client*>(1, creator));
 	this->_operator = (name[0] == '+' ? std::vector<Client*>() : std::vector<Client*>(1, creator));
 	this->_mode = 0;
+	this->_channelMode = 0;
 	this->_userLimit = 0;
 	this->_password = "";
 	return ;
@@ -85,6 +86,7 @@ Channel&	Channel::operator=( const Channel& rhs ) {
 		this->_client = rhs._client;
 		this->_operator = rhs._operator;
 		this->_mode = rhs._mode;
+		this->_channelMode = rhs._channelMode;
 		this->_userLimit = rhs._userLimit;
 		this->_password = rhs._password;
 	}
@@ -107,6 +109,10 @@ int			Channel::getMode( void ) const {
 	return (this->_mode);
 }
 
+int Channel::getChannelMode( void ) const { 
+	return (this->_channelMode);
+}
+
 Client*		Channel::getClient( const int client_socket ) const {
 	std::vector<Client*>::const_iterator it;
 
@@ -116,6 +122,20 @@ Client*		Channel::getClient( const int client_socket ) const {
 	}
 	return (NULL);
 }
+
+const std::vector<Client *>& Channel::getClients( void ) const{
+	return (this->_client);
+}
+
+
+std::string	Channel::getTopic( void ) const {
+	return (this->_topic);
+}
+
+void Channel::setTopic( const std::string & topic ){
+	this->_topic = topic;
+}
+
 /* ************************************************************************** */
 /* *                        Public member functions                         * */
 /* ************************************************************************** */

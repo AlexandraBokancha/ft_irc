@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 17:14:51 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/28 18:32:31 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@
 
 # define INVISIBLE		 0x01
 # define WALLOPS   		 0x02
-# define OPERRATOR 		 0x04
+# define OPERATOR 		 0x04
 # define LOCAL_OPERATOR  0x08
 # define RESTRICTED_USER 0x10
 # define AWAY            0x20

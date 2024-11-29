@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 17:12:40 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/29 15:52:10 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,7 +103,7 @@ std::string	Client::getModeStr( void ) const {
 		result += "+i";
 	if (this->_mode & WALLOPS)
 		result += "+w";
-	if (this->_mode & OPERRATOR)
+	if (this->_mode & OPERATOR)
 		result += "+o";
 	if (this->_mode & LOCAL_OPERATOR)
 		result += "+O";

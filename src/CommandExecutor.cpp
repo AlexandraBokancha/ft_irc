@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 17:14:25 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/29 18:10:45 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,7 +165,7 @@ namespace {
 						flag = (sign > 0 ? flag | RESTRICTED_USER : flag);
 						break ;
 					case 'o' :
-						flag = (sign > 0 ? flag : flag & ~OPERRATOR);
+						flag = (sign > 0 ? flag : flag & ~OPERATOR);
 						break ;
 					case 'O' :
 						flag = (sign > 0 ? flag : flag & ~LOCAL_OPERATOR);
@@ -253,7 +253,7 @@ namespace {
 			}
 
 			//! SUCCESS
-			//! add client to server
+			//! add client to channel
 			ch->addClient(&client);
 			serv.respond(client.getFd(), "JOIN %s", channel_it->c_str());
 
@@ -311,19 +311,54 @@ namespace {
 	 * If there is no "topic" parameter -> view
 	 * If there is "topic" -> change
 	 * 
-	 * need to check channel modes; ex. "t" flag -> topic can be
-	 * settable only by channel operator
+	 * BEWARE: to test this function MODE function has to be finished
+	 * Also, broadcasting to all clients on a channel has to be done
+	 * in IRC format (maybe we have to create a function for this purpose)
 	 * 
 	 */
-	// void topic( Server& serv, Client& client, Message& msg ) {
-	// 	if (msg.getParam().size() == 0) { //!< No parameter
-	// 		serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
-	// 		return ;
-	// 	}
-	// 	if (msg.getParam().size() == 1){
-			
-	// 	}
-	// }
+	void topic( Server& serv, Client& client, Message& msg ) {
+		Channel	*channel;
+		
+		if (msg.getParam().size() == 0) { //!< No parameter
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
+		
+		channel = serv.findChannel(msg.getParam()[0]);
+		if (!channel){ //!< Channel not found
+			serv.respond(client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0].c_str());
+			return ;
+		}
+		
+		if (!channel->getClient(client.getFd())){ //!< Client not in channel									 
+			serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+			return;
+		}
+		
+		if (msg.getParam().size() == 1){ //!< view the topic of the channel if exists
+			if (!channel->getTopic().empty()){
+				serv.respond(client.getFd(), RPL_TOPIC, channel->getName().c_str(), channel->getTopic().c_str());
+			}
+			else { //!< no topic for this channel
+				serv.respond(client.getFd(), RPL_NOTOPIC, channel->getName().c_str());
+			}
+		}
+		else if (msg.getParam().size() >= 2){ //!< change the topic, if you have the rights
+			if ((channel->getChannelMode() & T) && (client.getMode() & ~LOCAL_OPERATOR || client.getMode() & ~OPERATOR)){ //!< topic settable by channel operator only
+				serv.respond(client.getFd() , ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+				return;
+			}
+			else { //!< you can change the topic
+				channel->setTopic(msg.getParam()[1]);
+					const std::vector<Client *>& clients = channel->getClients(); //!< clients connected to this channel
+					for (std::vector<Client *>::const_iterator it = clients.begin(); it != clients.end(); ++it){ //!< broadcast message to every client on a channel (for testing purpose)
+						std::string msg = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+							" " + std::string("TOPIC") + " " + channel->getName() + " :" + channel->getTopic();
+						serv.respond((*it)->getFd(), msg.c_str());
+					}
+				}
+		}
+	}
 	
 	/**
 	 * @brief IRC TIME command
@@ -383,7 +418,6 @@ namespace {
 		(void) msg;
 		serv.respond(client.getFd(), "PONG :localhost");
 	}
-
 
 	/** 
 	 * @brief IRC QUIT command
@@ -532,19 +566,20 @@ namespace {
 		commandMap.push_back(std::make_pair("PASS", pass));
 		commandMap.push_back(std::make_pair("NICK", nick));
 		commandMap.push_back(std::make_pair("USER", user));
+		
 		commandMap.push_back(std::make_pair("JOIN", join));
 		commandMap.push_back(std::make_pair("PART", part));
-		commandMap.push_back(std::make_pair("time", time)); // irssi l'envoie en minuscule
-		commandMap.push_back(std::make_pair("info", info)); // irssi l'envoie en minuscule
-		commandMap.push_back(std::make_pair("PING", pong)); // PONG reagit a la cmd PING envoye par le client
+		commandMap.push_back(std::make_pair("MODE", mode));
+		commandMap.push_back(std::make_pair("TOPIC", topic));
+		
 		commandMap.push_back(std::make_pair("OPER", oper));
 		commandMap.push_back(std::make_pair("kill", kill));
 		commandMap.push_back(std::make_pair("restart", restart));
+		
+		commandMap.push_back(std::make_pair("time", time)); // irssi l'envoie en minuscule
+		commandMap.push_back(std::make_pair("info", info)); // irssi l'envoie en minuscule
+		commandMap.push_back(std::make_pair("PING", pong)); // PONG reagit a la cmd PING envoye par le client
 		commandMap.push_back(std::make_pair("QUIT", quit));
-		commandMap.push_back(std::make_pair("MODE", mode));
-		commandMap.push_back(std::make_pair("time", time));
-		commandMap.push_back(std::make_pair("INFO", info));
-		commandMap.push_back(std::make_pair("PING", pong));
 
 		return (commandMap);
 	}

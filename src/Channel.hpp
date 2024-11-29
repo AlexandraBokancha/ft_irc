@@ -3,13 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/24 15:33:07 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/11/29 17:12:14 by alexandra        ###   ########.fr       */
+/*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CHANNEL_HPP
+# ifndef CHANNEL_HPP
 # define CHANNEL_HPP
 
 # include <string>
@@ -36,8 +37,12 @@ public:
 	Channel& operator=( Channel const & rhs );
 
 	std::string			getName( void ) const;
+	std::string			getTopic( void ) const;
 	int					getMode( void ) const;
+	int					getChannelMode( void ) const;
 	Client*				getClient( const int client_socket ) const;
+	const std::vector<Client *>& getClients( void ) const;
+	void				setTopic(const std::string & topic);
 
 	bool				isFull( void ) const;
 	bool				isEmpty( void ) const;
@@ -57,6 +62,8 @@ private:
 	std::vector<Client*>	_operator; //!< Channel operator
 
 	int						_mode; //!< Mode flag
+	//int						_userMode;
+	int						_channelMode;
 	int						_userLimit; //!< 0: no User limit
 	std::string				_password;
 };

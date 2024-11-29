@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 16:48:59 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/29 16:48:01 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@
 
 //! INFO
 # define RPL_INFO				"371 %s"
-# define RPL_ENDOFINFO			"374 : End of /INFO"
+# define RPL_ENDOFINFO			"374 :End of /INFO"
 
 //! OPER
 # define ERR_NOOPERHOST			"491 :No O-lines for your host"
@@ -62,5 +62,11 @@
 # define ERR_UMODEUNKNOWNFLAG   "501 :Unknown MODE flag"
 # define ERR_USERSDONTMATCH     "502 :Cannot change mode for other users"
 # define RPL_UMODEIS            "221 %s :%s"
+
+//! TOPIC
+
+# define RPL_TOPIC              "332 %s :%s"
+# define RPL_NOTOPIC            "331 %s :No topic is set"
+# define ERR_CHANOPRIVSNEEDED   "482 %s :You're not channel operator"
 
 #endif // !NUMERIC_RESPONSE_HPP
