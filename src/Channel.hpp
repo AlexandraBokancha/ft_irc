@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/29 17:12:14 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/29 19:30:32 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,20 +36,21 @@ public:
 
 	Channel& operator=( Channel const & rhs );
 
-	std::string			getName( void ) const;
-	std::string			getTopic( void ) const;
-	int					getMode( void ) const;
-	int					getChannelMode( void ) const;
-	Client*				getClient( const int client_socket ) const;
-	const std::vector<Client *>& getClients( void ) const;
-	void				setTopic(const std::string & topic);
+	const std::vector<Client *>&	getClients( void ) const;
+	std::string						getName( void ) const;
+	std::string						getTopic( void ) const;
+	int								getMode( void ) const;
+	int								getChannelMode( void ) const;
+	Client*							getClient( const int client_socket ) const;
+	Client*							getClient( const std::string & nick ) const;
+	void							setTopic(const std::string & topic);
 
-	bool				isFull( void ) const;
-	bool				isEmpty( void ) const;
-	bool				validPassword( const std::string& password ) const;
+	bool							isFull( void ) const;
+	bool							isEmpty( void ) const;
+	bool							validPassword( const std::string& password ) const;
 
-	void				addClient( Client* const& client );
-	void				removeClient( int client_sock );
+	void							addClient( Client* const& client );
+	void							removeClient( int client_sock );
 
 	//! FOR TESTING PURPOSE
 	void	printChannel( void ) const;

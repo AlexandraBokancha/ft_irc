@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/29 18:10:45 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/29 19:59:07 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,11 @@
 
 //! Anonymous namespace: Everything declared here is only accesible in this file
 namespace {
+
+	/* ************************************************************************** */
+	/* *                         IRC Connection Registration                    * */
+	/* ************************************************************************** */
+	
 	/**
 	 * @brief Handle client password verification during registration
 	 *
@@ -124,62 +129,11 @@ namespace {
 			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 	}
 
-	/**
-	 * @brief Handle MODE command
-	 *
-	 * IRC MODE cmd
-	 * 
-	 * @param serv Actual server
-	 * @param client Client who send comand
-	 * @param msg Msg sent to server from client
-	 */
-	void	mode(Server& serv, Client& client, Message& msg) {
-		if (msg.getParam().size() == 0) { //!< No parameters
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
-			return ;
-		}
-		if (msg.getParam()[0].compare(client.getNickname()) != 0) { //!< Nickname not matching user
-			serv.respond(client.getFd(), ERR_USERSDONTMATCH);
-			return ;
-		}
-		if (msg.getParam().size() == 1) { //!< Send User mode
-			serv.respond(client.getFd(), RPL_UMODEIS, client.getNickname().c_str(), client.getModeStr().c_str());
-			return ;
-		}
 
-		int	sign = 0; //<! MODE sign ('-' < 0 | ??? == 0 | '+' > 0)
-		int flag = client.getMode();
-		std::vector<std::string>::const_iterator it;
-		std::vector<std::string>	mode_list = AParser::getModeList(msg.getParam()[1]);
-		for (it = mode_list.begin(); it != mode_list.end(); it++) {
-			sign = (it->begin()[0] == '+' ? 1 : -1);
-			for (std::string::const_iterator s_it = it->begin() + 1; s_it != it->end(); s_it++) {
-				switch (*s_it) {
-					case 'i' :
-						flag = (sign > 0 ? flag | INVISIBLE : flag & ~INVISIBLE);
-						break ;
-					case 'w' :
-						flag = (sign > 0 ? flag | WALLOPS : flag & ~WALLOPS);
-						break ;
-					case 'r' :
-						flag = (sign > 0 ? flag | RESTRICTED_USER : flag);
-						break ;
-					case 'o' :
-						flag = (sign > 0 ? flag : flag & ~OPERATOR);
-						break ;
-					case 'O' :
-						flag = (sign > 0 ? flag : flag & ~LOCAL_OPERATOR);
-						break ;
-					default :
-						serv.respond(client.getFd(), ERR_UMODEUNKNOWNFLAG);
-						return ;
-				}
-			}
-		}
-		log("Changed client %d mode", client.getFd());
-		client.setMode(flag);
-	}
-
+	/* ************************************************************************** */
+	/* *                         IRC Channel's commands                        * */
+	/* ************************************************************************** */
+	
 	/**
 	 * @brief IRC JOIN command
 	 *
@@ -201,7 +155,6 @@ namespace {
 		std::vector<std::string>::const_iterator	key_it;
 		Channel										*ch;
 		int											channel_mode;
-
 
 		//<! Get channel list and key list
 		channel_name = AParser::getChannelList(msg.getParam()[0]);
@@ -260,6 +213,62 @@ namespace {
 			return ;
 		}
 	}
+	
+	/**
+	 * @brief Handle MODE command
+	 *
+	 * IRC MODE cmd
+	 * 
+	 * @param serv Actual server
+	 * @param client Client who send comand
+	 * @param msg Msg sent to server from client
+	 */
+	void	mode(Server& serv, Client& client, Message& msg) {
+		if (msg.getParam().size() == 0) { //!< No parameters
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
+		if (msg.getParam()[0].compare(client.getNickname()) != 0) { //!< Nickname not matching user
+			serv.respond(client.getFd(), ERR_USERSDONTMATCH);
+			return ;
+		}
+		if (msg.getParam().size() == 1) { //!< Send User mode
+			serv.respond(client.getFd(), RPL_UMODEIS, client.getNickname().c_str(), client.getModeStr().c_str());
+			return ;
+		}
+
+		int	sign = 0; //<! MODE sign ('-' < 0 | ??? == 0 | '+' > 0)
+		int flag = client.getMode();
+		std::vector<std::string>::const_iterator it;
+		std::vector<std::string>	mode_list = AParser::getModeList(msg.getParam()[1]);
+		for (it = mode_list.begin(); it != mode_list.end(); it++) {
+			sign = (it->begin()[0] == '+' ? 1 : -1);
+			for (std::string::const_iterator s_it = it->begin() + 1; s_it != it->end(); s_it++) {
+				switch (*s_it) {
+					case 'i' :
+						flag = (sign > 0 ? flag | INVISIBLE : flag & ~INVISIBLE);
+						break ;
+					case 'w' :
+						flag = (sign > 0 ? flag | WALLOPS : flag & ~WALLOPS);
+						break ;
+					case 'r' :
+						flag = (sign > 0 ? flag | RESTRICTED_USER : flag);
+						break ;
+					case 'o' :
+						flag = (sign > 0 ? flag : flag & ~OPERATOR);
+						break ;
+					case 'O' :
+						flag = (sign > 0 ? flag : flag & ~LOCAL_OPERATOR);
+						break ;
+					default :
+						serv.respond(client.getFd(), ERR_UMODEUNKNOWNFLAG);
+						return ;
+				}
+			}
+		}
+		log("Changed client %d mode", client.getFd());
+		client.setMode(flag);
+	}
 
 	/**
 	 * @brief IRC PART command
@@ -272,9 +281,9 @@ namespace {
 	 * @param msg Msg sent to server from client
 	 */
 	void	part( Server& serv, Client& client, Message& msg) {
+		Channel										*channel;
 		std::vector<std::string>					channel_name;
 		std::vector<std::string>::const_iterator	channel_it;
-		Channel										*channel;
 		std::string									part_msg;
 
 		if (msg.getParam().size() == 0) { //!< No parameter
@@ -350,15 +359,80 @@ namespace {
 			}
 			else { //!< you can change the topic
 				channel->setTopic(msg.getParam()[1]);
-					const std::vector<Client *>& clients = channel->getClients(); //!< clients connected to this channel
-					for (std::vector<Client *>::const_iterator it = clients.begin(); it != clients.end(); ++it){ //!< broadcast message to every client on a channel (for testing purpose)
-						std::string msg = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
-							" " + std::string("TOPIC") + " " + channel->getName() + " :" + channel->getTopic();
-						serv.respond((*it)->getFd(), msg.c_str());
-					}
+
+				/* FOR TESTING PURPOSE. NEED TO REPLACE BY A REAL FUNCTION broadcastToChannel() */
+				const std::vector<Client *>& clients = channel->getClients(); //!< clients connected to this channel
+				for (std::vector<Client *>::const_iterator it = clients.begin(); it != clients.end(); ++it){ //!< broadcast message to every client on a channel
+					std::string msg = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+						" " + std::string("TOPIC") + " " + channel->getName() + " :" + channel->getTopic();
+					serv.respond((*it)->getFd(), msg.c_str());
 				}
+			}
 		}
 	}
+
+	/**
+	 * @brief IRC INVITE command
+	 * 
+	 * <nickname> <channel>
+	 * 
+	 * The parameter <nickname> is the nickname of the person to be invited to
+	 * the target channel <channel>. There is no requirement that the
+	 * channel the target user is being invited to must exist or be a valid
+	 * channel. 
+	 * 
+	 * To invite a user to a channel which is invite only (MODE +i),
+	 * the client sending the invite must be recognised as being a
+	 * channel operator on the given channel.
+	 * 
+	 */
+	void invite( Server& serv, Client& client, Message& msg ) {
+		Channel *channel;
+		std::string	response;
+		
+		if (msg.getParam().size() <= 1) { //!< No parameter
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
+		
+		std::string nick_target = msg.getParam()[0];
+		if (serv.findClient(nick_target) == NULL){ //!< No nick found
+			serv.respond(client.getFd(), ERR_NOSUCHNICK, nick_target.c_str());
+			return ;
+		}
+		
+		std::string channel_target = msg.getParam()[1];
+		channel = serv.findChannel(channel_target); //!< selon la norme IRC on doit pas verifie l'existence du channel
+		
+		if (channel){
+			if (!channel->getClient(client.getFd())){ //!< Client trying to sent an invitation not on a channel									 
+				serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+				return ;
+			}
+			if (channel->getClient(nick_target)){ //!< Client tries to invite a user to a channel they are already on
+				serv.respond(client.getFd(), ERR_USERONCHANNEL, channel->getClient(nick_target)->getUsername().c_str(), channel_target.c_str());
+				return ;
+			}
+			if (channel->getChannelMode() & I){ //! Invite-only channel -> client sending a msg has to be a channel operator
+				if (client.getMode() & ~OPERATOR && client.getMode() & ~LOCAL_OPERATOR){
+					serv.respond(client.getFd() , ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+					return ;
+				}
+			}
+		}
+		
+		// !< send invitation
+		response = ":" + client.getNickname() + " INVITE " + nick_target + " #" + channel_target;
+		serv.respond(serv.findClient(nick_target)->getFd(), response.c_str());
+		
+		//!< reply by server
+		serv.respond(client.getFd(), RPL_INVITING, channel_target.c_str(), nick_target.c_str());
+	}
+	
+	
+		/* ************************************************************************** */
+		/* *                         IRC Server's commands                          * */
+		/* ************************************************************************** */
 	
 	/**
 	 * @brief IRC TIME command
@@ -536,7 +610,7 @@ namespace {
 		const char *program = "./ircserv";
     	const char *const args[] = { "./ircserv", ss.str().c_str(), serv.getPasswd().c_str(), NULL};
 	
-    	if (execv(program, const_cast<char *const*>(args)) == -1) { //<! will restart the server with the same port/password
+    	if (execv(program, const_cast<char *const*>(args)) == -1) { //<! will restart the server with the same port/passwor
         	fatal_log("Failed to restart server");
         	exit(1);
     	}
@@ -571,6 +645,7 @@ namespace {
 		commandMap.push_back(std::make_pair("PART", part));
 		commandMap.push_back(std::make_pair("MODE", mode));
 		commandMap.push_back(std::make_pair("TOPIC", topic));
+		commandMap.push_back(std::make_pair("INVITE", invite));
 		
 		commandMap.push_back(std::make_pair("OPER", oper));
 		commandMap.push_back(std::make_pair("kill", kill));

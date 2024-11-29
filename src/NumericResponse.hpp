@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/29 16:48:01 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/29 19:48:51 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,9 +64,12 @@
 # define RPL_UMODEIS            "221 %s :%s"
 
 //! TOPIC
-
 # define RPL_TOPIC              "332 %s :%s"
 # define RPL_NOTOPIC            "331 %s :No topic is set"
 # define ERR_CHANOPRIVSNEEDED   "482 %s :You're not channel operator"
+
+//! INVITE
+# define ERR_USERONCHANNEL      "443 %s %s :is already on channel"
+# define RPL_INVITING           "341 %s %s"
 
 #endif // !NUMERIC_RESPONSE_HPP

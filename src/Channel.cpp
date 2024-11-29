@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/29 17:12:41 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/29 19:37:50 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,6 +118,16 @@ Client*		Channel::getClient( const int client_socket ) const {
 
 	for (it = this->_client.begin(); it != this->_client.end(); it++) {
 		if (client_socket == (*it)->getFd())
+			return (*it);
+	}
+	return (NULL);
+}
+
+Client* Channel::getClient( const std::string & nick ) const{
+	std::vector<Client*>::const_iterator it;
+
+	for (it = this->_client.begin(); it != this->_client.end(); it++){
+		if (nick == (*it)->getNickname())
 			return (*it);
 	}
 	return (NULL);
