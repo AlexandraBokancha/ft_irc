@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/29 19:59:07 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/02 17:23:39 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
  */
 
 # include "CommandExecutor.hpp"
-#include "AParser.hpp"
+# include "AParser.hpp"
 # include "Channel.hpp"
 # include "NumericResponse.hpp"
 # include "Server.hpp"
@@ -208,8 +208,26 @@ namespace {
 			//! SUCCESS
 			//! add client to channel
 			ch->addClient(&client);
-			serv.respond(client.getFd(), "JOIN %s", channel_it->c_str());
+			
+			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+				std::string(" JOIN ") + ch->getName();
+			serv.respond(client.getFd(), response.c_str());	
+			
+			if (!ch->getTopic().empty()){ //!< send topic if it's set
+				serv.respond(client.getFd(), RPL_TOPIC, ch->getName().c_str(), ch->getTopic().c_str());
+			}
 
+			std::string names = ":localhost 353 " + client.getNickname() + " = " + ch->getName() + " :";
+			const std::vector<Client *>& members = ch->getClients();
+			for (std::vector<Client *>::const_iterator it = members.begin(); it != members.end(); ++ it){
+				names += (*it)->getNickname() + " ";
+			}
+			serv.respond(client.getFd(), names.c_str());
+
+			std::string msg = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+				std::string(" JOIN ") + ch->getName();
+			serv.broadcastToChannel(msg, ch, client.getFd());
+			
 			return ;
 		}
 	}
@@ -305,9 +323,18 @@ namespace {
 			}
 			//! Remove from channel
 			channel->removeClient(client.getFd());
-			// BROADCAST TO CHANNEL
+			
+			
+			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+				std::string(" PART ") + channel->getName() + " :" + part_msg;
+			serv.respond(client.getFd(), response.c_str());
+			
 			if (channel->isEmpty()) //!< Remove channel
 				serv.delChannel(*channel);
+			
+			std::string msg = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+					std::string(" PART ") + channel->getName() + " :" + part_msg;
+			serv.broadcastToChannel(msg, channel, client.getFd());	
 		}
 	}
 
@@ -359,14 +386,10 @@ namespace {
 			}
 			else { //!< you can change the topic
 				channel->setTopic(msg.getParam()[1]);
-
-				/* FOR TESTING PURPOSE. NEED TO REPLACE BY A REAL FUNCTION broadcastToChannel() */
-				const std::vector<Client *>& clients = channel->getClients(); //!< clients connected to this channel
-				for (std::vector<Client *>::const_iterator it = clients.begin(); it != clients.end(); ++it){ //!< broadcast message to every client on a channel
-					std::string msg = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
-						" " + std::string("TOPIC") + " " + channel->getName() + " :" + channel->getTopic();
-					serv.respond((*it)->getFd(), msg.c_str());
-				}
+				
+				std::string msg = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+					" " + std::string("TOPIC") + " " + channel->getName() + " :" + channel->getTopic();	
+				serv.broadcastToChannel(msg, channel, client.getFd());
 			}
 		}
 	}
@@ -377,9 +400,11 @@ namespace {
 	 * <nickname> <channel>
 	 * 
 	 * The parameter <nickname> is the nickname of the person to be invited to
-	 * the target channel <channel>. There is no requirement that the
-	 * channel the target user is being invited to must exist or be a valid
-	 * channel. 
+	 * the target channel <channel>. 
+	 * 
+	 * 
+	 * NOTE: There is no requirement that the channel the target 
+	 * user is being invited to must exist or be a valid channel. 
 	 * 
 	 * To invite a user to a channel which is invite only (MODE +i),
 	 * the client sending the invite must be recognised as being a
@@ -421,7 +446,7 @@ namespace {
 			}
 		}
 		
-		// !< send invitation
+		//!< send invitation
 		response = ":" + client.getNickname() + " INVITE " + nick_target + " #" + channel_target;
 		serv.respond(serv.findClient(nick_target)->getFd(), response.c_str());
 		
