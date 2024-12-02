@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/02 17:23:39 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/02 21:35:35 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -144,10 +144,6 @@ namespace {
 	 * @param msg Msg sent to server from client
 	 */
 	void	join(Server& serv, Client& client, Message& msg) {
-		if (msg.getParam().size() == 0) {
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
-			return ;
-		}
 
 		std::vector<std::string>					channel_name;
 		std::vector<std::string>::const_iterator	channel_it;
@@ -155,6 +151,11 @@ namespace {
 		std::vector<std::string>::const_iterator	key_it;
 		Channel										*ch;
 		int											channel_mode;
+		
+		if (msg.getParam().size() == 0) {
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
 
 		//<! Get channel list and key list
 		channel_name = AParser::getChannelList(msg.getParam()[0]);
@@ -222,11 +223,10 @@ namespace {
 			for (std::vector<Client *>::const_iterator it = members.begin(); it != members.end(); ++ it){
 				names += (*it)->getNickname() + " ";
 			}
+			
 			serv.respond(client.getFd(), names.c_str());
 
-			std::string msg = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
-				std::string(" JOIN ") + ch->getName();
-			serv.broadcastToChannel(msg, ch, client.getFd());
+			serv.broadcastToChannel(response, ch, client.getFd());
 			
 			return ;
 		}
@@ -324,17 +324,14 @@ namespace {
 			//! Remove from channel
 			channel->removeClient(client.getFd());
 			
-			
 			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
 				std::string(" PART ") + channel->getName() + " :" + part_msg;
 			serv.respond(client.getFd(), response.c_str());
 			
 			if (channel->isEmpty()) //!< Remove channel
 				serv.delChannel(*channel);
-			
-			std::string msg = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
-					std::string(" PART ") + channel->getName() + " :" + part_msg;
-			serv.broadcastToChannel(msg, channel, client.getFd());	
+		
+			serv.broadcastToChannel(response, channel, client.getFd());	
 		}
 	}
 
@@ -366,7 +363,7 @@ namespace {
 			return ;
 		}
 		
-		if (!channel->getClient(client.getFd())){ //!< Client not in channel									 
+		if (!channel->getClient(client.getFd())){ //!< Client not on channel									 
 			serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
 			return;
 		}
@@ -381,7 +378,7 @@ namespace {
 		}
 		else if (msg.getParam().size() >= 2){ //!< change the topic, if you have the rights
 			if ((channel->getChannelMode() & T) && (client.getMode() & ~LOCAL_OPERATOR || client.getMode() & ~OPERATOR)){ //!< topic settable by channel operator only
-				serv.respond(client.getFd() , ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+				serv.respond(client.getFd(), ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
 				return;
 			}
 			else { //!< you can change the topic
@@ -389,6 +386,11 @@ namespace {
 				
 				std::string msg = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
 					" " + std::string("TOPIC") + " " + channel->getName() + " :" + channel->getTopic();	
+			
+				//!< response to client
+				serv.respond(client.getFd(), msg.c_str());
+			
+				//!< broadcast to channel
 				serv.broadcastToChannel(msg, channel, client.getFd());
 			}
 		}
@@ -401,7 +403,6 @@ namespace {
 	 * 
 	 * The parameter <nickname> is the nickname of the person to be invited to
 	 * the target channel <channel>. 
-	 * 
 	 * 
 	 * NOTE: There is no requirement that the channel the target 
 	 * user is being invited to must exist or be a valid channel. 
@@ -455,6 +456,59 @@ namespace {
 	}
 	
 	
+	/** 
+	 * @brief IRC KICK command
+	 * 
+	 * <channel> <user> [<comment>]
+	 * 
+	 * ~ forced PART a user from channel
+	 * 
+	 * Only a channel operator may kick another user out of a channel.
+	 * 
+	*/
+	void kick( Server& serv, Client& client, Message& msg ) {
+		Channel *channel;
+		std::string comment = "";
+		std::string response;
+		
+		if (msg.getParam().size() <= 1) { //!< No parameter
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
+	
+		channel = serv.findChannel(msg.getParam()[0]);
+		if (!channel){ //!< Channel not found
+			serv.respond(client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0].c_str());
+			return ;
+		}
+		
+		if (!channel->getClient(client.getFd())){ //!< Client not in channel									 
+			serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+			return;
+		}
+
+		if (client.getMode() & ~OPERATOR && client.getMode() & ~LOCAL_OPERATOR){ //!< Client has no privilages
+			serv.respond(client.getFd(), ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+			return ;
+		}
+	
+		//!< kick client from channel
+		channel->removeClient(channel->getClientByUsername(msg.getParam()[1])->getFd());
+		
+		if (msg.getParam().size() > 2){
+			comment = " :" + msg.getParam()[2];
+		}
+		
+		response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+			" KICK " + channel->getName() + " " + msg.getParam()[1] + comment;
+			
+		//!< response to client
+		serv.respond(client.getFd(), response.c_str());
+		
+		//!< broadcast to channel
+		serv.broadcastToChannel(response, channel, client.getFd());
+	}
+
 		/* ************************************************************************** */
 		/* *                         IRC Server's commands                          * */
 		/* ************************************************************************** */
@@ -671,6 +725,7 @@ namespace {
 		commandMap.push_back(std::make_pair("MODE", mode));
 		commandMap.push_back(std::make_pair("TOPIC", topic));
 		commandMap.push_back(std::make_pair("INVITE", invite));
+		commandMap.push_back(std::make_pair("KICK", kick));
 		
 		commandMap.push_back(std::make_pair("OPER", oper));
 		commandMap.push_back(std::make_pair("kill", kill));

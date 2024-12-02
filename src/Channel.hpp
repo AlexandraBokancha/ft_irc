@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/29 19:30:32 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/02 21:10:44 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,8 @@ public:
 	int								getChannelMode( void ) const;
 	Client*							getClient( const int client_socket ) const;
 	Client*							getClient( const std::string & nick ) const;
+	Client*							getClientByUsername( const std::string & user ) const;
+
 	void							setTopic(const std::string & topic);
 
 	bool							isFull( void ) const;

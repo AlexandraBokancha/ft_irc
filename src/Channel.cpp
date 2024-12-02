@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/29 19:37:50 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/02 21:35:07 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,6 +128,16 @@ Client* Channel::getClient( const std::string & nick ) const{
 
 	for (it = this->_client.begin(); it != this->_client.end(); it++){
 		if (nick == (*it)->getNickname())
+			return (*it);
+	}
+	return (NULL);
+}
+
+Client* Channel::getClientByUsername( const std::string & user ) const{
+	std::vector<Client*>::const_iterator it;
+
+	for (it = this->_client.begin(); it != this->_client.end(); it++){
+		if (user == (*it)->getUsername())
 			return (*it);
 	}
 	return (NULL);
