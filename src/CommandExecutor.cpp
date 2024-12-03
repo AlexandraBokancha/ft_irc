@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/02 21:35:35 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/03 13:43:45 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,6 +134,16 @@ namespace {
 	/* *                         IRC Channel's commands                        * */
 	/* ************************************************************************** */
 	
+
+	/* we need to broadcast info about next commands:
+		- MODE -
+		- KICK +
+		- PART + 
+		- QUIT -
+		- PRIVMSG/NOTICE -
+		- JOIN + 
+	*/
+
 	/**
 	 * @brief IRC JOIN command
 	 *
@@ -210,22 +220,34 @@ namespace {
 			//! add client to channel
 			ch->addClient(&client);
 			
+			//! response to client
 			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
 				std::string(" JOIN ") + ch->getName();
 			serv.respond(client.getFd(), response.c_str());	
 			
+			//! RPL_TOPIC
 			if (!ch->getTopic().empty()){ //!< send topic if it's set
 				serv.respond(client.getFd(), RPL_TOPIC, ch->getName().c_str(), ch->getTopic().c_str());
 			}
 
-			std::string names = ":localhost 353 " + client.getNickname() + " = " + ch->getName() + " :";
+			//! RPL_NAMERPLY 
+			std::string names = client.getNickname() + " = " + ch->getName() + " :";
 			const std::vector<Client *>& members = ch->getClients();
+			
 			for (std::vector<Client *>::const_iterator it = members.begin(); it != members.end(); ++ it){
-				names += (*it)->getNickname() + " ";
+				if (it != members.begin()){
+					names += " ";
+				}
+				if ((*it)->getMode() & LOCAL_OPERATOR || (*it)->getMode() & OPERATOR){
+					names += "@";
+				}
+				names += (*it)->getNickname();
 			}
 			
-			serv.respond(client.getFd(), names.c_str());
-
+			serv.respond(client.getFd(), RPL_NAMERPLY, ch->getName().c_str(), names.c_str());
+			serv.respond(client.getFd(), RPL_ENDOFNAMES, ch->getName().c_str());
+			
+			//! broadcast to channel
 			serv.broadcastToChannel(response, ch, client.getFd());
 			
 			return ;
@@ -324,13 +346,17 @@ namespace {
 			//! Remove from channel
 			channel->removeClient(client.getFd());
 			
+			//! response to client
 			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
 				std::string(" PART ") + channel->getName() + " :" + part_msg;
 			serv.respond(client.getFd(), response.c_str());
 			
-			if (channel->isEmpty()) //!< Remove channel
+			if (channel->isEmpty()){ //!< Remove channel
 				serv.delChannel(*channel);
+				return ;
+			}
 		
+			//! broadcast to channel
 			serv.broadcastToChannel(response, channel, client.getFd());	
 		}
 	}
@@ -345,8 +371,6 @@ namespace {
 	 * If there is "topic" -> change
 	 * 
 	 * BEWARE: to test this function MODE function has to be finished
-	 * Also, broadcasting to all clients on a channel has to be done
-	 * in IRC format (maybe we have to create a function for this purpose)
 	 * 
 	 */
 	void topic( Server& serv, Client& client, Message& msg ) {

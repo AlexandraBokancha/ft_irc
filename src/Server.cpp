@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/02 17:09:07 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/03 13:43:36 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -363,6 +363,7 @@ void	Server::disconnectClient( int& index ) {
 				log("Removing channel %s", it->getName().c_str());
 				it--;
 			}
+			// peut-etre on doit rajouter un broadcast ici pour notifier les clients qu'un user est parti ?
 		}
 	}
 

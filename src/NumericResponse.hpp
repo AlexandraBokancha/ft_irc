@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/29 19:48:51 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/03 13:24:38 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,8 @@
 # define ERR_CHANNELISFULL  	"471 %s :Cannot join channel (+l)"
 # define ERR_INVITEONLYCHAN 	"473 %s :Cannot join channel (+i)"
 # define ERR_BADCHANNELKEY  	"475 %s :Cannot join channel (+k)"
+# define RPL_NAMERPLY           "353 %s :%s"
+# define RPL_ENDOFNAMES         "366 %s :End of /NAMES list"
 
 //! PART
 # define ERR_NOTONCHANNEL		"442 %s :You're not on that channel"
