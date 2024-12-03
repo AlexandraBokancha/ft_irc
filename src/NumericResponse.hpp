@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 13:24:38 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/03 14:26:33 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,5 +73,10 @@
 //! INVITE
 # define ERR_USERONCHANNEL      "443 %s %s :is already on channel"
 # define RPL_INVITING           "341 %s %s"
+
+//! PRIVMSG
+# define ERR_NORECIPIENT        "411 :No recipient given (%s)"
+# define ERR_CANNOTSENDTOCHAN   "404 %s :Cannot send to channel"
+# define ERR_NOTEXTTOSEND       "412 :No text to send"
 
 #endif // !NUMERIC_RESPONSE_HPP

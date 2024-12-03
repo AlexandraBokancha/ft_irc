@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 13:43:36 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/03 18:24:23 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -335,6 +335,20 @@ Channel*	Server::findChannel( const std::string& name ) {
 	}
 	return (NULL);
 }
+
+
+std::vector<Channel*>	Server::clientOnChannel(Client* client ){
+	std::vector<Channel*>	clientChannels;
+	std::vector<Channel>::iterator it;
+
+	for (it = this->_channel.begin(); it != this->_channel.end(); it++){
+		if (std::find((*it).getClients().begin(), (*it).getClients().end(), client) != (*it).getClients().end()) {
+            clientChannels.push_back(&(*it));
+        }
+	}
+	return (clientChannels);
+}	
+
 
 /**
  * @brief Disconnect client and remove it from poll

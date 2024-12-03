@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/29 15:52:10 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/03 17:37:29 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ Client::Client( void ) {
 	this->_connected = false;
 	this->_registred = false;
 	this->_isOperator = false;
+	this->_joinedChannel = 0;
 	this->_fd = -1;
 	this->_mode = 0;
 	return ;
@@ -41,6 +42,7 @@ Client::Client( const Client & rhs ) {
 	this->_connected = rhs._connected;
 	this->_registred = rhs._registred;
 	this->_isOperator = rhs._isOperator;
+	this->_joinedChannel = rhs._joinedChannel;
 	this->_fd = rhs._fd;
 	this->_mode = 0;
 	return ;
@@ -145,7 +147,7 @@ void	Client::setOperator( void ){
 	this->_isOperator = true;
 }
 
-bool Client::isOperator( void ) const {
+bool 	Client::isOperator( void ) const {
 	return (this->_isOperator);
 }
 
@@ -161,6 +163,9 @@ void	Client::setMode(const short mode) {
 	this->_mode = mode;
 }
 
+void	Client::setJoinedChannel( void ){
+	this->_joinedChannel++;	
+}
 
 /* ************************************************************************** */
 /* *                             Operator Overload                          * */

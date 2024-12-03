@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 13:43:45 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/03 18:26:30 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -219,6 +219,7 @@ namespace {
 			//! SUCCESS
 			//! add client to channel
 			ch->addClient(&client);
+			client.setJoinedChannel();
 			
 			//! response to client
 			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
@@ -248,7 +249,7 @@ namespace {
 			serv.respond(client.getFd(), RPL_ENDOFNAMES, ch->getName().c_str());
 			
 			//! broadcast to channel
-			serv.broadcastToChannel(response, ch, client.getFd());
+			serv.broadcastToChannel(response, ch, -1);
 			
 			return ;
 		}
@@ -258,6 +259,12 @@ namespace {
 	 * @brief Handle MODE command
 	 *
 	 * IRC MODE cmd
+	 * 
+	 *  i: Set/remove Invite-only channel
+	 *  t: Set/remove the restrictions of the TOPIC command to channel operators
+	 *  k: Set/remove the channel key (password)
+	 *  o: Give/take channel operator privilege
+	 *  l: Set/remove the user limit to channel
 	 * 
 	 * @param serv Actual server
 	 * @param client Client who send comand
@@ -288,12 +295,12 @@ namespace {
 					case 'i' :
 						flag = (sign > 0 ? flag | INVISIBLE : flag & ~INVISIBLE);
 						break ;
-					case 'w' :
-						flag = (sign > 0 ? flag | WALLOPS : flag & ~WALLOPS);
-						break ;
-					case 'r' :
-						flag = (sign > 0 ? flag | RESTRICTED_USER : flag);
-						break ;
+					// case 'w' :
+					// 	flag = (sign > 0 ? flag | WALLOPS : flag & ~WALLOPS);
+					// 	break ;
+					// case 'r' :
+					// 	flag = (sign > 0 ? flag | RESTRICTED_USER : flag);
+					// 	break ;
 					case 'o' :
 						flag = (sign > 0 ? flag : flag & ~OPERATOR);
 						break ;
@@ -582,6 +589,59 @@ namespace {
 		serv.respond(client.getFd(), RPL_ENDOFINFO);
 	}
 
+
+	/**
+	 * @brief IRC PRIVMSG command
+	 * 
+	 * <receiver>{,<receiver>} <text to be sent>
+	 * 
+	 * 
+	 */
+	void privmsg( Server& serv, Client& client, Message& msg ) {
+		std::vector<std::string>					receiver;
+		std::vector<std::string>::const_iterator	receiver_it;
+		std::string									text;
+		Client										*clientReceiver;
+		Channel										*channelReceiver;
+
+		
+		if (msg.getParam().size() == 0){ //!< no receiver given
+			serv.respond(client.getFd(), ERR_NORECIPIENT, msg.getCommand().c_str());
+			return ;
+		}
+		if (msg.getParam().size() <= 1){ //!< no text to be sent given
+			serv.respond(client.getFd(), ERR_NOTEXTTOSEND);
+			return ;
+		}
+		
+		receiver = AParser::getReceiverList(msg.getParam()[0]);
+		
+		for (receiver_it = receiver.begin(); receiver_it != receiver.end(); receiver_it++){
+			if ((*receiver_it)[0] == '#' || (*receiver_it)[0] == '&'){ //!< it's a channel{
+				channelReceiver = serv.findChannel((*receiver_it));
+				if (!channelReceiver){ //!< no such channel
+					serv.respond(client.getFd(), ERR_NOSUCHCHANNEL, receiver_it->c_str());
+					continue ;
+				}
+				if (!channelReceiver->getClient(client.getFd())){ // !< client sending a msg not on  channel
+					serv.respond(client.getFd(), ERR_NOTONCHANNEL, channelReceiver->getName().c_str());
+					continue ;
+				}
+				text = ":" + client.getNickname() +" PRIVMSG " + channelReceiver->getName() + " :" + msg.getParam()[1];
+				serv.broadcastToChannel(text, channelReceiver, client.getFd());
+			}
+			else { //!< it's a client
+				clientReceiver = serv.findClient((*receiver_it)); 
+				if (!clientReceiver){ //!< no such client on server
+					serv.respond(client.getFd(), ERR_NOSUCHNICK, receiver_it->c_str());
+					continue ;
+				}
+				text = ":" + client.getNickname() + " PRIVMSG " + clientReceiver->getNickname() + " :" + msg.getParam()[1];
+				serv.respond(clientReceiver->getFd(), text.c_str());
+			}
+		}	
+	}
+	
 	/**
 	 * @brief IRC PONG command
 	 *
@@ -755,6 +815,7 @@ namespace {
 		commandMap.push_back(std::make_pair("kill", kill));
 		commandMap.push_back(std::make_pair("restart", restart));
 		
+		commandMap.push_back(std::make_pair("PRIVMSG", privmsg)); 
 		commandMap.push_back(std::make_pair("time", time)); // irssi l'envoie en minuscule
 		commandMap.push_back(std::make_pair("info", info)); // irssi l'envoie en minuscule
 		commandMap.push_back(std::make_pair("PING", pong)); // PONG reagit a la cmd PING envoye par le client

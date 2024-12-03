@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/02 17:08:03 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/03 18:04:03 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,9 +66,11 @@ public:
 	};
 
 
-	Client*		findClient( const std::string& nick );
-	Client*		findClient( int client_sock );
-	int			findClientIndex( const std::string & nick);	
+	std::vector<Channel*>	clientOnChannel( Client *client );
+		
+	Client*					findClient( const std::string& nick );
+	Client*					findClient( int client_sock );
+	int						findClientIndex( const std::string & nick );
 
 	void		pollPushBack( int fd, short events );
 	int			comparePassword( const std::string& str ) const;
@@ -85,6 +87,7 @@ public:
 	void		respond( const int& client_sock, const char* fmr, ... ) const;
 	void		broadcast( const char *buffer, int len, int fd ) const;
 	void 		broadcastToChannel( const std::string& msg, const Channel * ch, int fd ) const;
+	int			sendMsg( int socket, const char *buf, int len ) const;
 
 
 
@@ -117,7 +120,6 @@ private:
 	void						checkEvent( int& i );
 	void						receiveMsg( int& i );
 	int							sendMsg(int socket, const Message& msg ) const;
-	int							sendMsg( int socket, const char *buf, int len ) const;
 
 };
 
