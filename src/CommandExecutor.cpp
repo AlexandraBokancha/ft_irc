@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 18:26:30 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/03 19:10:27 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -643,6 +643,32 @@ namespace {
 	}
 	
 	/**
+	 * @brief IRC NOTICE Command 
+	 * 
+	 * <nickname> <text>
+	 * 
+	 * NOTE:
+	 * this command is similiar to PRIVMSG but automatic replies
+	 * must never be sent in response to a NOTICE message.
+	 * 
+	 */
+	void notice( Server& serv, Client& client, Message& msg ) {
+		std::string nick_target;
+		std::string text_target;
+
+		if (msg.getParam().size() <= 1){
+			return ;
+		}
+		nick_target = msg.getParam()[0];
+		if (serv.findClient(nick_target) == NULL){//!< No nick found
+			return ;
+		}
+		//!< send notice to client
+		text_target = ":" + client.getNickname() + " NOTICE " + nick_target + " :" + msg.getParam()[1];
+		serv.respond(serv.findClient(nick_target)->getFd(), text_target.c_str());	
+	}
+	
+	/**
 	 * @brief IRC PONG command
 	 *
 	 * Perform IRC PONG command and respond
@@ -815,7 +841,8 @@ namespace {
 		commandMap.push_back(std::make_pair("kill", kill));
 		commandMap.push_back(std::make_pair("restart", restart));
 		
-		commandMap.push_back(std::make_pair("PRIVMSG", privmsg)); 
+		commandMap.push_back(std::make_pair("PRIVMSG", privmsg));
+		commandMap.push_back(std::make_pair("NOTICE", notice)); 
 		commandMap.push_back(std::make_pair("time", time)); // irssi l'envoie en minuscule
 		commandMap.push_back(std::make_pair("info", info)); // irssi l'envoie en minuscule
 		commandMap.push_back(std::make_pair("PING", pong)); // PONG reagit a la cmd PING envoye par le client
