@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 17:12:40 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/29 01:19:24 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,19 +97,19 @@ int		Client::getMode( void ) const {
 	return (this->_mode);
 }
 
-std::string	Client::getModeStr( void ) const {
-	std::string	result = "";
+std::string	Client::modeToString( void ) const {
+	std::string	result = "+";
 	if (this->_mode & INVISIBLE)
-		result += "+i";
+		result += "i";
 	if (this->_mode & WALLOPS)
-		result += "+w";
+		result += "w";
 	if (this->_mode & OPERRATOR)
-		result += "+o";
+		result += "o";
 	if (this->_mode & LOCAL_OPERATOR)
-		result += "+O";
+		result += "O";
 	if (this->_mode & RESTRICTED_USER)
-		result += "+r";
-	return (result);
+		result += "r";
+	return ((result.length() == 1 ? "" : result));
 }
 
 void Client::setConnected( void ){

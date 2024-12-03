@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 18:15:46 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/03 12:34:56 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,25 +128,21 @@ namespace {
 	}
 
 	/**
-	 * @brief Handle MODE command
+	 * @brief Handle user MODE command
 	 *
-	 * IRC MODE cmd
+	 * IRC user MODE cmd
 	 * 
 	 * @param serv Actual server
 	 * @param client Client who send comand
 	 * @param msg Msg sent to server from client
 	 */
-	void	mode(Server& serv, Client& client, Message& msg) {
-		if (msg.getParam().size() == 0) { //!< No parameters
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
-			return ;
-		}
+	void	mode_user(Server& serv, Client& client, Message& msg) {
 		if (msg.getParam()[0].compare(client.getNickname()) != 0) { //!< Nickname not matching user
 			serv.respond(client.getFd(), ERR_USERSDONTMATCH);
 			return ;
 		}
 		if (msg.getParam().size() == 1) { //!< Send User mode
-			serv.respond(client.getFd(), RPL_UMODEIS, client.getNickname().c_str(), client.getModeStr().c_str());
+			serv.respond(client.getFd(), RPL_UMODEIS, client.getNickname().c_str(), client.modeToString().c_str());
 			return ;
 		}
 
@@ -181,6 +177,147 @@ namespace {
 		}
 		log("Changed client %d mode", client.getFd());
 		client.setMode(flag);
+	}
+
+/**
+ * @brief Add to mode response
+ *
+ * Add param to MODE response
+ *
+ * @param res resulting response vector
+ * @param sign Flag sign
+ * @param flag Mode flag
+ * @param param Optionnal mode param
+ * @return The updated res vector
+ */
+static std::vector<std::string>	addMode(std::vector<std::string>& result
+		, const char sign, const char flag, const std::string& param) {
+	std::vector<std::string>::iterator	it = result.begin();
+
+	//! Try to add to existing result
+	for (int i = 0; i < 2 && it != result.end(); i++) {
+		if (sign == (*it)[0]) {
+			it->append(1, flag);
+			if (param.length() > 0)
+				result.push_back(param);
+			if (param.length() == 0 && (flag == 'b' || flag == 'e' || flag == 'I'))
+				result.push_back("");
+			return (result);
+		}
+	}
+	//! Add new
+	if (sign == PLUS || sign == MINUS) { //! First element to contain flag
+		result.push_back(std::string(&sign) + flag);
+		if (param.length() > 0)
+			result.push_back(param);
+	}
+	return (result);
+}
+
+/**
+ * @brief Check if channel mode require a parameter
+ *
+ * Used to check if ERR_NEEDMOREPARAMS error should be returned
+ *
+ * @param mode The channel mode (o, v, a, i...)
+ * @param sign The sign of the mode (+ or -)
+ * @return True if require param (ERR_NEEDMOREPARAMS), else False 
+ */
+static bool	requireParam(const char mode, const char sign) {
+	if (mode =='o')
+		return (true);
+	if (sign == PLUS)
+		return (mode == 'k' || mode == 'l');
+	return (false);
+}
+
+static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& msg) {
+	std::vector<std::string>::const_iterator	prm_it;
+	std::vector<std::string>::const_iterator	mode_prm_it;
+	std::vector<std::string>					result;
+	std::string									res_prm;
+	std::string									response;
+	Channel										new_chan = *chan;
+	int											sign;
+	
+	for (prm_it = msg.getParam().begin() + 1; prm_it != msg.getParam().end(); prm_it++) {
+		sign = (*prm_it)[0];
+		mode_prm_it = prm_it + 1;
+		if (sign != '+' && sign != '-') //!< Invalid mode cmd
+			return (war_log("[MODE] invalid parameter : %s ...Ignore", prm_it->c_str()));
+			// throw (); //!< because it shouldnt happen
+		
+		for (std::string::const_iterator mode_it = prm_it->begin() + 1; mode_it != prm_it->end(); mode_it++) {
+			res_prm = (mode_prm_it == msg.getParam().end() ? "" : *mode_prm_it);
+
+			if (mode_prm_it == msg.getParam().end() && requireParam(*mode_it, sign))
+					return (serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, "MODE"));
+			switch (*mode_it) {
+				case 'o' :
+					if (!chan->getClient(*mode_prm_it))
+						return (serv.respond(client.getFd(), ERR_NOSUCHNICK, mode_prm_it->c_str()));
+					new_chan.changeUserMode(*mode_prm_it, sign, *mode_it);
+					break ;
+				case 'k' :
+					//! Check ERR_KEYSET ???
+					new_chan.setPassword(( sign == PLUS ? *mode_prm_it : ""));
+					break ;
+				case 'l' :
+					if (sign == PLUS) {
+						int lim = std::atoi(mode_prm_it->c_str());
+						if (lim > 0)
+							new_chan.setLimit(lim);
+					}
+					break ;
+				case 'i' :
+				case 't' : //!< Special
+					break ;
+				default :
+					return (serv.respond(client.getFd(), ERR_UNKNOWNMODE, *mode_it));
+			}
+			if (*mode_it != 'o')
+				new_chan.changeMode(sign, *mode_it);
+			result = addMode(result, sign, *mode_it, res_prm);
+		}
+		if (mode_prm_it == msg.getParam().end())
+			break ;
+		prm_it = mode_prm_it;
+	}
+
+	//! Server respond
+	*chan = new_chan;
+	for (prm_it = result.begin(); prm_it != result.end(); prm_it++) {
+		if ((*prm_it)[0] == PLUS || (*prm_it)[0] == MINUS)
+			response += *prm_it;
+		else
+			response += " " + *prm_it;
+	}
+	serv.respond(client.getFd(), RPL_UMODEIS, chan->getName().c_str(), response.c_str());
+}
+
+	/**
+	 * @brief Handle MODE command
+	 *
+	 * IRC MODE cmd
+	 * 
+	 * @param serv Actual server
+	 * @param client Client who send comand
+	 * @param msg Msg sent to server from client
+	 */
+	void	mode(Server& serv, Client& client, Message& msg) {
+		std::string	channel = "#&!+";
+
+		if (msg.getParam().size() == 0) { //!< No parameters
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
+		if (channel.find(msg.getParam()[1][0]) != std::string::npos) {
+			Channel*	chan = serv.findChannel(msg.getParam()[0]);
+			if (!chan)
+				return (serv.respond(client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0] .c_str()));
+			return (mode_channel(serv, chan, client, msg));
+		}
+		return (mode_user(serv, client, msg));
 	}
 
 	/**

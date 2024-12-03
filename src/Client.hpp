@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 17:14:51 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/29 01:12:34 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ public:
 	int					getFd( void ) const;
 	int					getJoinedChannel( void ) const;
 	int					getMode( void ) const;
-	std::string			getModeStr( void ) const;
+	std::string			modeToString( void ) const;
 
 	void				setHostname( const std::string& hostname );
 	void				setUsername( const std::string& username );

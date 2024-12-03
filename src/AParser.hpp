@@ -6,7 +6,7 @@
 /*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/20 18:05:37 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 15:06:13 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/01 12:07:19 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,6 +103,8 @@ public:
 	//! Mode parser
 	static std::string					getMode( const std::string& arg, std::string::const_iterator& pos  );
 	static std::vector<std::string>		getModeList( const std::string& arg );
+
+	static std::string					getMask( const std::string& arg );
 
 private:
 

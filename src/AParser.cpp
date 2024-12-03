@@ -556,6 +556,26 @@ std::vector<std::string>	AParser::getModeList( const std::string &arg) {
 	return (result);
 }
 
+/**
+ * @breif Get mask from arg
+ *
+ * Only extract valid mask character from string
+ *
+ * @param arg String containing the mask
+ * @return A valid mask axtracte from arg
+ */
+std::string	AParser::getMask( const std::string& arg ) {
+	std::string::const_iterator it;
+	std::string					mask = "";
+
+	for (it = arg.begin(); it != arg.end(); it++) {
+		if (*it == '\0')
+			break ;
+		mask.append(arg);
+	}
+	return (mask);
+}
+
 /* ************************************************************************** */
 /* *                            Exception handler                           * */
 /* ************************************************************************** */

@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 16:54:38 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/11/29 12:33:44 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,6 +73,9 @@ public:
 	void		pollPushBack( int fd, short events );
 	int			comparePassword( const std::string& str ) const;
 
+	void		sendChannelBanMask(Channel& ch, Client& client) const;
+	void		sendExceptionMask(Channel& ch, Client& client) const;
+	void		sendInvitemMsk(Channel& ch, Client& client) const;
 	Channel*	findChannel( const std::string& name );
 	void		delChannel( Channel& channel );
 	void		disconnectClient( int& index );

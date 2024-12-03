@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 18:09:38 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/02 21:26:28 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,5 +62,21 @@
 # define ERR_UMODEUNKNOWNFLAG   "501 :Unknown MODE flag"
 # define ERR_USERSDONTMATCH     "502 :Cannot change mode for other users"
 # define RPL_UMODEIS            "221 %s :%s"
+
+# define ERR_NOCHANMODES        "477 %s :Channel doesn't support modes"
+# define ERR_USERNOTINCHANNEL   "441 %s %s :They aren't on that channel"
+# define ERR_KEYSET             "467 %s :Channel key already set"
+# define ERR_CHANOPRIVSNEEDED   "482 %s :You're not channel operator"
+# define ERR_UNKNOWNMODE        "472 %s :is unknown mode char to me for %s"
+
+
+# define RPL_CHANNELMODEIS      "324 %s %s"
+# define RPL_UNIQOPIS           "325 %s %s"
+# define RPL_BANLIST            "367 %s %v"
+# define RPL_ENDOFBANLIST       "368 %s :End of channel ban list"
+# define RPL_INVITELIST         "346 %s %s"
+# define RPL_ENDOFINVITELIST    "347 %s :End of channel invite list"
+# define RPL_EXCEPTLIST         "348 %s %s"
+# define RPL_ENDOFEXCEPTLIST    "349 %s :End of channel exception list"
 
 #endif // !NUMERIC_RESPONSE_HPP
