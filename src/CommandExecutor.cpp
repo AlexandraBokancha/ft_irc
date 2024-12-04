@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 19:10:27 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/04 17:39:49 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,6 +116,7 @@ namespace {
 			std::vector<std::string> tmp = msg.getParam();
 			client.setUsername(tmp[0]);
 			client.setHostname(tmp[1]);
+			std::cout << "HOSTNAME :" << client.getHostname() << std::endl;
 			client.setServername(tmp[2]);
 			client.setRealname(tmp[3]);
 			success_log("USER %s enregistred", client.getUsername().c_str());
@@ -181,7 +182,7 @@ namespace {
 			if (ch == NULL) { //! Create new channel
 				Channel	new_channel(&client, *channel_it);
 				serv.addChannel(new_channel);
-				serv.respond(client.getFd(), "JOIN %s", channel_it->c_str());
+			//	serv.respond(client.getFd(), "JOIN %s", channel_it->c_str());
 				continue; ;
 			}
 
@@ -222,7 +223,7 @@ namespace {
 			client.setJoinedChannel();
 			
 			//! response to client
-			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+			std::string response = std::string(":") + client.getNickname() + std::string("!~") + client.getUsername() + std::string("@") + "localhost" + \
 				std::string(" JOIN ") + ch->getName();
 			serv.respond(client.getFd(), response.c_str());	
 			
@@ -232,7 +233,7 @@ namespace {
 			}
 
 			//! RPL_NAMERPLY 
-			std::string names = client.getNickname() + " = " + ch->getName() + " :";
+			std::string names = ":";
 			const std::vector<Client *>& members = ch->getClients();
 			
 			for (std::vector<Client *>::const_iterator it = members.begin(); it != members.end(); ++ it){
@@ -245,11 +246,11 @@ namespace {
 				names += (*it)->getNickname();
 			}
 			
-			serv.respond(client.getFd(), RPL_NAMERPLY, ch->getName().c_str(), names.c_str());
-			serv.respond(client.getFd(), RPL_ENDOFNAMES, ch->getName().c_str());
+			serv.respond(client.getFd(), RPL_NAMERPLY, client.getNickname().c_str(), ch->getName().c_str(), names.c_str());
+			serv.respond(client.getFd(), RPL_ENDOFNAMES, client.getNickname().c_str(), ch->getName().c_str());
 			
 			//! broadcast to channel
-			serv.broadcastToChannel(response, ch, -1);
+			serv.broadcastToChannel(response, ch, client.getFd());
 			
 			return ;
 		}
@@ -669,6 +670,16 @@ namespace {
 	}
 	
 	/**
+	 * @brief Reply to WHOIS command
+	 * 
+
+	 */
+	void whoisReply( Server& serv, Client& client, Message& msg ){
+		(void) msg;
+		serv.respond(client.getFd(), RPL_WHOISUSER, client.getNickname().c_str(), client.getUsername().c_str(), client.getHostname().c_str(), client.getRealname().c_str());
+	}
+	
+	/**
 	 * @brief IRC PONG command
 	 *
 	 * Perform IRC PONG command and respond
@@ -831,6 +842,7 @@ namespace {
 		commandMap.push_back(std::make_pair("USER", user));
 		
 		commandMap.push_back(std::make_pair("JOIN", join));
+		commandMap.push_back(std::make_pair("WHOIS", whoisReply));
 		commandMap.push_back(std::make_pair("PART", part));
 		commandMap.push_back(std::make_pair("MODE", mode));
 		commandMap.push_back(std::make_pair("TOPIC", topic));

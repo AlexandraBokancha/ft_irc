@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 14:26:33 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/04 17:16:23 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,8 +40,8 @@
 # define ERR_CHANNELISFULL  	"471 %s :Cannot join channel (+l)"
 # define ERR_INVITEONLYCHAN 	"473 %s :Cannot join channel (+i)"
 # define ERR_BADCHANNELKEY  	"475 %s :Cannot join channel (+k)"
-# define RPL_NAMERPLY           "353 %s :%s"
-# define RPL_ENDOFNAMES         "366 %s :End of /NAMES list"
+# define RPL_NAMERPLY           "353 %s = %s :%s"
+# define RPL_ENDOFNAMES         "366 %s %s :End of /NAMES list"
 
 //! PART
 # define ERR_NOTONCHANNEL		"442 %s :You're not on that channel"
@@ -79,4 +79,6 @@
 # define ERR_CANNOTSENDTOCHAN   "404 %s :Cannot send to channel"
 # define ERR_NOTEXTTOSEND       "412 :No text to send"
 
+//! WHOIS
+#define RPL_WHOISUSER           "311 %s %s %s * :%s"
 #endif // !NUMERIC_RESPONSE_HPP
