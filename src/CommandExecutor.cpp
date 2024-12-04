@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/04 17:39:49 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/04 17:45:19 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,7 +182,6 @@ namespace {
 			if (ch == NULL) { //! Create new channel
 				Channel	new_channel(&client, *channel_it);
 				serv.addChannel(new_channel);
-			//	serv.respond(client.getFd(), "JOIN %s", channel_it->c_str());
 				continue; ;
 			}
 
@@ -223,8 +222,8 @@ namespace {
 			client.setJoinedChannel();
 			
 			//! response to client
-			std::string response = std::string(":") + client.getNickname() + std::string("!~") + client.getUsername() + std::string("@") + "localhost" + \
-				std::string(" JOIN ") + ch->getName();
+			std::string response = std::string(":") + client.getNickname() + std::string("!~") + client.getUsername() + \
+				std::string("@") + "localhost" + std::string(" JOIN ") + ch->getName();
 			serv.respond(client.getFd(), response.c_str());	
 			
 			//! RPL_TOPIC
