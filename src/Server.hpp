@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/29 12:33:44 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/03 12:49:14 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,6 +87,8 @@ public:
 
 	void		respond( const int& client_sock, const char* fmr, ... ) const;
 	void		broadcast( const char *buffer, int len, int fd ) const;
+	void 		broadcastToChannel( const std::string& msg, const Channel * ch, int fd ) const;
+
 
 
 	//! FOR TESTING PURPOSE

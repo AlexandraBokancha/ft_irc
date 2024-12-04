@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/02 21:26:28 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/03 12:45:50 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@
 
 //! INFO
 # define RPL_INFO				"371 %s"
-# define RPL_ENDOFINFO			"374 : End of /INFO"
+# define RPL_ENDOFINFO			"374 :End of /INFO"
 
 //! OPER
 # define ERR_NOOPERHOST			"491 :No O-lines for your host"
@@ -72,11 +72,13 @@
 
 # define RPL_CHANNELMODEIS      "324 %s %s"
 # define RPL_UNIQOPIS           "325 %s %s"
-# define RPL_BANLIST            "367 %s %v"
-# define RPL_ENDOFBANLIST       "368 %s :End of channel ban list"
-# define RPL_INVITELIST         "346 %s %s"
-# define RPL_ENDOFINVITELIST    "347 %s :End of channel invite list"
-# define RPL_EXCEPTLIST         "348 %s %s"
-# define RPL_ENDOFEXCEPTLIST    "349 %s :End of channel exception list"
+//! TOPIC
+# define RPL_TOPIC              "332 %s :%s"
+# define RPL_NOTOPIC            "331 %s :No topic is set"
+# define ERR_CHANOPRIVSNEEDED   "482 %s :You're not channel operator"
+
+//! INVITE
+# define ERR_USERONCHANNEL      "443 %s %s :is already on channel"
+# define RPL_INVITING           "341 %s %s"
 
 #endif // !NUMERIC_RESPONSE_HPP

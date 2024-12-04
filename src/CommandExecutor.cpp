@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 12:34:56 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/03 13:02:13 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
  */
 
 # include "CommandExecutor.hpp"
-#include "AParser.hpp"
+# include "AParser.hpp"
 # include "Channel.hpp"
 # include "NumericResponse.hpp"
 # include "Server.hpp"
@@ -33,6 +33,11 @@
 
 //! Anonymous namespace: Everything declared here is only accesible in this file
 namespace {
+
+	/* ************************************************************************** */
+	/* *                         IRC Connection Registration                    * */
+	/* ************************************************************************** */
+	
 	/**
 	 * @brief Handle client password verification during registration
 	 *
@@ -164,7 +169,7 @@ namespace {
 						flag = (sign > 0 ? flag | RESTRICTED_USER : flag);
 						break ;
 					case 'o' :
-						flag = (sign > 0 ? flag : flag & ~OPERRATOR);
+						flag = (sign > 0 ? flag : flag & ~OPERATOR);
 						break ;
 					case 'O' :
 						flag = (sign > 0 ? flag : flag & ~LOCAL_OPERATOR);
@@ -179,121 +184,121 @@ namespace {
 		client.setMode(flag);
 	}
 
-/**
- * @brief Add to mode response
- *
- * Add param to MODE response
- *
- * @param res resulting response vector
- * @param sign Flag sign
- * @param flag Mode flag
- * @param param Optionnal mode param
- * @return The updated res vector
- */
-static std::vector<std::string>	addMode(std::vector<std::string>& result
-		, const char sign, const char flag, const std::string& param) {
-	std::vector<std::string>::iterator	it = result.begin();
+	/**
+	 * @brief Add to mode response
+	 *
+	 * Add param to MODE response
+	 *
+	 * @param res resulting response vector
+	 * @param sign Flag sign
+	 * @param flag Mode flag
+	 * @param param Optionnal mode param
+	 * @return The updated res vector
+	 */
+	static std::vector<std::string>	addMode(std::vector<std::string>& result
+			, const char sign, const char flag, const std::string& param) {
+		std::vector<std::string>::iterator	it = result.begin();
 
-	//! Try to add to existing result
-	for (int i = 0; i < 2 && it != result.end(); i++) {
-		if (sign == (*it)[0]) {
-			it->append(1, flag);
+		//! Try to add to existing result
+		for (int i = 0; i < 2 && it != result.end(); i++) {
+			if (sign == (*it)[0]) {
+				it->append(1, flag);
+				if (param.length() > 0)
+					result.push_back(param);
+				if (param.length() == 0 && (flag == 'b' || flag == 'e' || flag == 'I'))
+					result.push_back("");
+				return (result);
+			}
+		}
+		//! Add new
+		if (sign == PLUS || sign == MINUS) { //! First element to contain flag
+			result.push_back(std::string(&sign) + flag);
 			if (param.length() > 0)
 				result.push_back(param);
-			if (param.length() == 0 && (flag == 'b' || flag == 'e' || flag == 'I'))
-				result.push_back("");
-			return (result);
 		}
+		return (result);
 	}
-	//! Add new
-	if (sign == PLUS || sign == MINUS) { //! First element to contain flag
-		result.push_back(std::string(&sign) + flag);
-		if (param.length() > 0)
-			result.push_back(param);
+
+	/**
+	 * @brief Check if channel mode require a parameter
+	 *
+	 * Used to check if ERR_NEEDMOREPARAMS error should be returned
+	 *
+	 * @param mode The channel mode (o, v, a, i...)
+	 * @param sign The sign of the mode (+ or -)
+	 * @return True if require param (ERR_NEEDMOREPARAMS), else False 
+	 */
+	static bool	requireParam(const char mode, const char sign) {
+		if (mode =='o')
+			return (true);
+		if (sign == PLUS)
+			return (mode == 'k' || mode == 'l');
+		return (false);
 	}
-	return (result);
-}
 
-/**
- * @brief Check if channel mode require a parameter
- *
- * Used to check if ERR_NEEDMOREPARAMS error should be returned
- *
- * @param mode The channel mode (o, v, a, i...)
- * @param sign The sign of the mode (+ or -)
- * @return True if require param (ERR_NEEDMOREPARAMS), else False 
- */
-static bool	requireParam(const char mode, const char sign) {
-	if (mode =='o')
-		return (true);
-	if (sign == PLUS)
-		return (mode == 'k' || mode == 'l');
-	return (false);
-}
-
-static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& msg) {
-	std::vector<std::string>::const_iterator	prm_it;
-	std::vector<std::string>::const_iterator	mode_prm_it;
-	std::vector<std::string>					result;
-	std::string									res_prm;
-	std::string									response;
-	Channel										new_chan = *chan;
-	int											sign;
-	
-	for (prm_it = msg.getParam().begin() + 1; prm_it != msg.getParam().end(); prm_it++) {
-		sign = (*prm_it)[0];
-		mode_prm_it = prm_it + 1;
-		if (sign != '+' && sign != '-') //!< Invalid mode cmd
-			return (war_log("[MODE] invalid parameter : %s ...Ignore", prm_it->c_str()));
-			// throw (); //!< because it shouldnt happen
+	static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& msg) {
+		std::vector<std::string>::const_iterator	prm_it;
+		std::vector<std::string>::const_iterator	mode_prm_it;
+		std::vector<std::string>					result;
+		std::string									res_prm;
+		std::string									response;
+		Channel										new_chan = *chan;
+		int											sign;
 		
-		for (std::string::const_iterator mode_it = prm_it->begin() + 1; mode_it != prm_it->end(); mode_it++) {
-			res_prm = (mode_prm_it == msg.getParam().end() ? "" : *mode_prm_it);
+		for (prm_it = msg.getParam().begin() + 1; prm_it != msg.getParam().end(); prm_it++) {
+			sign = (*prm_it)[0];
+			mode_prm_it = prm_it + 1;
+			if (sign != '+' && sign != '-') //!< Invalid mode cmd
+				return (war_log("[MODE] invalid parameter : %s ...Ignore", prm_it->c_str()));
+				// throw (); //!< because it shouldnt happen
+			
+			for (std::string::const_iterator mode_it = prm_it->begin() + 1; mode_it != prm_it->end(); mode_it++) {
+				res_prm = (mode_prm_it == msg.getParam().end() ? "" : *mode_prm_it);
 
-			if (mode_prm_it == msg.getParam().end() && requireParam(*mode_it, sign))
-					return (serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, "MODE"));
-			switch (*mode_it) {
-				case 'o' :
-					if (!chan->getClient(*mode_prm_it))
-						return (serv.respond(client.getFd(), ERR_NOSUCHNICK, mode_prm_it->c_str()));
-					new_chan.changeUserMode(*mode_prm_it, sign, *mode_it);
-					break ;
-				case 'k' :
-					//! Check ERR_KEYSET ???
-					new_chan.setPassword(( sign == PLUS ? *mode_prm_it : ""));
-					break ;
-				case 'l' :
-					if (sign == PLUS) {
-						int lim = std::atoi(mode_prm_it->c_str());
-						if (lim > 0)
-							new_chan.setLimit(lim);
-					}
-					break ;
-				case 'i' :
-				case 't' : //!< Special
-					break ;
-				default :
-					return (serv.respond(client.getFd(), ERR_UNKNOWNMODE, *mode_it));
+				if (mode_prm_it == msg.getParam().end() && requireParam(*mode_it, sign))
+						return (serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, "MODE"));
+				switch (*mode_it) {
+					case 'o' :
+						if (!chan->getClient(*mode_prm_it))
+							return (serv.respond(client.getFd(), ERR_NOSUCHNICK, mode_prm_it->c_str()));
+						new_chan.changeUserMode(*mode_prm_it, sign, *mode_it);
+						break ;
+					case 'k' :
+						//! Check ERR_KEYSET ???
+						new_chan.setPassword(( sign == PLUS ? *mode_prm_it : ""));
+						break ;
+					case 'l' :
+						if (sign == PLUS) {
+							int lim = std::atoi(mode_prm_it->c_str());
+							if (lim > 0)
+								new_chan.setLimit(lim);
+						}
+						break ;
+					case 'i' :
+					case 't' : //!< Special
+						break ;
+					default :
+						return (serv.respond(client.getFd(), ERR_UNKNOWNMODE, *mode_it));
+				}
+				if (*mode_it != 'o')
+					new_chan.changeMode(sign, *mode_it);
+				result = addMode(result, sign, *mode_it, res_prm);
 			}
-			if (*mode_it != 'o')
-				new_chan.changeMode(sign, *mode_it);
-			result = addMode(result, sign, *mode_it, res_prm);
+			if (mode_prm_it == msg.getParam().end())
+				break ;
+			prm_it = mode_prm_it;
 		}
-		if (mode_prm_it == msg.getParam().end())
-			break ;
-		prm_it = mode_prm_it;
-	}
 
-	//! Server respond
-	*chan = new_chan;
-	for (prm_it = result.begin(); prm_it != result.end(); prm_it++) {
-		if ((*prm_it)[0] == PLUS || (*prm_it)[0] == MINUS)
-			response += *prm_it;
-		else
-			response += " " + *prm_it;
+		//! Server respond
+		*chan = new_chan;
+		for (prm_it = result.begin(); prm_it != result.end(); prm_it++) {
+			if ((*prm_it)[0] == PLUS || (*prm_it)[0] == MINUS)
+				response += *prm_it;
+			else
+				response += " " + *prm_it;
+		}
+		serv.respond(client.getFd(), RPL_UMODEIS, chan->getName().c_str(), response.c_str());
 	}
-	serv.respond(client.getFd(), RPL_UMODEIS, chan->getName().c_str(), response.c_str());
-}
 
 	/**
 	 * @brief Handle MODE command
@@ -311,7 +316,7 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 			return ;
 		}
-		if (channel.find(msg.getParam()[1][0]) != std::string::npos) {
+		if (channel.find(msg.getParam()[0][0]) != std::string::npos) {
 			Channel*	chan = serv.findChannel(msg.getParam()[0]);
 			if (!chan)
 				return (serv.respond(client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0] .c_str()));
@@ -320,6 +325,11 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 		return (mode_user(serv, client, msg));
 	}
 
+
+	/* ************************************************************************** */
+	/* *                         IRC Channel's commands                        * */
+	/* ************************************************************************** */
+	
 	/**
 	 * @brief IRC JOIN command
 	 *
@@ -330,10 +340,6 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 	 * @param msg Msg sent to server from client
 	 */
 	void	join(Server& serv, Client& client, Message& msg) {
-		if (msg.getParam().size() == 0) {
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
-			return ;
-		}
 
 		std::vector<std::string>					channel_name;
 		std::vector<std::string>::const_iterator	channel_it;
@@ -341,7 +347,11 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 		std::vector<std::string>::const_iterator	key_it;
 		Channel										*ch;
 		int											channel_mode;
-
+		
+		if (msg.getParam().size() == 0) {
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
 
 		//<! Get channel list and key list
 		channel_name = AParser::getChannelList(msg.getParam()[0]);
@@ -393,14 +403,31 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 			}
 
 			//! SUCCESS
-			//! add client to server
+			//! add client to channel
 			ch->addClient(&client);
-			serv.respond(client.getFd(), "JOIN %s", channel_it->c_str());
+			
+			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+				std::string(" JOIN ") + ch->getName();
+			serv.respond(client.getFd(), response.c_str());	
+			
+			if (!ch->getTopic().empty()){ //!< send topic if it's set
+				serv.respond(client.getFd(), RPL_TOPIC, ch->getName().c_str(), ch->getTopic().c_str());
+			}
 
+			std::string names = ":localhost 353 " + client.getNickname() + " = " + ch->getName() + " :";
+			const std::vector<std::pair<Client *, int> >& members = ch->getClients();
+			for (std::vector<std::pair<Client *, int> >::const_iterator it = members.begin(); it != members.end(); ++ it){
+				names += it->first->getNickname() + " ";
+			}
+			
+			serv.respond(client.getFd(), names.c_str());
+
+			serv.broadcastToChannel(response, ch, client.getFd());
+			
 			return ;
 		}
 	}
-
+		
 	/**
 	 * @brief IRC PART command
 	 *
@@ -412,9 +439,9 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 	 * @param msg Msg sent to server from client
 	 */
 	void	part( Server& serv, Client& client, Message& msg) {
+		Channel										*channel;
 		std::vector<std::string>					channel_name;
 		std::vector<std::string>::const_iterator	channel_it;
-		Channel										*channel;
 		std::string									part_msg;
 
 		if (msg.getParam().size() == 0) { //!< No parameter
@@ -436,9 +463,15 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 			}
 			//! Remove from channel
 			channel->removeClient(client.getFd());
-			// BROADCAST TO CHANNEL
+			
+			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+				std::string(" PART ") + channel->getName() + " :" + part_msg;
+			serv.respond(client.getFd(), response.c_str());
+			
 			if (channel->isEmpty()) //!< Remove channel
 				serv.delChannel(*channel);
+		
+			serv.broadcastToChannel(response, channel, client.getFd());	
 		}
 	}
 
@@ -451,20 +484,175 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 	 * If there is no "topic" parameter -> view
 	 * If there is "topic" -> change
 	 * 
-	 * need to check channel modes; ex. "t" flag -> topic can be
-	 * settable only by channel operator
+	 * BEWARE: to test this function MODE function has to be finished
+	 * Also, broadcasting to all clients on a channel has to be done
+	 * in IRC format (maybe we have to create a function for this purpose)
 	 * 
 	 */
-	// void topic( Server& serv, Client& client, Message& msg ) {
-	// 	if (msg.getParam().size() == 0) { //!< No parameter
-	// 		serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
-	// 		return ;
-	// 	}
-	// 	if (msg.getParam().size() == 1){
+	void topic( Server& serv, Client& client, Message& msg ) {
+		Channel	*channel;
+		
+		if (msg.getParam().size() == 0) { //!< No parameter
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
+		
+		channel = serv.findChannel(msg.getParam()[0]);
+		if (!channel){ //!< Channel not found
+			serv.respond(client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0].c_str());
+			return ;
+		}
+		
+		if (!channel->getClient(client.getFd())){ //!< Client not on channel									 
+			serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+			return;
+		}
+		
+		if (msg.getParam().size() == 1){ //!< view the topic of the channel if exists
+			if (!channel->getTopic().empty()){
+				serv.respond(client.getFd(), RPL_TOPIC, channel->getName().c_str(), channel->getTopic().c_str());
+			}
+			else { //!< no topic for this channel
+				serv.respond(client.getFd(), RPL_NOTOPIC, channel->getName().c_str());
+			}
+		}
+		else if (msg.getParam().size() >= 2){ //!< change the topic, if you have the rights
+			if ((channel->getMode() & T) && (client.getMode() & ~LOCAL_OPERATOR || client.getMode() & ~OPERATOR)){ //!< topic settable by channel operator only
+				serv.respond(client.getFd(), ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+				return;
+			}
+			else { //!< you can change the topic
+				channel->setTopic(msg.getParam()[1]);
+				
+				std::string msg = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+					" " + std::string("TOPIC") + " " + channel->getName() + " :" + channel->getTopic();	
 			
-	// 	}
-	// }
-	
+				//!< response to client
+				serv.respond(client.getFd(), msg.c_str());
+			
+				//!< broadcast to channel
+				serv.broadcastToChannel(msg, channel, client.getFd());
+			}
+		}
+	}
+
+	/**
+	 * @brief IRC INVITE command
+	 * 
+	 * <nickname> <channel>
+	 * 
+	 * The parameter <nickname> is the nickname of the person to be invited to
+	 * the target channel <channel>. 
+	 * 
+	 * NOTE: There is no requirement that the channel the target 
+	 * user is being invited to must exist or be a valid channel. 
+	 * 
+	 * To invite a user to a channel which is invite only (MODE +i),
+	 * the client sending the invite must be recognised as being a
+	 * channel operator on the given channel.
+	 * 
+	 */
+	void invite( Server& serv, Client& client, Message& msg ) {
+		Channel *channel;
+		std::string	response;
+		
+		if (msg.getParam().size() <= 1) { //!< No parameter
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
+		
+		std::string nick_target = msg.getParam()[0];
+		if (serv.findClient(nick_target) == NULL){ //!< No nick found
+			serv.respond(client.getFd(), ERR_NOSUCHNICK, nick_target.c_str());
+			return ;
+		}
+		
+		std::string channel_target = msg.getParam()[1];
+		channel = serv.findChannel(channel_target); //!< selon la norme IRC on doit pas verifie l'existence du channel
+		
+		if (channel){
+			if (!channel->getClient(client.getFd())){ //!< Client trying to sent an invitation not on a channel									 
+				serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+				return ;
+			}
+			if (channel->getClient(nick_target)){ //!< Client tries to invite a user to a channel they are already on
+				serv.respond(client.getFd(), ERR_USERONCHANNEL, channel->getClient(nick_target)->getUsername().c_str(), channel_target.c_str());
+				return ;
+			}
+			if (channel->getMode() & I){ //! Invite-only channel -> client sending a msg has to be a channel operator
+				if (client.getMode() & ~OPERATOR && client.getMode() & ~LOCAL_OPERATOR){
+					serv.respond(client.getFd() , ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+					return ;
+				}
+			}
+		}
+		
+		//!< send invitation
+		response = ":" + client.getNickname() + " INVITE " + nick_target + " #" + channel_target;
+		serv.respond(serv.findClient(nick_target)->getFd(), response.c_str());
+		
+		//!< reply by server
+		serv.respond(client.getFd(), RPL_INVITING, channel_target.c_str(), nick_target.c_str());
+	}
+
+
+	/** 
+	 * @brief IRC KICK command
+	 * 
+	 * <channel> <user> [<comment>]
+	 * 
+	 * ~ forced PART a user from channel
+	 * 
+	 * Only a channel operator may kick another user out of a channel.
+	 * 
+	*/
+	void kick( Server& serv, Client& client, Message& msg ) {
+		Channel *channel;
+		std::string comment = "";
+		std::string response;
+		
+		if (msg.getParam().size() <= 1) { //!< No parameter
+			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
+
+		channel = serv.findChannel(msg.getParam()[0]);
+		if (!channel){ //!< Channel not found
+			serv.respond(client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0].c_str());
+			return ;
+		}
+		
+		if (!channel->getClient(client.getFd())){ //!< Client not in channel									 
+			serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+			return;
+		}
+
+		if (client.getMode() & ~OPERATOR && client.getMode() & ~LOCAL_OPERATOR){ //!< Client has no privilages
+			serv.respond(client.getFd(), ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+			return ;
+		}
+
+		//!< kick client from channel
+		channel->removeClient(channel->getClientByUsername(msg.getParam()[1])->getFd());
+		
+		if (msg.getParam().size() > 2){
+			comment = " :" + msg.getParam()[2];
+		}
+		
+		response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+			" KICK " + channel->getName() + " " + msg.getParam()[1] + comment;
+			
+		//!< response to client
+		serv.respond(client.getFd(), response.c_str());
+		
+		//!< broadcast to channel
+		serv.broadcastToChannel(response, channel, client.getFd());
+	}
+
+		/* ************************************************************************** */
+		/* *                         IRC Server's commands                          * */
+		/* ************************************************************************** */
+
 	/**
 	 * @brief IRC TIME command
 	 *
@@ -479,10 +667,10 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 		std::time_t now = std::time(NULL);
 		std::string timeStr = std::ctime(&now);
 
-	  	size_t pos = timeStr.find('\n');
-    	if (pos != std::string::npos) {
-        	timeStr.erase(pos, 1); //<! Supprime \n a la find de timeStr
-    	}
+		size_t pos = timeStr.find('\n');
+		if (pos != std::string::npos) {
+			timeStr.erase(pos, 1); //<! Supprime \n a la find de timeStr
+		}
 		serv.respond(client.getFd(), RPL_TIME, timeStr.c_str());
 	}
 
@@ -524,7 +712,6 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 		serv.respond(client.getFd(), "PONG :localhost");
 	}
 
-
 	/** 
 	 * @brief IRC QUIT command
 	 * 
@@ -540,7 +727,7 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 		success_log("Client %s will be disconnected from the server", client.getNickname().c_str());
 		serv.disconnectClient(index);
 	}
-	
+
 	/* ************************************************************************** */
 	/* *                         IRC Operator's commands                        * */
 	/* ************************************************************************** */
@@ -578,7 +765,7 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 		
 		success_log("MODE +o %s", client.getNickname().c_str());
 	}
-	
+
 	/** @brief IRC KILL command
 	 * 
 	 * <nickname> <comment>
@@ -614,7 +801,7 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 		std::cout << "index : " << index << std::endl;
 		serv.disconnectClient(index); //!< this client was deconnected from the server
 	}
-	
+
 	/** @brief IRC RESTART command
 	 * 
 	 * No parameters.
@@ -633,19 +820,19 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 		//<! will notify all clients and IRC operators about restarting a server
 		war_log("Server will be restarted by %s", client.getNickname().c_str());
 		serv.broadcast(":localhost :Server will be restarted\r\n", 39, -1);
-    
+
 		serv.stopServer(); //<! will stop the server and deconnect every client before restart the server
 		
 		std::stringstream ss;
 		ss << serv.getPort();
 		
 		const char *program = "./ircserv";
-    	const char *const args[] = { "./ircserv", ss.str().c_str(), serv.getPasswd().c_str(), NULL};
-	
-    	if (execv(program, const_cast<char *const*>(args)) == -1) { //<! will restart the server with the same port/password
-        	fatal_log("Failed to restart server");
-        	exit(1);
-    	}
+		const char *const args[] = { "./ircserv", ss.str().c_str(), serv.getPasswd().c_str(), NULL};
+
+		if (execv(program, const_cast<char *const*>(args)) == -1) { //<! will restart the server with the same port/passwor
+			fatal_log("Failed to restart server");
+			exit(1);
+		}
 	}
 	
 	
@@ -672,14 +859,21 @@ static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& m
 		commandMap.push_back(std::make_pair("PASS", pass));
 		commandMap.push_back(std::make_pair("NICK", nick));
 		commandMap.push_back(std::make_pair("USER", user));
+		
 		commandMap.push_back(std::make_pair("JOIN", join));
 		commandMap.push_back(std::make_pair("PART", part));
-		commandMap.push_back(std::make_pair("time", time)); // irssi l'envoie en minuscule
-		commandMap.push_back(std::make_pair("info", info)); // irssi l'envoie en minuscule
-		commandMap.push_back(std::make_pair("PING", pong)); // PONG reagit a la cmd PING envoye par le client
+		commandMap.push_back(std::make_pair("MODE", mode));
+		commandMap.push_back(std::make_pair("TOPIC", topic));
+		commandMap.push_back(std::make_pair("INVITE", invite));
+		commandMap.push_back(std::make_pair("KICK", kick));
+		
 		commandMap.push_back(std::make_pair("OPER", oper));
 		commandMap.push_back(std::make_pair("kill", kill));
 		commandMap.push_back(std::make_pair("restart", restart));
+		
+		commandMap.push_back(std::make_pair("time", time)); // irssi l'envoie en minuscule
+		commandMap.push_back(std::make_pair("info", info)); // irssi l'envoie en minuscule
+		commandMap.push_back(std::make_pair("PING", pong)); // PONG reagit a la cmd PING envoye par le client
 		commandMap.push_back(std::make_pair("QUIT", quit));
 		commandMap.push_back(std::make_pair("MODE", mode));
 		commandMap.push_back(std::make_pair("INFO", info));

@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/29 12:35:29 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/03 12:56:03 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -288,58 +288,6 @@ void	Server::respond(const int& client_sock, const char* fmt, ...) const {
 	sendMsg(client_sock, response);
 }
 
-
-/**
- * @breif Send channel banmask to client
- *
- * USed in channel mode response
- *
- * @param ch Channel from which to take the banmask
- * @param client Client to send the banmask to
- */
-void	Server::sendChannelBanMask(Channel& ch, Client& client) const {
-	std::vector<std::string>::const_iterator it;
-
-	for (it = ch.getBanMask().begin(); it != ch.getBanMask().end(); it++) {
-		this->respond(client.getFd(), RPL_BANLIST, ch.getName().c_str(), (*it).c_str());
-	}
-	this->respond(client.getFd(), RPL_ENDOFBANLIST);
-}
-
-/**
- * @breif Send channel exception to client
- *
- * USed in channel mode response
- *
- * @param ch Channel from which to take the exception list
- * @param client Client to send the exception list to
- */
-void	Server::sendExceptionMask(Channel& ch, Client& client) const {
-	std::vector<std::string>::const_iterator it;
-
-	for (it = ch.getExceptionMask().begin(); it != ch.getExceptionMask().end(); it++) {
-		this->respond(client.getFd(), RPL_EXCEPTLIST, ch.getName().c_str(), (*it).c_str());
-	}
-	this->respond(client.getFd(), RPL_ENDOFEXCEPTLIST);
-}
-
-/**
- * @breif Send channel invite mask list to client
- *
- * USed in channel mode response
- *
- * @param ch Channel from which to take the invite mask list
- * @param client Client to send the invite mask list to
- */
-void	Server::sendInvitemMsk(Channel& ch, Client& client) const {
-	std::vector<std::string>::const_iterator it;
-
-	for (it = ch.getInviteMask().begin(); it != ch.getInviteMask().end(); it++) {
-		this->respond(client.getFd(), RPL_INVITELIST, ch.getName().c_str(), (*it).c_str());
-	}
-	this->respond(client.getFd(), RPL_ENDOFINVITELIST);
-}
-
 /**
  * @brief Add new channel to server
  *
@@ -603,6 +551,14 @@ void	Server::broadcast(const char *buffer, int len, int fd) const {
 
 		if (sendMsg(this->_pollFd[i].fd, buffer, len) == -1)
 			err_log("Msg could not be sent on socket %d", this->_pollFd[i].fd);
+	}
+}
+
+void Server::broadcastToChannel( const std::string& msg, const Channel * ch, int fd ) const {
+	const std::vector< std::pair<Client *, int> >& clients = ch->getClients(); //!< clients connected to this channel
+	for (std::vector<std::pair<Client *,int> >::const_iterator it = clients.begin(); it != clients.end(); ++it){
+			if (it->first->getFd() != fd)
+				Server::respond(it->first->getFd(), msg.c_str());
 	}
 }
 

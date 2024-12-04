@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 12:30:34 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/03 12:54:29 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,7 @@ void	Channel::printChannel( void ) const {
 /* ************************************************************************** */
 Channel::Channel( void )
 	: _name(""), _topic(""), _client(std::vector<std::pair<Client*, int> >()),
-		_operator(std::vector<Client*>()), _mode(0), _userLimit(10), _password(""),
-		_banmask()
+		_operator(std::vector<Client*>()), _mode(0), _userLimit(10), _password("")
 {
 		return ;
 }
@@ -49,7 +48,7 @@ Channel::Channel( const Channel& rhs )
 
 Channel::Channel( Client* creator, const std::string& name )
 	: _name(name), _topic(""), _client(), _operator(),
-		_mode(0), _userLimit(0), _password(""), _banmask()
+		_mode(0), _userLimit(0), _password("")
 {
 	this->_name = name;
 	if (name[0] == '!') {
@@ -83,7 +82,6 @@ Channel&	Channel::operator=( const Channel& rhs ) {
 		this->_mode = rhs._mode;
 		this->_userLimit = rhs._userLimit;
 		this->_password = rhs._password;
-		this->_banmask = rhs._banmask;
 	}
 	return (*this);
 }
@@ -137,10 +135,10 @@ Client*		Channel::getClient( const int client_socket ) const {
 	return (NULL);
 }
 
-Client*		Channel::getClient( const std::string& nick ) const {
-	std::vector<std::pair<Client*, int > >::const_iterator it;
+Client* Channel::getClient( const std::string & nick ) const{
+	std::vector< std::pair< Client*, int > >::const_iterator it;
 
-	for (it = this->_client.begin(); it != this->_client.end(); it++) {
+	for (it = this->_client.begin(); it != this->_client.end(); it++){
 		if (nick == it->first->getNickname())
 			return (it->first);
 	}
@@ -157,17 +155,6 @@ int			Channel::getUserMode( const Client* client ) const {
 	return (-1);
 }
 
-std::vector<std::string>	Channel::getBanMask( void ) const {
-	return (this->_banmask);
-}
-
-std::vector<std::string>	Channel::getExceptionMask( void ) const {
-	return (this->_exception);
-}
-
-std::vector<std::string>	Channel::getInviteMask( void ) const {
-	return (this->_invite);
-}
 
 void		Channel::setPassword( const std::string& password ) {
 	this->_password = password;
@@ -176,6 +163,29 @@ void		Channel::setPassword( const std::string& password ) {
 void		Channel::setLimit( const int limit ) {
 	this->_userLimit = limit;
 }
+Client* Channel::getClientByUsername( const std::string & user ) const{
+	std::vector< std::pair< Client*, int > >::const_iterator it;
+
+	for (it = this->_client.begin(); it != this->_client.end(); it++){
+		if (user == it->first->getUsername())
+			return (it->first);
+	}
+	return (NULL);
+}
+
+const std::vector< std::pair<Client*, int> >& Channel::getClients( void ) const{
+	return (this->_client);
+}
+
+
+std::string	Channel::getTopic( void ) const {
+	return (this->_topic);
+}
+
+void Channel::setTopic( const std::string & topic ){
+	this->_topic = topic;
+}
+
 /* ************************************************************************** */
 /* *                        Public member functions                         * */
 /* ************************************************************************** */
