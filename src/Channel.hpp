@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 12:54:58 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/04 02:05:47 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ public:
 	std::vector<std::string>	getInviteMask( void ) const;
 	void				setPassword( const std::string& password );
 	void				setLimit( const int limit );
-	std::string			modeToString( const int mode ) const;
+	std::string			modeToString( void ) const;
 
 	void				changeMode( const char sign, const int mode );
 	void				changeUserMode( const std::string& nick, const char sign, const int mode );

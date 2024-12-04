@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 12:49:14 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/04 22:19:14 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,7 +96,6 @@ public:
 
 private:
 	//! Private member
-	// static const std::string	_ip;
 	const int					_port;
 	const std::string			_passwd;
 	const std::string			_opPasswd; 
@@ -112,6 +111,7 @@ private:
 	unsigned int				_clientNbr;
 
 	struct addrinfo				*_serverInfo;
+	std::string					_ip;
 
 	//! Private member function
 	void						acceptNewClient( void );

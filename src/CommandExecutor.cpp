@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 13:02:13 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/04 02:06:04 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -244,6 +244,9 @@ namespace {
 		std::string									response;
 		Channel										new_chan = *chan;
 		int											sign;
+
+		if (msg.getParam().size() == 1)
+			return (serv.respond(client.getFd(), RPL_UMODEIS, chan->getName().c_str(), chan->modeToString().c_str()));
 		
 		for (prm_it = msg.getParam().begin() + 1; prm_it != msg.getParam().end(); prm_it++) {
 			sign = (*prm_it)[0];

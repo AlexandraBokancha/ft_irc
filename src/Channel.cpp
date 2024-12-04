@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 12:54:29 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/04 02:06:56 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,27 +102,27 @@ int			Channel::getMode( void ) const {
 	return (this->_mode);
 }
 
-std::string	Channel::modeToString( const int mode  ) const {
+std::string	Channel::modeToString( void ) const {
 	std::string	result = "+";
 	char		buffer[100];
 
-	if (mode & CHN_I)
+	if (this->_mode & CHN_I)
 		result.append("i");
-	if (mode & CHN_T)
+	if (this->_mode & CHN_T)
 		result.append("t");
-	if (mode & CHN_L)
+	if (this->_mode & CHN_L)
 		result.append("l");
-	if (mode & CHN_K)
+	if (this->_mode & CHN_K)
 		result.append("k");
-	if (mode & CHN_L) {
+	if (this->_mode & CHN_L) {
 		sprintf(buffer, "%d", this->_userLimit);
 		result.append(" " + std::string(buffer));
 	}
-	if (mode & CHN_K) {
+	if (this->_mode & CHN_K) {
 		sprintf(buffer, "%s", this->_password.c_str());
 		result.append(" " + std::string(buffer));
 	}
-	return ((result.length() == 0 ? "" : result));
+	return ((result.length() == 1 ? "" : result));
 }
 
 Client*		Channel::getClient( const int client_socket ) const {

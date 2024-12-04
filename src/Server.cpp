@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 12:56:03 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/04 22:21:39 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 # include "log.hpp"
 #include <cstring>
 #include <netdb.h>
+#include <string>
 
 void	Server::printChannel( void ) const {
 	std::cout << "Channel :" << std::endl;
@@ -135,7 +136,7 @@ Server& Server::operator=( Server const & rhs ) {
  * @return Server prefix
  */
 std::string	Server::getPrefix( void ) const {
-	return ("localhost");
+	return (this->_ip);
 }
 
 std::string Server::getOpPasswd( void ) const {
@@ -282,7 +283,7 @@ void	Server::respond(const int& client_sock, const char* fmt, ...) const {
 	}
 	va_end(args);
 
-	log("Sending :%s to client: %d", buffer.c_str(), client_sock);
+	// log("Sending :%s to client: %d", buffer.c_str(), client_sock);
 
 	response.setContent(buffer);
 	sendMsg(client_sock, response);
@@ -387,6 +388,10 @@ void	Server::disconnectClient( int& index ) {
 }
 
                            /* SERVER HANDLING */
+// TESTING
+
+// END TESTING
+
 /**
  * @brief Start the server
  *
@@ -395,7 +400,7 @@ void	Server::disconnectClient( int& index ) {
  * @param Port in char* format just for an easier access to get_addr
  */
 void	Server::startServer( const char *port_str ) {
-	struct addrinfo	hints;
+	struct addrinfo	hints, *p;
 	struct addrinfo	*servInfo;
 
 	std::memset(&hints, 0, sizeof(hints));
@@ -408,6 +413,17 @@ void	Server::startServer( const char *port_str ) {
 		throw (std::runtime_error(std::string("getaddrinfo: ") + std::strerror(errno)));
 
 	this->_serverInfo = servInfo;
+
+    char ipstr[INET_ADDRSTRLEN];
+    for (p = servInfo; p != NULL; p = p->ai_next) {
+        struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+        void *addr = &(ipv4->sin_addr);
+
+        // Convert the IP to a string and return it
+        inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));
+        break; // We only need the first IP address
+    }
+	this->_ip = ipstr;
 
 	// this->_socket = socket(this->_serverInfo->ai_family, this->_serverInfo->ai_socktype, this->_serverInfo->ai_protocol);
 	this->_socket = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
@@ -512,6 +528,7 @@ int Server::sendMsg(int socket, const char *buf, int len) const {
         total += b;
         left -= b;
     }
+	log("Sending %s", buf); 
     // *len = total; //!< Why
     return (b == -1 ? -1 : 0); // return -1 on error, 0 on success
 }
