@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 17:37:44 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/05 11:46:37 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,12 +49,13 @@ public:
 	std::string			getNickname( void ) const;
 	std::string			getServername( void ) const;
 	std::string			getRealname( void ) const;
+	std::string			getPrefix( void ) const;
 	bool				getConnected( void ) const;
 	bool				getRegistred( void ) const;
 	int					getFd( void ) const;
 	int					getJoinedChannel( void ) const;
 	int					getMode( void ) const;
-	std::string			getModeStr( void ) const;
+	std::string			modeToString( void ) const;
 
 	void				setHostname( const std::string& hostname );
 	void				setUsername( const std::string& username );

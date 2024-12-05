@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:02:35 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 18:04:03 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/05 11:44:26 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,9 @@ public:
 	void		pollPushBack( int fd, short events );
 	int			comparePassword( const std::string& str ) const;
 
+	void		sendChannelBanMask(Channel& ch, Client& client) const;
+	void		sendExceptionMask(Channel& ch, Client& client) const;
+	void		sendInvitemMsk(Channel& ch, Client& client) const;
 	Channel*	findChannel( const std::string& name );
 	void		delChannel( Channel& channel );
 	void		disconnectClient( int& index );
@@ -84,7 +87,7 @@ public:
 	void		stopServer( void );	
 	void		addChannel(Channel& channel);
 
-	void		respond( const int& client_sock, const char* fmr, ... ) const;
+	void		respond( const Client* src, const int& client_sock, const char* fmr, ... ) const;
 	void		broadcast( const char *buffer, int len, int fd ) const;
 	void 		broadcastToChannel( const std::string& msg, const Channel * ch, int fd ) const;
 	int			sendMsg( int socket, const char *buf, int len ) const;
@@ -96,7 +99,6 @@ public:
 
 private:
 	//! Private member
-	// static const std::string	_ip;
 	const int					_port;
 	const std::string			_passwd;
 	const std::string			_opPasswd; 
@@ -112,6 +114,7 @@ private:
 	unsigned int				_clientNbr;
 
 	struct addrinfo				*_serverInfo;
+	std::string					_ip;
 
 	//! Private member function
 	void						acceptNewClient( void );

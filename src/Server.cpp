@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 18:24:23 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/05 12:38:00 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,9 +18,11 @@
 
 
 /* FOR TESTING PURPOSE */
+#include "NumericResponse.hpp"
 # include "log.hpp"
 #include <cstring>
 #include <netdb.h>
+#include <string>
 
 void	Server::printChannel( void ) const {
 	std::cout << "Channel :" << std::endl;
@@ -134,7 +136,7 @@ Server& Server::operator=( Server const & rhs ) {
  * @return Server prefix
  */
 std::string	Server::getPrefix( void ) const {
-	return ("localhost");
+	return (this->_ip);
 }
 
 std::string Server::getOpPasswd( void ) const {
@@ -234,16 +236,20 @@ int Server::findClientIndex( const std::string & nick ){
  *
  * This is a way to snend formated response to client command in a formatted way
  *
+ * @param The source of the message (NULL if it come from the server)
  * @param client_sock Client socket to send message to
  * @param fmt The formated message to send (defined in Numericresponse.hpp)
  * @param ... The fmt argument
  */
-void	Server::respond(const int& client_sock, const char* fmt, ...) const {
+void	Server::respond(const Client* src, const int& client_sock, const char* fmt, ...) const {
 	va_list		args;
 	std::string	buffer;
 	Message		response;
 
-	response.setPrefix(this->getPrefix());
+	if (!src)
+		response.setPrefix(this->getPrefix());
+	else
+		response.setPrefix(src->getPrefix());
 
 	buffer.reserve(512);
 	va_start(args, fmt);
@@ -260,6 +266,13 @@ void	Server::respond(const int& client_sock, const char* fmt, ...) const {
 					int d = va_arg(args, int);
 					std::stringstream ss;
 					ss << d;
+					buffer.append(ss.str());
+					break ;
+				}
+				case 'l' : { //!< int 
+					long int l = va_arg(args, long int);
+					std::stringstream ss;
+					ss << l;
 					buffer.append(ss.str());
 					break ;
 				}
@@ -337,17 +350,17 @@ Channel*	Server::findChannel( const std::string& name ) {
 }
 
 
-std::vector<Channel*>	Server::clientOnChannel(Client* client ){
-	std::vector<Channel*>	clientChannels;
-	std::vector<Channel>::iterator it;
-
-	for (it = this->_channel.begin(); it != this->_channel.end(); it++){
-		if (std::find((*it).getClients().begin(), (*it).getClients().end(), client) != (*it).getClients().end()) {
-            clientChannels.push_back(&(*it));
-        }
-	}
-	return (clientChannels);
-}	
+// std::vector<Channel*>	Server::clientOnChannel(Client* client ){
+// 	std::vector<Channel*>	clientChannels;
+// 	std::vector<Channel>::iterator it;
+//
+// 	for (it = this->_channel.begin(); it != this->_channel.end(); it++){
+// 		if (std::find((*it).getClients().begin(), (*it).getClients().end(), client) != (*it).getClients().end()) {
+//             clientChannels.push_back(&(*it));
+//         }
+// 	}
+// 	return (clientChannels);
+// }	
 
 
 /**
@@ -394,6 +407,10 @@ void	Server::disconnectClient( int& index ) {
 }
 
                            /* SERVER HANDLING */
+// TESTING
+
+// END TESTING
+
 /**
  * @brief Start the server
  *
@@ -402,7 +419,7 @@ void	Server::disconnectClient( int& index ) {
  * @param Port in char* format just for an easier access to get_addr
  */
 void	Server::startServer( const char *port_str ) {
-	struct addrinfo	hints;
+	struct addrinfo	hints, *p;
 	struct addrinfo	*servInfo;
 
 	std::memset(&hints, 0, sizeof(hints));
@@ -415,6 +432,17 @@ void	Server::startServer( const char *port_str ) {
 		throw (std::runtime_error(std::string("getaddrinfo: ") + std::strerror(errno)));
 
 	this->_serverInfo = servInfo;
+
+    char ipstr[INET_ADDRSTRLEN];
+    for (p = servInfo; p != NULL; p = p->ai_next) {
+        struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+        void *addr = &(ipv4->sin_addr);
+
+        // Convert the IP to a string and return it
+        inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));
+        break; // We only need the first IP address
+    }
+	this->_ip = ipstr;
 
 	// this->_socket = socket(this->_serverInfo->ai_family, this->_serverInfo->ai_socktype, this->_serverInfo->ai_protocol);
 	this->_socket = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
@@ -519,6 +547,7 @@ int Server::sendMsg(int socket, const char *buf, int len) const {
         total += b;
         left -= b;
     }
+	log("Sending %s", buf); 
     // *len = total; //!< Why
     return (b == -1 ? -1 : 0); // return -1 on error, 0 on success
 }
@@ -562,10 +591,10 @@ void	Server::broadcast(const char *buffer, int len, int fd) const {
 }
 
 void Server::broadcastToChannel( const std::string& msg, const Channel * ch, int fd ) const {
-	const std::vector<Client *>& clients = ch->getClients(); //!< clients connected to this channel
-	for (std::vector<Client *>::const_iterator it = clients.begin(); it != clients.end(); ++it){
-			if ((*it)->getFd() != fd)
-				Server::respond((*it)->getFd(), msg.c_str());
+	const std::vector< std::pair<Client *, int> >& clients = ch->getClients(); //!< clients connected to this channel
+	for (std::vector<std::pair<Client *,int> >::const_iterator it = clients.begin(); it != clients.end(); ++it){
+			if (it->first->getFd() != fd)
+				Server::respond(NULL, it->first->getFd(), msg.c_str());
 	}
 }
 

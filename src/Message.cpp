@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:49 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/11/28 16:58:53 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/04 22:24:47 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,7 +137,11 @@ std::string	Message::toString( void ) const {
 	str.append(this->_command);
 
 	for (std::vector<std::string>::const_iterator it = this->_param.begin(); it != this->_param.end(); it++) {
-		str.append(SPACE + *it);
+		str.append(" ");
+		if (it == this->_param.end() - 1 && (*it)[0] != ':')
+			str.append(":");
+		str.append(*it);
+		// str.append(SPACE + *it);
 	}
 	str.append("\r\n");
 	return (str);

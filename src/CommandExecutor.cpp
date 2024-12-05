@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/04 17:45:19 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/05 12:53:20 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,8 +25,14 @@
 # include "Client.hpp"
 
 # include "log.hpp"
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <ctime>
+#include <ostream>
 #include <string>
+#include <algorithm>
 
 //! Anonymous namespace: Everything declared here is only accesible in this file
 namespace {
@@ -46,7 +52,7 @@ namespace {
 		if (client.getConnected() == true)
 			return ;
 		if (client.getRegistred() == true){
-			serv.respond(client.getFd(), ERR_ALREADYREGISTRED, client.getNickname().c_str());
+			serv.respond(NULL, client.getFd(), ERR_ALREADYREGISTRED, client.getNickname().c_str());
 			return ;
 		}
 		if (msg.getParam().size() >= 1){
@@ -55,11 +61,11 @@ namespace {
 				success_log("Password confirmed");
 			}
 			else{
-				serv.respond(client.getFd(), ERR_PASSWDMISMATCH);
+				serv.respond(NULL, client.getFd(), ERR_PASSWDMISMATCH);
 			}
 		}
 		else{
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 		}
 		return ;
 	}
@@ -78,23 +84,23 @@ namespace {
 	void	nick(Server& serv, Client& client, Message& msg) {
 		if (msg.getParam().size() >= 1) {
 			if (serv.findClient(msg.getParam()[0]) != NULL) {
-				serv.respond(client.getFd(), ERR_NICKNAMEINUSE, msg.getParam()[0].c_str());
+				serv.respond(NULL, client.getFd(), ERR_NICKNAMEINUSE, msg.getParam()[0].c_str());
 				return ;
 			}
 			if (!AParser::isNickname(msg.getParam()[0])) { //! Invalid nickname
-				serv.respond(client.getFd(), ERR_ERRONEUSNICKNAME, msg.getParam()[0].c_str());
+				serv.respond(NULL, client.getFd(), ERR_ERRONEUSNICKNAME, msg.getParam()[0].c_str());
 				return ;
 			}
 			client.setNickname(msg.getParam()[0]);
 			success_log("NICK %s enregistred", client.getNickname().c_str());
 			if (!client.getUsername().empty()) {
 				client.setRegistred();
-				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), \
+				serv.respond(NULL, client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), \
 					client.getUsername().c_str(), client.getHostname().c_str());
 			}
 		}
 		else
-			serv.respond(client.getFd(), ERR_NONICKNAMEGIVEN);
+			serv.respond(NULL, client.getFd(), ERR_NONICKNAMEGIVEN);
 		return ;
 	}
 
@@ -109,7 +115,7 @@ namespace {
 	 */
 	void	user(Server& serv, Client& client, Message& msg) {
 		if (client.getRegistred()){
-			serv.respond(client.getFd(), ERR_ALREADYREGISTRED);
+			serv.respond(NULL, client.getFd(), ERR_ALREADYREGISTRED);
 			return (war_log("Client is already registered"));
 		}
 		if (msg.getParam().size() == 4){
@@ -122,12 +128,223 @@ namespace {
 			success_log("USER %s enregistred", client.getUsername().c_str());
 			if (!client.getNickname().empty()) {
 				client.setRegistred();
-				serv.respond(client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), \
+				serv.respond(NULL, client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), \
 					client.getUsername().c_str(), client.getHostname().c_str());
 			}
 		}
 		else
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+	}
+
+	/**
+	 * @brief Handle user MODE command
+	 *
+	 * IRC user MODE cmd
+	 * 
+	 * @param serv Actual server
+	 * @param client Client who send comand
+	 * @param msg Msg sent to server from client
+	 */
+	void	mode_user(Server& serv, Client& client, Message& msg) {
+		if (msg.getParam()[0].compare(client.getNickname()) != 0) { //!< Nickname not matching user
+			serv.respond(NULL, client.getFd(), ERR_USERSDONTMATCH);
+			return ;
+		}
+		if (msg.getParam().size() == 1) { //!< Send User mode
+			serv.respond(NULL, client.getFd(), RPL_UMODEIS, client.getNickname().c_str(), client.modeToString().c_str());
+			return ;
+		}
+
+		int	sign = 0; //<! MODE sign ('-' < 0 | ??? == 0 | '+' > 0)
+		int flag = client.getMode();
+		std::vector<std::string>::const_iterator it;
+		std::vector<std::string>	mode_list = AParser::getModeList(msg.getParam()[1]);
+		for (it = mode_list.begin(); it != mode_list.end(); it++) {
+			sign = (it->begin()[0] == '+' ? 1 : -1);
+			for (std::string::const_iterator s_it = it->begin() + 1; s_it != it->end(); s_it++) {
+				switch (*s_it) {
+					case 'i' :
+						flag = (sign > 0 ? flag | INVISIBLE : flag & ~INVISIBLE);
+						break ;
+					case 'w' :
+						flag = (sign > 0 ? flag | WALLOPS : flag & ~WALLOPS);
+						break ;
+					case 'r' :
+						flag = (sign > 0 ? flag | RESTRICTED_USER : flag);
+						break ;
+					case 'o' :
+						flag = (sign > 0 ? flag : flag & ~OPERATOR);
+						break ;
+					case 'O' :
+						flag = (sign > 0 ? flag : flag & ~LOCAL_OPERATOR);
+						break ;
+					default :
+						serv.respond(NULL, client.getFd(), ERR_UMODEUNKNOWNFLAG);
+						return ;
+				}
+			}
+		}
+		log("Changed client %d mode", client.getFd());
+		client.setMode(flag);
+	}
+
+	/**
+	 * @brief Add to mode response
+	 *
+	 * Add param to MODE response
+	 *
+	 * @param res resulting response vector
+	 * @param sign Flag sign
+	 * @param flag Mode flag
+	 * @param param Optionnal mode param
+	 * @return The updated res vector
+	 */
+	static std::vector<std::string>	addMode(std::vector<std::string>& result
+			, const char sign, const char flag, const std::string& param) {
+		std::vector<std::string>::iterator	it = result.begin();
+
+		//! Try to add to existing result
+		for (int i = 0; i < 2 && it != result.end(); i++) {
+			if (sign == (*it)[0]) {
+				it->append(1, flag);
+				if (param.length() > 0)
+					result.push_back(param);
+				if (param.length() == 0 && (flag == 'b' || flag == 'e' || flag == 'I'))
+					result.push_back("");
+				return (result);
+			}
+		}
+		//! Add new
+		if (sign == PLUS || sign == MINUS) { //! First element to contain flag
+			result.push_back(std::string(1, sign) + flag);
+			if (param.length() > 0)
+				result.push_back(param);
+		}
+		return (result);
+	}
+
+	/**
+	 * @brief Check if channel mode require a parameter
+	 *
+	 * Used to check if ERR_NEEDMOREPARAMS error should be returned
+	 *
+	 * @param mode The channel mode (o, v, a, i...)
+	 * @param sign The sign of the mode (+ or -)
+	 * @return True if require param (ERR_NEEDMOREPARAMS), else False 
+	 */
+	static bool	requireParam(const char mode, const char sign) {
+		if (mode =='o')
+			return (true);
+		if (sign == PLUS)
+			return (mode == 'k' || mode == 'l');
+		return (false);
+	}
+
+	static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& msg) {
+		std::vector<std::string>::const_iterator	prm_it;
+		std::vector<std::string>::const_iterator	mode_prm_it;
+		std::vector<std::string>					result;
+		std::string									res_prm;
+		std::string									response;
+		Channel										new_chan = *chan;
+		int											sign;
+
+		std::cout << "parma size: " << msg.getParam().size() << std::endl;
+		// for (prm_it = msg.getParam().begin(); prm_it != msg.getParam().end() && prm_it->length() != 0; prm_it++) {
+		// 	std::cout << "  " << prm_it->size() << " - " << *prm_it << std::endl;
+		// }
+
+		if (msg.getParam().size() == 1)
+			return (serv.respond(NULL, client.getFd(), RPL_UMODEIS, chan->getName().c_str(), chan->modeToString().c_str()));
+		
+		for (prm_it = msg.getParam().begin() + 1; prm_it != msg.getParam().end() && prm_it->length() != 0; prm_it++) {
+			if (prm_it->length() == 0) //!< INIFINITE LOOP PROBLEM
+				break ;
+			sign = (*prm_it)[0];
+			mode_prm_it = prm_it + 1;
+			if (sign != '+' && sign != '-') //!< Invalid mode cmd
+				return (war_log("[MODE] invalid parameter : %s ...Ignore", prm_it->c_str()));
+				// throw (); //!< because it shouldnt happen
+			
+			for (std::string::const_iterator mode_it = prm_it->begin() + 1; mode_it != prm_it->end(); mode_it++) {
+				res_prm = (mode_prm_it == msg.getParam().end() ? "" : *mode_prm_it);
+
+				if (mode_prm_it == msg.getParam().end() && requireParam(*mode_it, sign))
+						return (serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, "MODE"));
+				switch (*mode_it) {
+					case 'o' :
+						if (!chan->getClient(*mode_prm_it))
+							return (serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, mode_prm_it->c_str()));
+						new_chan.changeUserMode(*mode_prm_it, sign, *mode_it);
+						break ;
+					case 'k' :
+						//! Check ERR_KEYSET ???
+						new_chan.setPassword(( sign == PLUS ? *mode_prm_it : ""));
+						if (sign == PLUS)
+							mode_prm_it = ( mode_prm_it == msg.getParam().end() ? mode_prm_it : mode_prm_it + 1 );
+						break ;
+					case 'l' :
+						if (sign == PLUS) {
+							int lim = std::atoi(mode_prm_it->c_str());
+							if (lim > 0)
+								new_chan.setLimit(lim);
+							mode_prm_it = ( mode_prm_it == msg.getParam().end() ? mode_prm_it : mode_prm_it + 1 );
+						}
+						break ;
+					case 'i' :
+					case 't' : //!< Special
+						break ;
+					default :
+						return (serv.respond(NULL, client.getFd(), ERR_UNKNOWNMODE, *mode_it));
+				}
+				if (*mode_it != 'o' && sign == PLUS)
+					new_chan.changeMode(sign, *mode_it);
+				result = addMode(result, sign, *mode_it, res_prm);
+				
+				for (std::vector<std::string>::const_iterator it = result.begin(); it != result.end(); it++) {
+					std::cout << *it << std::endl;
+				}
+
+			}
+			if (mode_prm_it == msg.getParam().end())
+				break ;
+			prm_it = mode_prm_it;
+		}
+
+		//! Server respond
+		*chan = new_chan;
+		for (prm_it = result.begin(); prm_it != result.end(); prm_it++) {
+			if ((*prm_it)[0] == PLUS || (*prm_it)[0] == MINUS)
+				response += *prm_it;
+			else
+				response += " " + *prm_it;
+		}
+		serv.respond(NULL, client.getFd(), RPL_UMODEIS, chan->getName().c_str(), response.c_str());
+	}
+
+	/**
+	 * @brief Handle MODE command
+	 *
+	 * IRC MODE cmd
+	 * 
+	 * @param serv Actual server
+	 * @param client Client who send comand
+	 * @param msg Msg sent to server from client
+	 */
+	void	mode(Server& serv, Client& client, Message& msg) {
+		std::string	channel = "#&!+";
+
+		if (msg.getParam().size() == 0) { //!< No parameters
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			return ;
+		}
+		if (channel.find(msg.getParam()[0][0]) != std::string::npos) {
+			Channel*	chan = serv.findChannel(msg.getParam()[0]);
+			if (!chan)
+				return (serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0] .c_str()));
+			return (mode_channel(serv, chan, client, msg));
+		}
+		return (mode_user(serv, client, msg));
 	}
 
 
@@ -164,7 +381,7 @@ namespace {
 		int											channel_mode;
 		
 		if (msg.getParam().size() == 0) {
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 			return ;
 		}
 
@@ -182,71 +399,83 @@ namespace {
 			if (ch == NULL) { //! Create new channel
 				Channel	new_channel(&client, *channel_it);
 				serv.addChannel(new_channel);
-				continue; ;
+				ch = serv.findChannel(*channel_it);
+				// continue; ;
 			}
+			else {
+				if (ch->getClient(client.getFd())) //!< Client already in channel
+					continue ;
 
-			if (ch->getClient(client.getFd())) //!< Client already in channel
-				continue ;
-
-			//!< TOOMANYTARGET ERROR
-			if (ch->getName()[0] == '!' && channel_it->c_str()[0] == '!'
-					&& std::strcmp(ch->getName().c_str() + 6, channel_it->c_str() + 1) == 0) {
-				serv.respond(client.getFd(), ERR_TOOMANYTARGETS, channel_it->c_str(), 471, "Safe channel already exist");
-				continue ;
-			}
-
-			channel_mode = ch->getMode();
-			if (channel_mode & INVITE_ONLY) { //!< Invite only channel
-				serv.respond(client.getFd(), ERR_INVITEONLYCHAN, channel_it->c_str());
-				continue ;
-			}
-			if (ch->isFull()) { //!< User limit set and reached
-				serv.respond(client.getFd(), ERR_CHANNELISFULL, channel_it->c_str());
-				continue ;
-			}
-			if (key_it != key.end()) { //!< Invalid key
-				if (!ch->validPassword(*key_it)) {
-					serv.respond(client.getFd(), ERR_BADCHANNELKEY, channel_it->c_str());
+				//!< TOOMANYTARGET ERROR
+				if (ch->getName()[0] == '!' && channel_it->c_str()[0] == '!'
+						&& std::strcmp(ch->getName().c_str() + 6, channel_it->c_str() + 1) == 0) {
+					serv.respond(NULL, client.getFd(), ERR_TOOMANYTARGETS, channel_it->c_str(), 471, "Safe channel already exist");
 					continue ;
 				}
-				key_it++;
-			}
-			if (client.getJoinedChannel() >= MAX_CHANNEL_PER_CLIENT) { //!< Maximum channel joined
-				serv.respond(client.getFd(), ERR_TOOMANYCHANNELS, channel_it->c_str());
-				continue ;
-			}
 
-			//! SUCCESS
-			//! add client to channel
-			ch->addClient(&client);
-			client.setJoinedChannel();
+				channel_mode = ch->getMode();
+				if (channel_mode & CHN_I) { //!< Invite only channel
+					serv.respond(NULL, client.getFd(), ERR_INVITEONLYCHAN, channel_it->c_str());
+					continue ;
+				}
+				if (ch->isFull()) { //!< User limit set and reached
+					serv.respond(NULL, client.getFd(), ERR_CHANNELISFULL, channel_it->c_str());
+					continue ;
+				}
+				if (key_it != key.end()) { //!< Invalid key
+					if (!ch->validPassword(*key_it)) {
+						serv.respond(NULL, client.getFd(), ERR_BADCHANNELKEY, channel_it->c_str());
+						continue ;
+					}
+					key_it++;
+				}
+				if (client.getJoinedChannel() >= MAX_CHANNEL_PER_CLIENT) { //!< Maximum channel joined
+					serv.respond(NULL, client.getFd(), ERR_TOOMANYCHANNELS, channel_it->c_str());
+					continue ;
+				}
+
+				//! SUCCESS
+				//! add client to channel
+				ch->addClient(&client);
+				client.setJoinedChannel();
+
+			}
 			
 			//! response to client
-			std::string response = std::string(":") + client.getNickname() + std::string("!~") + client.getUsername() + \
-				std::string("@") + "localhost" + std::string(" JOIN ") + ch->getName();
-			serv.respond(client.getFd(), response.c_str());	
+			// std::string response = std::string(":") + client.getNickname() + std::string("!~") + client.getUsername() + 
+			// 	std::string("@") + serv.getPrefix() + std::string(" JOIN ") + ch->getName();
+			std::string response = "JOIN " + ch->getName();
+			serv.respond(&client, client.getFd(), response.c_str());	
 			
 			//! RPL_TOPIC
 			if (!ch->getTopic().empty()){ //!< send topic if it's set
-				serv.respond(client.getFd(), RPL_TOPIC, ch->getName().c_str(), ch->getTopic().c_str());
+				serv.respond(NULL, client.getFd(), RPL_TOPIC, ch->getName().c_str(), ch->getTopic().c_str());
 			}
 
-			//! RPL_NAMERPLY 
+// <<<<<<< HEAD
+			// std::string names = ":localhost 353 " + client.getNickname() + " = " + ch->getName() + " :";
 			std::string names = ":";
-			const std::vector<Client *>& members = ch->getClients();
-			
-			for (std::vector<Client *>::const_iterator it = members.begin(); it != members.end(); ++ it){
+			const std::vector<std::pair<Client *, int> >& members = ch->getClients();
+			for (std::vector<std::pair<Client *, int> >::const_iterator it = members.begin(); it != members.end(); ++ it){
+				// names += it->first->getNickname() + " ";
+// =======
+			//! RPL_NAMERPLY 
+			// std::string names = ":";
+			// const std::vector<Client *>& members = ch->getClients();
+			// 
+			// for (std::vector<Client *>::const_iterator it = members.begin(); it != members.end(); ++ it){
 				if (it != members.begin()){
 					names += " ";
-				}
-				if ((*it)->getMode() & LOCAL_OPERATOR || (*it)->getMode() & OPERATOR){
+				// } if (it->first->getMode() & LOCAL_OPERATOR || it->first->getMode() & OPERATOR){
+				} if (it->second & LOCAL_OPERATOR || it->second & OPERATOR){
 					names += "@";
 				}
-				names += (*it)->getNickname();
+				names += it->first->getNickname();
+// >>>>>>> albokanc
 			}
 			
-			serv.respond(client.getFd(), RPL_NAMERPLY, client.getNickname().c_str(), ch->getName().c_str(), names.c_str());
-			serv.respond(client.getFd(), RPL_ENDOFNAMES, client.getNickname().c_str(), ch->getName().c_str());
+			serv.respond(NULL, client.getFd(), RPL_NAMERPLY, client.getNickname().c_str(), ch->getName().c_str(), names.c_str());
+			serv.respond(NULL, client.getFd(), RPL_ENDOFNAMES, client.getNickname().c_str(), ch->getName().c_str());
 			
 			//! broadcast to channel
 			serv.broadcastToChannel(response, ch, client.getFd());
@@ -255,68 +484,69 @@ namespace {
 		}
 	}
 	
-	/**
-	 * @brief Handle MODE command
-	 *
-	 * IRC MODE cmd
-	 * 
-	 *  i: Set/remove Invite-only channel
-	 *  t: Set/remove the restrictions of the TOPIC command to channel operators
-	 *  k: Set/remove the channel key (password)
-	 *  o: Give/take channel operator privilege
-	 *  l: Set/remove the user limit to channel
-	 * 
-	 * @param serv Actual server
-	 * @param client Client who send comand
-	 * @param msg Msg sent to server from client
-	 */
-	void	mode(Server& serv, Client& client, Message& msg) {
-		if (msg.getParam().size() == 0) { //!< No parameters
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
-			return ;
-		}
-		if (msg.getParam()[0].compare(client.getNickname()) != 0) { //!< Nickname not matching user
-			serv.respond(client.getFd(), ERR_USERSDONTMATCH);
-			return ;
-		}
-		if (msg.getParam().size() == 1) { //!< Send User mode
-			serv.respond(client.getFd(), RPL_UMODEIS, client.getNickname().c_str(), client.getModeStr().c_str());
-			return ;
-		}
-
-		int	sign = 0; //<! MODE sign ('-' < 0 | ??? == 0 | '+' > 0)
-		int flag = client.getMode();
-		std::vector<std::string>::const_iterator it;
-		std::vector<std::string>	mode_list = AParser::getModeList(msg.getParam()[1]);
-		for (it = mode_list.begin(); it != mode_list.end(); it++) {
-			sign = (it->begin()[0] == '+' ? 1 : -1);
-			for (std::string::const_iterator s_it = it->begin() + 1; s_it != it->end(); s_it++) {
-				switch (*s_it) {
-					case 'i' :
-						flag = (sign > 0 ? flag | INVISIBLE : flag & ~INVISIBLE);
-						break ;
-					// case 'w' :
-					// 	flag = (sign > 0 ? flag | WALLOPS : flag & ~WALLOPS);
-					// 	break ;
-					// case 'r' :
-					// 	flag = (sign > 0 ? flag | RESTRICTED_USER : flag);
-					// 	break ;
-					case 'o' :
-						flag = (sign > 0 ? flag : flag & ~OPERATOR);
-						break ;
-					case 'O' :
-						flag = (sign > 0 ? flag : flag & ~LOCAL_OPERATOR);
-						break ;
-					default :
-						serv.respond(client.getFd(), ERR_UMODEUNKNOWNFLAG);
-						return ;
-				}
-			}
-		}
-		log("Changed client %d mode", client.getFd());
-		client.setMode(flag);
-	}
-
+// 	/**
+// 	 * @brief Handle MODE command
+// 	 *
+// 	 * IRC MODE cmd
+// 	 * 
+// 	 *  i: Set/remove Invite-only channel
+// 	 *  t: Set/remove the restrictions of the TOPIC command to channel operators
+// 	 *  k: Set/remove the channel key (password)
+// 	 *  o: Give/take channel operator privilege
+// 	 *  l: Set/remove the user limit to channel
+// 	 * 
+// 	 * @param serv Actual server
+// 	 * @param client Client who send comand
+// 	 * @param msg Msg sent to server from client
+// 	 */
+// 	void	mode(Server& serv, Client& client, Message& msg) {
+// 		if (msg.getParam().size() == 0) { //!< No parameters
+// 			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+// 			return ;
+// 		}
+// 		if (msg.getParam()[0].compare(client.getNickname()) != 0) { //!< Nickname not matching user
+// 			serv.respond(client.getFd(), ERR_USERSDONTMATCH);
+// 			return ;
+// 		}
+// 		if (msg.getParam().size() == 1) { //!< Send User mode
+// 			serv.respond(client.getFd(), RPL_UMODEIS, client.getNickname().c_str(), client.getModeStr().c_str());
+// 			return ;
+// 		}
+//
+// 		int	sign = 0; //<! MODE sign ('-' < 0 | ??? == 0 | '+' > 0)
+// 		int flag = client.getMode();
+// 		std::vector<std::string>::const_iterator it;
+// 		std::vector<std::string>	mode_list = AParser::getModeList(msg.getParam()[1]);
+// 		for (it = mode_list.begin(); it != mode_list.end(); it++) {
+// 			sign = (it->begin()[0] == '+' ? 1 : -1);
+// 			for (std::string::const_iterator s_it = it->begin() + 1; s_it != it->end(); s_it++) {
+// 				switch (*s_it) {
+// 					case 'i' :
+// 						flag = (sign > 0 ? flag | INVISIBLE : flag & ~INVISIBLE);
+// 						break ;
+// 					// case 'w' :
+// 					// 	flag = (sign > 0 ? flag | WALLOPS : flag & ~WALLOPS);
+// 					// 	break ;
+// 					// case 'r' :
+// 					// 	flag = (sign > 0 ? flag | RESTRICTED_USER : flag);
+// 					// 	break ;
+// 					case 'o' :
+// 						flag = (sign > 0 ? flag : flag & ~OPERATOR);
+// 						break ;
+// 					case 'O' :
+// 						flag = (sign > 0 ? flag : flag & ~LOCAL_OPERATOR);
+// 						break ;
+// 					default :
+// 						serv.respond(client.getFd(), ERR_UMODEUNKNOWNFLAG);
+// 						return ;
+// 				}
+// 			}
+// 		}
+// 		log("Changed client %d mode", client.getFd());
+// 		client.setMode(flag);
+// 	}
+//
+// >>>>>>> albokanc
 	/**
 	 * @brief IRC PART command
 	 *
@@ -334,7 +564,7 @@ namespace {
 		std::string									part_msg;
 
 		if (msg.getParam().size() == 0) { //!< No parameter
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 			return ;
 		}
 
@@ -343,11 +573,11 @@ namespace {
 		for (channel_it = channel_name.begin(); channel_it != channel_name.end(); channel_it++) {
 			channel = serv.findChannel(*channel_it);
 			if (!channel) { //!< Channel not found
-				serv.respond(client.getFd(), ERR_NOSUCHCHANNEL, channel_it->c_str());
+				serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, channel_it->c_str());
 				continue ;
 			}
 			if (!channel->getClient(client.getFd())) { //!< Client not in channel
-				serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+				serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
 				continue ;
 			}
 			//! Remove from channel
@@ -356,7 +586,7 @@ namespace {
 			//! response to client
 			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
 				std::string(" PART ") + channel->getName() + " :" + part_msg;
-			serv.respond(client.getFd(), response.c_str());
+			serv.respond(NULL, client.getFd(), response.c_str());
 			
 			if (channel->isEmpty()){ //!< Remove channel
 				serv.delChannel(*channel);
@@ -384,32 +614,32 @@ namespace {
 		Channel	*channel;
 		
 		if (msg.getParam().size() == 0) { //!< No parameter
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 			return ;
 		}
 		
 		channel = serv.findChannel(msg.getParam()[0]);
 		if (!channel){ //!< Channel not found
-			serv.respond(client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0].c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0].c_str());
 			return ;
 		}
 		
 		if (!channel->getClient(client.getFd())){ //!< Client not on channel									 
-			serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
 			return;
 		}
 		
 		if (msg.getParam().size() == 1){ //!< view the topic of the channel if exists
 			if (!channel->getTopic().empty()){
-				serv.respond(client.getFd(), RPL_TOPIC, channel->getName().c_str(), channel->getTopic().c_str());
+				serv.respond(NULL, client.getFd(), RPL_TOPIC, channel->getName().c_str(), channel->getTopic().c_str());
 			}
 			else { //!< no topic for this channel
-				serv.respond(client.getFd(), RPL_NOTOPIC, channel->getName().c_str());
+				serv.respond(NULL, client.getFd(), RPL_NOTOPIC, channel->getName().c_str());
 			}
 		}
 		else if (msg.getParam().size() >= 2){ //!< change the topic, if you have the rights
-			if ((channel->getChannelMode() & T) && (client.getMode() & ~LOCAL_OPERATOR || client.getMode() & ~OPERATOR)){ //!< topic settable by channel operator only
-				serv.respond(client.getFd(), ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+			if ((channel->getMode() & CHN_T) && (client.getMode() & ~LOCAL_OPERATOR || client.getMode() & ~OPERATOR)){ //!< topic settable by channel operator only
+				serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
 				return;
 			}
 			else { //!< you can change the topic
@@ -419,7 +649,7 @@ namespace {
 					" " + std::string("TOPIC") + " " + channel->getName() + " :" + channel->getTopic();	
 			
 				//!< response to client
-				serv.respond(client.getFd(), msg.c_str());
+				serv.respond(NULL, client.getFd(), msg.c_str());
 			
 				//!< broadcast to channel
 				serv.broadcastToChannel(msg, channel, client.getFd());
@@ -448,13 +678,13 @@ namespace {
 		std::string	response;
 		
 		if (msg.getParam().size() <= 1) { //!< No parameter
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 			return ;
 		}
 		
 		std::string nick_target = msg.getParam()[0];
 		if (serv.findClient(nick_target) == NULL){ //!< No nick found
-			serv.respond(client.getFd(), ERR_NOSUCHNICK, nick_target.c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, nick_target.c_str());
 			return ;
 		}
 		
@@ -463,16 +693,16 @@ namespace {
 		
 		if (channel){
 			if (!channel->getClient(client.getFd())){ //!< Client trying to sent an invitation not on a channel									 
-				serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+				serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
 				return ;
 			}
 			if (channel->getClient(nick_target)){ //!< Client tries to invite a user to a channel they are already on
-				serv.respond(client.getFd(), ERR_USERONCHANNEL, channel->getClient(nick_target)->getUsername().c_str(), channel_target.c_str());
+				serv.respond(NULL, client.getFd(), ERR_USERONCHANNEL, channel->getClient(nick_target)->getUsername().c_str(), channel_target.c_str());
 				return ;
 			}
-			if (channel->getChannelMode() & I){ //! Invite-only channel -> client sending a msg has to be a channel operator
+			if (channel->getMode() & CHN_I){ //! Invite-only channel -> client sending a msg has to be a channel operator
 				if (client.getMode() & ~OPERATOR && client.getMode() & ~LOCAL_OPERATOR){
-					serv.respond(client.getFd() , ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+					serv.respond(NULL, client.getFd() , ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
 					return ;
 				}
 			}
@@ -480,13 +710,13 @@ namespace {
 		
 		//!< send invitation
 		response = ":" + client.getNickname() + " INVITE " + nick_target + " #" + channel_target;
-		serv.respond(serv.findClient(nick_target)->getFd(), response.c_str());
+		serv.respond(NULL, serv.findClient(nick_target)->getFd(), response.c_str());
 		
 		//!< reply by server
-		serv.respond(client.getFd(), RPL_INVITING, channel_target.c_str(), nick_target.c_str());
+		serv.respond(NULL, client.getFd(), RPL_INVITING, channel_target.c_str(), nick_target.c_str());
 	}
-	
-	
+
+
 	/** 
 	 * @brief IRC KICK command
 	 * 
@@ -503,26 +733,26 @@ namespace {
 		std::string response;
 		
 		if (msg.getParam().size() <= 1) { //!< No parameter
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 			return ;
 		}
-	
+
 		channel = serv.findChannel(msg.getParam()[0]);
 		if (!channel){ //!< Channel not found
-			serv.respond(client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0].c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0].c_str());
 			return ;
 		}
 		
 		if (!channel->getClient(client.getFd())){ //!< Client not in channel									 
-			serv.respond(client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
 			return;
 		}
 
 		if (client.getMode() & ~OPERATOR && client.getMode() & ~LOCAL_OPERATOR){ //!< Client has no privilages
-			serv.respond(client.getFd(), ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+			serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
 			return ;
 		}
-	
+
 		//!< kick client from channel
 		channel->removeClient(channel->getClientByUsername(msg.getParam()[1])->getFd());
 		
@@ -534,7 +764,7 @@ namespace {
 			" KICK " + channel->getName() + " " + msg.getParam()[1] + comment;
 			
 		//!< response to client
-		serv.respond(client.getFd(), response.c_str());
+		serv.respond(NULL, client.getFd(), response.c_str());
 		
 		//!< broadcast to channel
 		serv.broadcastToChannel(response, channel, client.getFd());
@@ -543,12 +773,12 @@ namespace {
 		/* ************************************************************************** */
 		/* *                         IRC Server's commands                          * */
 		/* ************************************************************************** */
-	
+
 	/**
 	 * @brief IRC TIME command
 	 *
 	 * Perform IRC TIME command and respond
-	 *
+	 * 
 	 * @param serv Actual server
 	 * @param client Client who send comand
 	 * @param msg Msg sent to server from client
@@ -558,18 +788,18 @@ namespace {
 		std::time_t now = std::time(NULL);
 		std::string timeStr = std::ctime(&now);
 
-	  	size_t pos = timeStr.find('\n');
-    	if (pos != std::string::npos) {
-        	timeStr.erase(pos, 1); //<! Supprime \n a la find de timeStr
-    	}
-		serv.respond(client.getFd(), RPL_TIME, timeStr.c_str());
+		size_t pos = timeStr.find('\n');
+		if (pos != std::string::npos) {
+			timeStr.erase(pos, 1); //<! Supprime \n a la find de timeStr
+		}
+		serv.respond(NULL, client.getFd(), RPL_TIME, timeStr.c_str());
 	}
 
 	/**
 	 * @brief IRC INFO command
 	 *
 	 * Perform IRC INFO command and respond
-	 *
+	 * 
 	 * @param serv Actual server
 	 * @param client Client who send comand
 	 * @param msg Msg sent to server from client
@@ -584,9 +814,9 @@ namespace {
 		
 		for (std::vector<std::string>::const_iterator it = infoMessages.begin(); it \
 				!= infoMessages.end(); ++it) {
-			serv.respond(client.getFd(), RPL_INFO, it->c_str());
+			serv.respond(NULL, client.getFd(), RPL_INFO, it->c_str());
 		}
-		serv.respond(client.getFd(), RPL_ENDOFINFO);
+		serv.respond(NULL, client.getFd(), RPL_ENDOFINFO);
 	}
 
 
@@ -606,11 +836,11 @@ namespace {
 
 		
 		if (msg.getParam().size() == 0){ //!< no receiver given
-			serv.respond(client.getFd(), ERR_NORECIPIENT, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NORECIPIENT, msg.getCommand().c_str());
 			return ;
 		}
 		if (msg.getParam().size() <= 1){ //!< no text to be sent given
-			serv.respond(client.getFd(), ERR_NOTEXTTOSEND);
+			serv.respond(NULL, client.getFd(), ERR_NOTEXTTOSEND);
 			return ;
 		}
 		
@@ -620,11 +850,11 @@ namespace {
 			if ((*receiver_it)[0] == '#' || (*receiver_it)[0] == '&'){ //!< it's a channel{
 				channelReceiver = serv.findChannel((*receiver_it));
 				if (!channelReceiver){ //!< no such channel
-					serv.respond(client.getFd(), ERR_NOSUCHCHANNEL, receiver_it->c_str());
+					serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, receiver_it->c_str());
 					continue ;
 				}
 				if (!channelReceiver->getClient(client.getFd())){ // !< client sending a msg not on  channel
-					serv.respond(client.getFd(), ERR_NOTONCHANNEL, channelReceiver->getName().c_str());
+					serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channelReceiver->getName().c_str());
 					continue ;
 				}
 				text = ":" + client.getNickname() +" PRIVMSG " + channelReceiver->getName() + " :" + msg.getParam()[1];
@@ -633,11 +863,11 @@ namespace {
 			else { //!< it's a client
 				clientReceiver = serv.findClient((*receiver_it)); 
 				if (!clientReceiver){ //!< no such client on server
-					serv.respond(client.getFd(), ERR_NOSUCHNICK, receiver_it->c_str());
+					serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, receiver_it->c_str());
 					continue ;
 				}
 				text = ":" + client.getNickname() + " PRIVMSG " + clientReceiver->getNickname() + " :" + msg.getParam()[1];
-				serv.respond(clientReceiver->getFd(), text.c_str());
+				serv.respond(NULL, clientReceiver->getFd(), text.c_str());
 			}
 		}	
 	}
@@ -665,7 +895,7 @@ namespace {
 		}
 		//!< send notice to client
 		text_target = ":" + client.getNickname() + " NOTICE " + nick_target + " :" + msg.getParam()[1];
-		serv.respond(serv.findClient(nick_target)->getFd(), text_target.c_str());	
+		serv.respond(NULL, serv.findClient(nick_target)->getFd(), text_target.c_str());	
 	}
 	
 	/**
@@ -675,21 +905,21 @@ namespace {
 	 */
 	void whoisReply( Server& serv, Client& client, Message& msg ){
 		(void) msg;
-		serv.respond(client.getFd(), RPL_WHOISUSER, client.getNickname().c_str(), client.getUsername().c_str(), client.getHostname().c_str(), client.getRealname().c_str());
+		serv.respond(NULL, client.getFd(), RPL_WHOISUSER, client.getNickname().c_str(), client.getUsername().c_str(), client.getHostname().c_str(), client.getRealname().c_str());
 	}
 	
 	/**
 	 * @brief IRC PONG command
 	 *
 	 * Perform IRC PONG command and respond
-	 *
+	 * 
 	 * @param serv Actual server
 	 * @param client Client who send comand
 	 * @param msg Msg sent to server from client
 	 */
 	void	pong( Server& serv, Client& client, Message& msg) {
 		(void) msg;
-		serv.respond(client.getFd(), "PONG :localhost");
+		serv.respond(NULL, client.getFd(), "PONG :localhost");
 	}
 
 	/** 
@@ -707,7 +937,7 @@ namespace {
 		success_log("Client %s will be disconnected from the server", client.getNickname().c_str());
 		serv.disconnectClient(index);
 	}
-	
+
 	/* ************************************************************************** */
 	/* *                         IRC Operator's commands                        * */
 	/* ************************************************************************** */
@@ -724,28 +954,28 @@ namespace {
 	*/
 	void oper( Server & serv, Client & client, Message & msg ){
 		if (msg.getParam().size() < 2){
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 			return (war_log("ERR_NEEDMOREPARAMS sent to Client %d", client.getFd()));
 		}
 		
 		std::vector<std::string> tmp = msg.getParam();	
 		
 		if (tmp[0] != serv.getOpUser()){
-			serv.respond(client.getFd(), ERR_NOOPERHOST);
+			serv.respond(NULL, client.getFd(), ERR_NOOPERHOST);
 			return(war_log("ERR_NOOPERHOST sent to Client %d", client.getFd()));
 		}
 		
 		if (tmp[1] != serv.getOpPasswd()){
-			serv.respond(client.getFd(), ERR_PASSWDMISMATCH);
+			serv.respond(NULL, client.getFd(), ERR_PASSWDMISMATCH);
 			return (war_log("ERR_PASSWDMISMATCH sent to Client %d", client.getFd()));
 		}
 		
 		client.setOperator(); // !< this client is now Server operator
-		serv.respond(client.getFd(), RPL_YOUREOPER);
+		serv.respond(NULL, client.getFd(), RPL_YOUREOPER);
 		
 		success_log("MODE +o %s", client.getNickname().c_str());
 	}
-	
+
 	/** @brief IRC KILL command
 	 * 
 	 * <nickname> <comment>
@@ -761,16 +991,16 @@ namespace {
 	 */
 	void kill( Server & serv, Client & client, Message & msg){
 		if (!client.isOperator()){
-			serv.respond(client.getFd(), ERR_NOPRIVILEGES);
+			serv.respond(NULL, client.getFd(), ERR_NOPRIVILEGES);
 			return (war_log("ERR_NOPRIVILEGES sent to Client %d", client.getFd()));
 		}
 		if (msg.getParam().size() < 2){
-			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 			return (war_log("ERR_NEEDMOREPARAMS sent to Client %d", client.getFd()));
 		}
 		std::vector<std::string> tmp = msg.getParam();
 		if (serv.findClient(tmp[0]) == NULL){
-			serv.respond(client.getFd(), ERR_NOSUCHNICK, tmp[0].c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, tmp[0].c_str());
 			return (war_log("ERR_NOSUCHNICK sent to Client %d", client.getFd()));
 		}
 		
@@ -781,7 +1011,7 @@ namespace {
 		std::cout << "index : " << index << std::endl;
 		serv.disconnectClient(index); //!< this client was deconnected from the server
 	}
-	
+
 	/** @brief IRC RESTART command
 	 * 
 	 * No parameters.
@@ -793,26 +1023,26 @@ namespace {
 	void restart( Server & serv, Client & client, Message & msg ){
 		(void) msg;
 		if (!client.isOperator()){
-			serv.respond(client.getFd(), ERR_NOPRIVILEGES);
+			serv.respond(NULL, client.getFd(), ERR_NOPRIVILEGES);
 			return (war_log("ERR_NOPRIVILEGES sent to Client %d", client.getFd()));
 		}
 		
 		//<! will notify all clients and IRC operators about restarting a server
 		war_log("Server will be restarted by %s", client.getNickname().c_str());
 		serv.broadcast(":localhost :Server will be restarted\r\n", 39, -1);
-    
+
 		serv.stopServer(); //<! will stop the server and deconnect every client before restart the server
 		
 		std::stringstream ss;
 		ss << serv.getPort();
 		
 		const char *program = "./ircserv";
-    	const char *const args[] = { "./ircserv", ss.str().c_str(), serv.getPasswd().c_str(), NULL};
-	
-    	if (execv(program, const_cast<char *const*>(args)) == -1) { //<! will restart the server with the same port/passwor
-        	fatal_log("Failed to restart server");
-        	exit(1);
-    	}
+		const char *const args[] = { "./ircserv", ss.str().c_str(), serv.getPasswd().c_str(), NULL};
+
+		if (execv(program, const_cast<char *const*>(args)) == -1) { //<! will restart the server with the same port/passwor
+			fatal_log("Failed to restart server");
+			exit(1);
+		}
 	}
 	
 	
@@ -858,6 +1088,9 @@ namespace {
 		commandMap.push_back(std::make_pair("info", info)); // irssi l'envoie en minuscule
 		commandMap.push_back(std::make_pair("PING", pong)); // PONG reagit a la cmd PING envoye par le client
 		commandMap.push_back(std::make_pair("QUIT", quit));
+		commandMap.push_back(std::make_pair("MODE", mode));
+		commandMap.push_back(std::make_pair("INFO", info));
+		commandMap.push_back(std::make_pair("PING", pong));
 
 		return (commandMap);
 	}

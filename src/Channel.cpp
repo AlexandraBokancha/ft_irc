@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/02 21:35:07 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/05 12:49:32 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,8 +23,8 @@ void	Channel::printChannel( void ) const {
 	for (std::vector<Client*>::const_iterator it = _operator.begin(); it != _operator.end(); it++) {
 		std::cout << "  [ @" << (*it)->getNickname() << " ] : " << (*it)->getFd() << std::endl;
 	}
-	for (std::vector<Client*>::const_iterator it = _client.begin(); it != _client.end(); it++) {
-		std::cout << "  [ " << (*it)->getNickname() << " ] : " << (*it)->getFd() << std::endl;
+	for (std::vector<std::pair<Client*, int > >::const_iterator it = _client.begin(); it != _client.end(); it++) {
+		std::cout << "  [ " << it->first->getNickname() << " ] : " << it->first->getFd() << std::endl;
 	}
 	std::cout << std::endl;
 }
@@ -33,8 +33,8 @@ void	Channel::printChannel( void ) const {
 /* *                       Constructors && Destructors                      * */
 /* ************************************************************************** */
 Channel::Channel( void )
-	: _name(""), _topic(""), _client(std::vector<Client*>()), _operator(std::vector<Client*>()),
-		_mode(0), _channelMode(0), _userLimit(10), _password("")
+	: _name(""), _topic(""), _client(std::vector<std::pair<Client*, int> >()),
+		_operator(std::vector<Client*>()), _mode(0), _userLimit(0), _password("")
 {
 		return ;
 }
@@ -47,10 +47,12 @@ Channel::Channel( const Channel& rhs )
 
 
 Channel::Channel( Client* creator, const std::string& name )
-	: _name(name), _topic(""), _client(1, creator), _operator(1, creator),
-		_mode(0), _channelMode(0), _userLimit(0), _password("")
+	: _name(name), _topic(""), _client(), _operator(),
+		_mode(0), _userLimit(0), _password("")
 {
 	this->_name = name;
+	this->_client.push_back(std::pair<Client*, int>(creator, LOCAL_OPERATOR));
+	// this->_client = std::vector< std::pair< Client*, int > >(1, std::pair<Client*,int>(creator, LOCAL_OPERATOR));
 	if (name[0] == '!') {
 		time_t now = time(NULL);
 		std::string	result = "";
@@ -61,13 +63,7 @@ Channel::Channel( Client* creator, const std::string& name )
 		}
 		this->_name = ("!" + std::string(result.rbegin(), result.rend()) + name.substr(1, name.size()));
 	}
-	this->_topic = "";
-	this->_client = (std::vector<Client*>(1, creator));
 	this->_operator = (name[0] == '+' ? std::vector<Client*>() : std::vector<Client*>(1, creator));
-	this->_mode = 0;
-	this->_channelMode = 0;
-	this->_userLimit = 0;
-	this->_password = "";
 	return ;
 }
 
@@ -86,7 +82,6 @@ Channel&	Channel::operator=( const Channel& rhs ) {
 		this->_client = rhs._client;
 		this->_operator = rhs._operator;
 		this->_mode = rhs._mode;
-		this->_channelMode = rhs._channelMode;
 		this->_userLimit = rhs._userLimit;
 		this->_password = rhs._password;
 	}
@@ -109,41 +104,78 @@ int			Channel::getMode( void ) const {
 	return (this->_mode);
 }
 
-int Channel::getChannelMode( void ) const { 
-	return (this->_channelMode);
+std::string	Channel::modeToString( void ) const {
+	std::string	result = "+";
+	char		buffer[100];
+
+	if (this->_mode & CHN_I)
+		result.append("i");
+	if (this->_mode & CHN_T)
+		result.append("t");
+	if (this->_mode & CHN_L)
+		result.append("l");
+	if (this->_mode & CHN_K)
+		result.append("k");
+	if (this->_mode & CHN_L) {
+		sprintf(buffer, "%d", this->_userLimit);
+		result.append(" " + std::string(buffer));
+	}
+	if (this->_mode & CHN_K) {
+		sprintf(buffer, "%s", this->_password.c_str());
+		result.append(" " + std::string(buffer));
+	}
+	return ((result.length() == 1 ? "" : result));
 }
 
 Client*		Channel::getClient( const int client_socket ) const {
-	std::vector<Client*>::const_iterator it;
+	std::vector<std::pair<Client*, int > >::const_iterator it;
 
 	for (it = this->_client.begin(); it != this->_client.end(); it++) {
-		if (client_socket == (*it)->getFd())
-			return (*it);
+		if (client_socket == it->first->getFd())
+			return (it->first);
 	}
 	return (NULL);
 }
 
 Client* Channel::getClient( const std::string & nick ) const{
-	std::vector<Client*>::const_iterator it;
+	std::vector< std::pair< Client*, int > >::const_iterator it;
 
 	for (it = this->_client.begin(); it != this->_client.end(); it++){
-		if (nick == (*it)->getNickname())
-			return (*it);
+		if (nick == it->first->getNickname())
+			return (it->first);
 	}
 	return (NULL);
 }
 
+int			Channel::getUserMode( const Client* client ) const {
+	std::vector <std::pair <Client*, int> >::const_iterator it;
+
+	for (it = this->_client.begin(); it != this->_client.end(); it++) {
+		if (client == it->first)
+			return (it->second);
+	}
+	return (-1);
+}
+
+
+void		Channel::setPassword( const std::string& password ) {
+	this->_password = password;
+}
+
+void		Channel::setLimit( const int limit ) {
+	this->_userLimit = limit;
+}
 Client* Channel::getClientByUsername( const std::string & user ) const{
-	std::vector<Client*>::const_iterator it;
+	std::vector< std::pair< Client*, int > >::const_iterator it;
 
 	for (it = this->_client.begin(); it != this->_client.end(); it++){
-		if (user == (*it)->getUsername())
-			return (*it);
+		if (user == it->first->getUsername())
+			return (it->first);
 	}
 	return (NULL);
 }
 
-const std::vector<Client *>& Channel::getClients( void ) const{
+const std::vector< std::pair<Client*, int> >& Channel::getClients( void ) const{
 	return (this->_client);
 }
 
@@ -159,6 +191,59 @@ void Channel::setTopic( const std::string & topic ){
 /* ************************************************************************** */
 /* *                        Public member functions                         * */
 /* ************************************************************************** */
+
+/**
+ * @brief Add or remove channel mode
+ *
+ * Add or remove one channel mode
+ *
+ * @param sign Mode sign ('+' or '-')
+ * @param mode Channel mode to modify
+ */
+void		Channel::changeMode( const char sign, const int mode ) {
+	int mode_val = 0;
+
+	if (mode == 'i')
+		mode_val = CHN_I;
+	if (mode == 't')
+		mode_val = CHN_T;
+	if (mode == 'k')
+		mode_val = CHN_K;
+	if (mode == 'l')
+		mode_val = CHN_L;
+
+	if (sign == PLUS)
+		this->_mode |= mode_val;
+	if (sign == MINUS)
+		this->_mode &= ~mode_val;
+}
+
+/**
+ * @brief Add or remove channel user mode
+ *
+ * Add or remove channel user mode.
+ * If user was fouund
+ *
+ * @param nick Client nick
+ * @param sign Mode sign ('+' or '-')
+ * @param mode Channel mode to modify
+ */
+void		Channel::changeUserMode( const std::string& nick,  const char sign, const int mode ) {
+	std::vector< std::pair< Client*, int > >::iterator it;
+
+	for (it = _client.begin(); it != _client.end(); it++) {
+		if (nick == it->first->getNickname())
+			break ;
+	}
+	if (it == _client.end())
+		return ;
+	if (sign == PLUS)
+		it->second &= mode;
+	if (sign == MINUS)
+		it->second |= ~mode;
+	return ;
+}
+
 /**
  * @brief Check if channel is full when trying to join it
  *
@@ -167,7 +252,7 @@ void Channel::setTopic( const std::string & topic ){
  * @return True when yes, False when channel has a limit that has been reached
  */
 bool		Channel::isFull( void ) const {
-	return (this->_mode & L && static_cast<int>(this->_client.size()) >= this->_userLimit);
+	return (this->_mode & CHN_L && static_cast<int>(this->_client.size()) >= this->_userLimit);
 }
 
 /**
@@ -205,7 +290,7 @@ bool		Channel::validPassword( const std::string& password ) const {
  * @param Client pointer to add
  */
 void		Channel::addClient( Client* const& client ) {
-	this->_client.push_back(client);
+	this->_client.push_back(std::pair<Client*, int>(client, 0));
 }
 
 /**
@@ -216,10 +301,8 @@ void		Channel::addClient( Client* const& client ) {
  * @param Client address
  */
 void		Channel::removeClient( int client_sock ) {
-	std::vector<Client*>::iterator it;
-
 	//! remove operator
-	for (it = this->_operator.begin(); it != this->_operator.end(); it++) {
+	for (std::vector<Client*>::iterator it = this->_operator.begin(); it != this->_operator.end(); it++) {
 		if ((*it)->getFd() == client_sock) {
 			log("removing operator %d on channel %s", client_sock, this->getName().c_str());
 			this->_operator.erase(it);
@@ -230,11 +313,12 @@ void		Channel::removeClient( int client_sock ) {
 	}
 
 	//! remove client
-	for (it = this->_client.begin(); it != this->_client.end(); it++) {
-		if ((*it)->getFd() == client_sock) {
+	for (std::vector<std::pair<Client*, int> >::iterator it = this->_client.begin(); it != this->_client.end(); it++) {
+		if (it->first->getFd() == client_sock) {
 			log("removing client %d on channel %s", client_sock, this->getName().c_str());
 			this->_client.erase(it);
 			return ;
 		}
 	}
 }
+

@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/04 17:16:23 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/04 22:30:44 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,15 @@
 # define ERR_USERSDONTMATCH     "502 :Cannot change mode for other users"
 # define RPL_UMODEIS            "221 %s :%s"
 
+# define ERR_NOCHANMODES        "477 %s :Channel doesn't support modes"
+# define ERR_USERNOTINCHANNEL   "441 %s %s :They aren't on that channel"
+# define ERR_KEYSET             "467 %s :Channel key already set"
+# define ERR_CHANOPRIVSNEEDED   "482 %s :You're not channel operator"
+# define ERR_UNKNOWNMODE        "472 %s :is unknown mode char to me for %s"
+
+
+# define RPL_CHANNELMODEIS      "324 %s %s"
+# define RPL_UNIQOPIS           "325 %s %s"
 //! TOPIC
 # define RPL_TOPIC              "332 %s :%s"
 # define RPL_NOTOPIC            "331 %s :No topic is set"
