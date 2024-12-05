@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/04 22:29:51 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/05 11:46:37 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,7 @@ public:
 	std::string			getNickname( void ) const;
 	std::string			getServername( void ) const;
 	std::string			getRealname( void ) const;
+	std::string			getPrefix( void ) const;
 	bool				getConnected( void ) const;
 	bool				getRegistred( void ) const;
 	int					getFd( void ) const;

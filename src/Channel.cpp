@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/05 10:31:14 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/05 12:49:32 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,8 @@ Channel::Channel( Client* creator, const std::string& name )
 		_mode(0), _userLimit(0), _password("")
 {
 	this->_name = name;
+	this->_client.push_back(std::pair<Client*, int>(creator, LOCAL_OPERATOR));
+	// this->_client = std::vector< std::pair< Client*, int > >(1, std::pair<Client*,int>(creator, LOCAL_OPERATOR));
 	if (name[0] == '!') {
 		time_t now = time(NULL);
 		std::string	result = "";

@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/04 22:38:03 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/05 12:38:00 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -236,16 +236,20 @@ int Server::findClientIndex( const std::string & nick ){
  *
  * This is a way to snend formated response to client command in a formatted way
  *
+ * @param The source of the message (NULL if it come from the server)
  * @param client_sock Client socket to send message to
  * @param fmt The formated message to send (defined in Numericresponse.hpp)
  * @param ... The fmt argument
  */
-void	Server::respond(const int& client_sock, const char* fmt, ...) const {
+void	Server::respond(const Client* src, const int& client_sock, const char* fmt, ...) const {
 	va_list		args;
 	std::string	buffer;
 	Message		response;
 
-	response.setPrefix(this->getPrefix());
+	if (!src)
+		response.setPrefix(this->getPrefix());
+	else
+		response.setPrefix(src->getPrefix());
 
 	buffer.reserve(512);
 	va_start(args, fmt);
@@ -283,7 +287,7 @@ void	Server::respond(const int& client_sock, const char* fmt, ...) const {
 	}
 	va_end(args);
 
-	// log("Sending :%s to client: %d", buffer.c_str(), client_sock);
+	log("Sending :%s to client: %d", buffer.c_str(), client_sock);
 
 	response.setContent(buffer);
 	sendMsg(client_sock, response);
@@ -590,7 +594,7 @@ void Server::broadcastToChannel( const std::string& msg, const Channel * ch, int
 	const std::vector< std::pair<Client *, int> >& clients = ch->getClients(); //!< clients connected to this channel
 	for (std::vector<std::pair<Client *,int> >::const_iterator it = clients.begin(); it != clients.end(); ++it){
 			if (it->first->getFd() != fd)
-				Server::respond(it->first->getFd(), msg.c_str());
+				Server::respond(NULL, it->first->getFd(), msg.c_str());
 	}
 }
 

@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/04 22:32:07 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/05 11:48:07 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,10 @@ std::string Client::getRealname( void ) const {
 
 std::string Client::getServername( void ) const {
 	return (this->_servername);
+}
+
+std::string Client::getPrefix( void ) const {
+	return (this->_nickname + "!" + this->_username + "@" + this->_hostname);
 }
 
 bool Client::getConnected( void ) const {
