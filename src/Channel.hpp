@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/05 10:22:45 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/05 19:49:32 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,38 +49,34 @@ public:
 
 	Channel& operator=( Channel const & rhs );
 
-	std::string			getName( void ) const;
-	int					getMode( void ) const;
-	Client*				getClient( const std::string& nick ) const;
-	Client*				getClient( const int client_socket ) const;
-	int					getUserMode( const Client* client ) const;
-	std::vector<std::string>	getBanMask( void ) const;
-	std::vector<std::string>	getExceptionMask( void ) const;
-	std::vector<std::string>	getInviteMask( void ) const;
-	void				setPassword( const std::string& password );
-	void				setLimit( const int limit );
-	std::string			modeToString( void ) const;
-
-	void				changeMode( const char sign, const int mode );
-	void				changeUserMode( const std::string& nick, const char sign, const int mode );
+	std::string	getName( void ) const;
+	int			getMode( void ) const;
+	Client*		getClient( const std::string& nick ) const;
 	const std::vector< std::pair<Client *, int> >&	getClients( void ) const;
-	std::string						getTopic( void ) const;
-	int								getChannelMode( void ) const;
-	Client*							getClientByUsername( const std::string & user ) const;
+	Client*		getClient( const int client_socket ) const;
+	Client*		getClientByUsername( const std::string & user ) const;
+	std::string	getTopic( void ) const;
+	int			getUserMode( const Client* client ) const;
+	void		setPassword( const std::string& password );
+	void		setLimit( const int limit );
+	std::string	modeToString( void ) const;
 
-	void							setTopic(const std::string & topic);
+	void		changeMode( const char sign, const int mode );
+	void		changeUserMode( const std::string& nick, const char sign, const int mode );
 
-	void				isOperator( const std::string nick );
+	void		setTopic(const std::string & topic);
 
-	bool							isFull( void ) const;
-	bool							isEmpty( void ) const;
-	bool							validPassword( const std::string& password ) const;
+	void		isOperator( const std::string nick );
 
-	void							addClient( Client* const& client );
-	void							removeClient( int client_sock );
+	bool		isFull( void ) const;
+	bool		isEmpty( void ) const;
+	bool		validPassword( const std::string& password ) const;
+
+	void		addClient( Client* const& client );
+	void		removeClient( int client_sock );
 
 	//! FOR TESTING PURPOSE
-	void	printChannel( void ) const;
+	void		printChannel( void ) const;
 
 private:
 	std::string					_name; //!< Channel name

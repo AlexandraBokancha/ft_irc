@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/04 22:30:44 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/05 17:34:30 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@
                                                               // une premiere cmd a executer (logiquement 
                                                               // on peut pas avoir le nick)
 # define ERR_NOPRIVILEGES       "481 :Permission Denied- You're not an IRC opertator"
-# define ERR_NOSUCHNICK         "401 %s :No such nick/channel"
+# define ERR_NOSUCHNICK         "401 %s %s :No such nick/channel"
 
 //! NICK
 # define ERR_NONICKNAMEGIVEN	"431 :No nickname given"
@@ -62,7 +62,7 @@
 
 // MODE
 # define ERR_UMODEUNKNOWNFLAG   "501 :Unknown MODE flag"
-# define ERR_USERSDONTMATCH     "502 :Cannot change mode for other users"
+# define ERR_USERSDONTMATCH     "502 %s :Cannot change mode for other users"
 # define RPL_UMODEIS            "221 %s :%s"
 
 # define ERR_NOCHANMODES        "477 %s :Channel doesn't support modes"
@@ -72,7 +72,7 @@
 # define ERR_UNKNOWNMODE        "472 %s :is unknown mode char to me for %s"
 
 
-# define RPL_CHANNELMODEIS      "324 %s %s"
+# define RPL_CHANNELMODEIS      "324 %s %s %s"
 # define RPL_UNIQOPIS           "325 %s %s"
 //! TOPIC
 # define RPL_TOPIC              "332 %s :%s"

@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/05 12:49:32 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/05 19:47:47 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ void	Channel::printChannel( void ) const {
 /* ************************************************************************** */
 Channel::Channel( void )
 	: _name(""), _topic(""), _client(std::vector<std::pair<Client*, int> >()),
-		_operator(std::vector<Client*>()), _mode(0), _userLimit(0), _password("")
+		_operator(std::vector<Client*>()), _mode(CHN_T), _userLimit(0), _password("")
 {
 		return ;
 }
@@ -48,7 +48,7 @@ Channel::Channel( const Channel& rhs )
 
 Channel::Channel( Client* creator, const std::string& name )
 	: _name(name), _topic(""), _client(), _operator(),
-		_mode(0), _userLimit(0), _password("")
+		_mode(CHN_T), _userLimit(0), _password("")
 {
 	this->_name = name;
 	this->_client.push_back(std::pair<Client*, int>(creator, LOCAL_OPERATOR));
@@ -321,4 +321,3 @@ void		Channel::removeClient( int client_sock ) {
 		}
 	}
 }
-
