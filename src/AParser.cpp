@@ -463,6 +463,33 @@ std::vector<std::string>	AParser::getChannelList( const std::string& arg ) {
 }
 
 /**
+ * @brief Extract receiver list from message parameter
+ * 
+ * Used in PRIVMSG 
+ * 
+ */
+std::vector<std::string> AParser::getReceiverList( const std::string& arg ){
+	std::vector<std::string> receiverList;
+	int len = arg.length();
+	int i = 0;
+	int start = 0;
+
+	while (i < len){
+		if (arg[i] == ','){
+			i++; //!< skip comma
+			continue;
+		}
+		start = i;
+		while (i < len && arg[i] != ','){
+			i++;
+		}
+		receiverList.push_back(arg.substr(start, i - start));
+	}
+
+	return (receiverList);
+}
+
+/**
  * @brief Extract key from key list
  *
  * Used in JOIN key parsing and maybe others...

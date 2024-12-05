@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/04 02:06:56 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/05 10:31:14 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ void	Channel::printChannel( void ) const {
 /* ************************************************************************** */
 Channel::Channel( void )
 	: _name(""), _topic(""), _client(std::vector<std::pair<Client*, int> >()),
-		_operator(std::vector<Client*>()), _mode(0), _userLimit(10), _password("")
+		_operator(std::vector<Client*>()), _mode(0), _userLimit(0), _password("")
 {
 		return ;
 }
@@ -199,10 +199,21 @@ void Channel::setTopic( const std::string & topic ){
  * @param mode Channel mode to modify
  */
 void		Channel::changeMode( const char sign, const int mode ) {
+	int mode_val = 0;
+
+	if (mode == 'i')
+		mode_val = CHN_I;
+	if (mode == 't')
+		mode_val = CHN_T;
+	if (mode == 'k')
+		mode_val = CHN_K;
+	if (mode == 'l')
+		mode_val = CHN_L;
+
 	if (sign == PLUS)
-		this->_mode &= mode;
+		this->_mode |= mode_val;
 	if (sign == MINUS)
-		this->_mode |= ~mode;
+		this->_mode &= ~mode_val;
 }
 
 /**
@@ -239,7 +250,7 @@ void		Channel::changeUserMode( const std::string& nick,  const char sign, const 
  * @return True when yes, False when channel has a limit that has been reached
  */
 bool		Channel::isFull( void ) const {
-	return (this->_mode & L && static_cast<int>(this->_client.size()) >= this->_userLimit);
+	return (this->_mode & CHN_L && static_cast<int>(this->_client.size()) >= this->_userLimit);
 }
 
 /**

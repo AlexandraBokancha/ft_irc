@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/04 02:05:47 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/05 10:22:45 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,14 +17,14 @@
 # include <vector>
 # include <cstdio>
 
-# define O 0x01 //!< Give/take channel operator privileges
-# define I 0x02 //!< Invite-only channel
-# define INVITE_ONLY 0x02 //!< Invite-only channel
-# define T 0x04 //!< Topic settable by channel operator only
-# define TOPIC 0x04 //!< Topic settable by channel operator only
-# define L 0x08 //!< User limit for the channel
-# define USER_LIMIT 0x08 //!< User limit for the channel
-# define K 0x10//!< Set/remove the channel key (password)
+// # define O 0x01 //!< Give/take channel operator privileges
+// # define I 0x02 //!< Invite-only channel
+// # define INVITE_ONLY 0x02 //!< Invite-only channel
+// # define T 0x04 //!< Topic settable by channel operator only
+// # define TOPIC 0x04 //!< Topic settable by channel operator only
+// # define L 0x08 //!< User limit for the channel
+// # define USER_LIMIT 0x08 //!< User limit for the channel
+// # define K 0x10//!< Set/remove the channel key (password)
 
 //! Chanel user flag
 # define CHNUSR_BIGO	0x01
@@ -32,11 +32,11 @@
 # define CHNUSR_V		0x04
 
 //! Chanel flag
-# define CHN_I	0x0002	//!< Invite-mode
-# define CHN_T	0x0100	//!< Topic
+# define CHN_I	0x01	//!< Invite-mode
+# define CHN_T	0x02	//!< Topic
 
-# define CHN_K	0x0200	//!< Channel password setter
-# define CHN_L	0x0400	//!< User limit setter
+# define CHN_K	0x04	//!< Channel password setter
+# define CHN_L	0x08	//!< User limit setter
 
 class Client;
 

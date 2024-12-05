@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/03 12:49:16 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/04 22:29:51 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,7 @@ public:
 	void				setOperator( void );
 	bool				isOperator( void ) const;
 	void				setMode( const short mode );
+	void				setJoinedChannel( void );
 
 private:
 	struct sockaddr_in	_netId;		//!< Client addr

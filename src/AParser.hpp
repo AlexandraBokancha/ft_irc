@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   AParser.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dbaladro <dbaladro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/20 18:05:37 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/01 12:07:19 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/04 22:29:34 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,6 +96,7 @@ public:
 	//! Message parameter analysis
 	static std::string					getChannelName( const std::string& arg, std::string::const_iterator& pos );
 	static std::vector<std::string>		getChannelList( const std::string& arg );
+	static std::vector<std::string> 	getReceiverList( const std::string& arg );
 
 	static std::string					getKey( const std::string& arg, std::string::const_iterator& pos );
 	static std::vector<std::string>		getKeyList( const std::string& arg );

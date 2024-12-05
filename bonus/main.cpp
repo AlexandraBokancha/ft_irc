@@ -3,6 +3,7 @@
 # include <cstring>
 # include <exception>
 # include <unistd.h>
+# include <sstream>
 
 //#include <sys/types.h> 
 //#include <netinet/in.h> 
@@ -54,8 +55,6 @@ int main(){
     sendMsg(sockfd, "NICK bot\r\n", 10);
     sendMsg(sockfd, "USER ircBot localhost bot :Bot\r\n", 32);
     
-    // if "PING" -> envoie "PONG" (faut coder PING)
-    // if "001" -> "JOIN"
     for (;;){
         if ((nbytes = recv(sockfd, buf, 512, 0)) == -1){
             throw (std::runtime_error("recv() error"));
@@ -65,7 +64,25 @@ int main(){
             break;
         }
         buf[nbytes] = '\0';
-        std::cout << "Recu: " << buf << std::endl;
+        std::string str(buf);
+       
+        //!< join #main channel
+        size_t pos = str.find("001");
+        if (pos != std::string::npos){
+            sendMsg(sockfd, "JOIN #main\r\n", 12);
+        }
+        
+        //!< send welcoming message
+        size_t join_pos = str.find("JOIN");
+        if (join_pos != std::string::npos){
+            size_t nick_pos = str.find('!');
+            if (nick_pos != std::string::npos){
+                if (str.substr(1, nick_pos - 1)  != "bot"){
+                    std::string welcoming_msg = "PRIVMSG #main :Welcome to channel, " + str.substr(1, nick_pos - 1) + "\r\n";
+                    sendMsg(sockfd, welcoming_msg.c_str(), welcoming_msg.length());
+                }
+            }
+        }
     }
 
     close(sockfd);

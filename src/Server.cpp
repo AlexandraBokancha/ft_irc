@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/04 22:21:39 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/04 22:38:03 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -345,6 +345,20 @@ Channel*	Server::findChannel( const std::string& name ) {
 	return (NULL);
 }
 
+
+// std::vector<Channel*>	Server::clientOnChannel(Client* client ){
+// 	std::vector<Channel*>	clientChannels;
+// 	std::vector<Channel>::iterator it;
+//
+// 	for (it = this->_channel.begin(); it != this->_channel.end(); it++){
+// 		if (std::find((*it).getClients().begin(), (*it).getClients().end(), client) != (*it).getClients().end()) {
+//             clientChannels.push_back(&(*it));
+//         }
+// 	}
+// 	return (clientChannels);
+// }	
+
+
 /**
  * @brief Disconnect client and remove it from poll
  *
@@ -372,6 +386,7 @@ void	Server::disconnectClient( int& index ) {
 				log("Removing channel %s", it->getName().c_str());
 				it--;
 			}
+			// peut-etre on doit rajouter un broadcast ici pour notifier les clients qu'un user est parti ?
 		}
 	}
 
