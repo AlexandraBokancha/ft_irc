@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/05 12:53:20 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/06 21:24:45 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,23 +48,25 @@ namespace {
 	 * @param client Client who send comand
 	 * @param msg Msg sent to server from client
 	 */
-	void	pass(Server& serv, Client& client, Message& msg) {
-		if (client.getConnected() == true)
-			return ;
-		if (client.getRegistred() == true){
+	void	pass( Server& serv, Client& client, Message& msg ) {
+		// // if (client.getConnected() == true) {
+		// 	return ;
+		// }
+		if (client.getRegistred() == true) {
 			serv.respond(NULL, client.getFd(), ERR_ALREADYREGISTRED, client.getNickname().c_str());
 			return ;
 		}
-		if (msg.getParam().size() >= 1){
+		if (msg.getParam().size() >= 1) {
 			if (serv.comparePassword(msg.getParam()[0]) == 0) {
 				client.setConnected();
 				success_log("Password confirmed");
 			}
-			else{
+			else {
 				serv.respond(NULL, client.getFd(), ERR_PASSWDMISMATCH);
+				client.setDisconnected();
 			}
 		}
-		else{
+		else {
 			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
 		}
 		return ;
@@ -81,9 +83,9 @@ namespace {
 	 * @param client Client who send comand
 	 * @param msg Msg sent to server from client
 	 */
-	void	nick(Server& serv, Client& client, Message& msg) {
+	void	nick( Server& serv, Client& client, Message& msg ) {
 		if (msg.getParam().size() >= 1) {
-			if (serv.findClient(msg.getParam()[0]) != NULL) {
+			if (serv.findClient(msg.getParam()[0]) != NULL) { //! Nickname is already in used by another client
 				serv.respond(NULL, client.getFd(), ERR_NICKNAMEINUSE, msg.getParam()[0].c_str());
 				return ;
 			}
@@ -99,8 +101,9 @@ namespace {
 					client.getUsername().c_str(), client.getHostname().c_str());
 			}
 		}
-		else
+		else {
 			serv.respond(NULL, client.getFd(), ERR_NONICKNAMEGIVEN);
+		}
 		return ;
 	}
 
@@ -113,16 +116,15 @@ namespace {
 	 * @param client Client who send comand
 	 * @param msg Msg sent to server from client
 	 */
-	void	user(Server& serv, Client& client, Message& msg) {
-		if (client.getRegistred()){
-			serv.respond(NULL, client.getFd(), ERR_ALREADYREGISTRED);
+	void	user( Server& serv, Client& client, Message& msg ) {
+		if (client.getRegistred()) {
+			serv.respond(NULL, client.getFd(), ERR_ALREADYREGISTRED, client.getNickname().c_str());
 			return (war_log("Client is already registered"));
 		}
-		if (msg.getParam().size() == 4){
+		if (msg.getParam().size() == 4) {
 			std::vector<std::string> tmp = msg.getParam();
 			client.setUsername(tmp[0]);
 			client.setHostname(tmp[1]);
-			std::cout << "HOSTNAME :" << client.getHostname() << std::endl;
 			client.setServername(tmp[2]);
 			client.setRealname(tmp[3]);
 			success_log("USER %s enregistred", client.getUsername().c_str());
@@ -132,8 +134,9 @@ namespace {
 					client.getUsername().c_str(), client.getHostname().c_str());
 			}
 		}
-		else
+		else {
 			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+		}
 	}
 
 	/**
@@ -145,7 +148,7 @@ namespace {
 	 * @param client Client who send comand
 	 * @param msg Msg sent to server from client
 	 */
-	void	mode_user(Server& serv, Client& client, Message& msg) {
+	void	mode_user( Server& serv, Client& client, Message& msg ) {
 		if (msg.getParam()[0].compare(client.getNickname()) != 0) { //!< Nickname not matching user
 			serv.respond(NULL, client.getFd(), ERR_USERSDONTMATCH);
 			return ;
@@ -371,7 +374,7 @@ namespace {
 	 * @param client Client who send comand
 	 * @param msg Msg sent to server from client
 	 */
-	void	join(Server& serv, Client& client, Message& msg) {
+	void	join( Server& serv, Client& client, Message& msg ) {
 
 		std::vector<std::string>					channel_name;
 		std::vector<std::string>::const_iterator	channel_it;
@@ -448,30 +451,20 @@ namespace {
 			serv.respond(&client, client.getFd(), response.c_str());	
 			
 			//! RPL_TOPIC
-			if (!ch->getTopic().empty()){ //!< send topic if it's set
+			if (!ch->getTopic().empty()) { //!< send topic if it's set
 				serv.respond(NULL, client.getFd(), RPL_TOPIC, ch->getName().c_str(), ch->getTopic().c_str());
 			}
 
-// <<<<<<< HEAD
-			// std::string names = ":localhost 353 " + client.getNickname() + " = " + ch->getName() + " :";
+			//!RPL_NAMERPLY
 			std::string names = ":";
 			const std::vector<std::pair<Client *, int> >& members = ch->getClients();
 			for (std::vector<std::pair<Client *, int> >::const_iterator it = members.begin(); it != members.end(); ++ it){
-				// names += it->first->getNickname() + " ";
-// =======
-			//! RPL_NAMERPLY 
-			// std::string names = ":";
-			// const std::vector<Client *>& members = ch->getClients();
-			// 
-			// for (std::vector<Client *>::const_iterator it = members.begin(); it != members.end(); ++ it){
 				if (it != members.begin()){
 					names += " ";
-				// } if (it->first->getMode() & LOCAL_OPERATOR || it->first->getMode() & OPERATOR){
 				} if (it->second & LOCAL_OPERATOR || it->second & OPERATOR){
 					names += "@";
 				}
 				names += it->first->getNickname();
-// >>>>>>> albokanc
 			}
 			
 			serv.respond(NULL, client.getFd(), RPL_NAMERPLY, client.getNickname().c_str(), ch->getName().c_str(), names.c_str());
@@ -484,69 +477,7 @@ namespace {
 		}
 	}
 	
-// 	/**
-// 	 * @brief Handle MODE command
-// 	 *
-// 	 * IRC MODE cmd
-// 	 * 
-// 	 *  i: Set/remove Invite-only channel
-// 	 *  t: Set/remove the restrictions of the TOPIC command to channel operators
-// 	 *  k: Set/remove the channel key (password)
-// 	 *  o: Give/take channel operator privilege
-// 	 *  l: Set/remove the user limit to channel
-// 	 * 
-// 	 * @param serv Actual server
-// 	 * @param client Client who send comand
-// 	 * @param msg Msg sent to server from client
-// 	 */
-// 	void	mode(Server& serv, Client& client, Message& msg) {
-// 		if (msg.getParam().size() == 0) { //!< No parameters
-// 			serv.respond(client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
-// 			return ;
-// 		}
-// 		if (msg.getParam()[0].compare(client.getNickname()) != 0) { //!< Nickname not matching user
-// 			serv.respond(client.getFd(), ERR_USERSDONTMATCH);
-// 			return ;
-// 		}
-// 		if (msg.getParam().size() == 1) { //!< Send User mode
-// 			serv.respond(client.getFd(), RPL_UMODEIS, client.getNickname().c_str(), client.getModeStr().c_str());
-// 			return ;
-// 		}
-//
-// 		int	sign = 0; //<! MODE sign ('-' < 0 | ??? == 0 | '+' > 0)
-// 		int flag = client.getMode();
-// 		std::vector<std::string>::const_iterator it;
-// 		std::vector<std::string>	mode_list = AParser::getModeList(msg.getParam()[1]);
-// 		for (it = mode_list.begin(); it != mode_list.end(); it++) {
-// 			sign = (it->begin()[0] == '+' ? 1 : -1);
-// 			for (std::string::const_iterator s_it = it->begin() + 1; s_it != it->end(); s_it++) {
-// 				switch (*s_it) {
-// 					case 'i' :
-// 						flag = (sign > 0 ? flag | INVISIBLE : flag & ~INVISIBLE);
-// 						break ;
-// 					// case 'w' :
-// 					// 	flag = (sign > 0 ? flag | WALLOPS : flag & ~WALLOPS);
-// 					// 	break ;
-// 					// case 'r' :
-// 					// 	flag = (sign > 0 ? flag | RESTRICTED_USER : flag);
-// 					// 	break ;
-// 					case 'o' :
-// 						flag = (sign > 0 ? flag : flag & ~OPERATOR);
-// 						break ;
-// 					case 'O' :
-// 						flag = (sign > 0 ? flag : flag & ~LOCAL_OPERATOR);
-// 						break ;
-// 					default :
-// 						serv.respond(client.getFd(), ERR_UMODEUNKNOWNFLAG);
-// 						return ;
-// 				}
-// 			}
-// 		}
-// 		log("Changed client %d mode", client.getFd());
-// 		client.setMode(flag);
-// 	}
-//
-// >>>>>>> albokanc
+
 	/**
 	 * @brief IRC PART command
 	 *
@@ -557,7 +488,7 @@ namespace {
 	 * @param client Client who send comand
 	 * @param msg Msg sent to server from client
 	 */
-	void	part( Server& serv, Client& client, Message& msg) {
+	void	part( Server& serv, Client& client, Message& msg ) {
 		Channel										*channel;
 		std::vector<std::string>					channel_name;
 		std::vector<std::string>::const_iterator	channel_it;
@@ -584,11 +515,11 @@ namespace {
 			channel->removeClient(client.getFd());
 			
 			//! response to client
-			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
-				std::string(" PART ") + channel->getName() + " :" + part_msg;
+			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + \
+				std::string(inet_ntoa((client.getNetId().sin_addr))) + std::string(" PART ") + channel->getName() + " :" + part_msg;
 			serv.respond(NULL, client.getFd(), response.c_str());
 			
-			if (channel->isEmpty()){ //!< Remove channel
+			if (channel->isEmpty()) { //!< Remove channel
 				serv.delChannel(*channel);
 				return ;
 			}
@@ -604,8 +535,6 @@ namespace {
 	 * <channel> [<topic>]
 	 * 
 	 * Message is used to change or view the topic of a channel.
-	 * If there is no "topic" parameter -> view
-	 * If there is "topic" -> change
 	 * 
 	 * BEWARE: to test this function MODE function has to be finished
 	 * 
@@ -619,25 +548,25 @@ namespace {
 		}
 		
 		channel = serv.findChannel(msg.getParam()[0]);
-		if (!channel){ //!< Channel not found
+		if (!channel) { //!< Channel not found
 			serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0].c_str());
 			return ;
 		}
 		
-		if (!channel->getClient(client.getFd())){ //!< Client not on channel									 
+		if (!channel->getClient(client.getFd())) { //!< Client not on channel									 
 			serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
 			return;
 		}
 		
 		if (msg.getParam().size() == 1){ //!< view the topic of the channel if exists
-			if (!channel->getTopic().empty()){
+			if (!channel->getTopic().empty()) {
 				serv.respond(NULL, client.getFd(), RPL_TOPIC, channel->getName().c_str(), channel->getTopic().c_str());
 			}
 			else { //!< no topic for this channel
 				serv.respond(NULL, client.getFd(), RPL_NOTOPIC, channel->getName().c_str());
 			}
 		}
-		else if (msg.getParam().size() >= 2){ //!< change the topic, if you have the rights
+		else if (msg.getParam().size() >= 2) { //!< change the topic, if you have the rights
 			if ((channel->getMode() & CHN_T) && (client.getMode() & ~LOCAL_OPERATOR || client.getMode() & ~OPERATOR)){ //!< topic settable by channel operator only
 				serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
 				return;
@@ -674,7 +603,7 @@ namespace {
 	 * 
 	 */
 	void invite( Server& serv, Client& client, Message& msg ) {
-		Channel *channel;
+		Channel	*channel;
 		std::string	response;
 		
 		if (msg.getParam().size() <= 1) { //!< No parameter
@@ -691,16 +620,17 @@ namespace {
 		std::string channel_target = msg.getParam()[1];
 		channel = serv.findChannel(channel_target); //!< selon la norme IRC on doit pas verifie l'existence du channel
 		
-		if (channel){
-			if (!channel->getClient(client.getFd())){ //!< Client trying to sent an invitation not on a channel									 
+		if (channel) {
+			if (!channel->getClient(client.getFd())) { //!< Client trying to sent an invitation not on a channel									 
 				serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
 				return ;
 			}
-			if (channel->getClient(nick_target)){ //!< Client tries to invite a user to a channel they are already on
-				serv.respond(NULL, client.getFd(), ERR_USERONCHANNEL, channel->getClient(nick_target)->getUsername().c_str(), channel_target.c_str());
+			if (channel->getClient(nick_target)) { //!< Client tries to invite a user to a channel they are already on
+				serv.respond(NULL, client.getFd(), ERR_USERONCHANNEL, channel->getClient(nick_target)->getUsername().c_str(), \
+					channel_target.c_str());
 				return ;
 			}
-			if (channel->getMode() & CHN_I){ //! Invite-only channel -> client sending a msg has to be a channel operator
+			if (channel->getMode() & CHN_I) { //! Invite-only channel -> client sending a msg has to be a channel operator
 				if (client.getMode() & ~OPERATOR && client.getMode() & ~LOCAL_OPERATOR){
 					serv.respond(NULL, client.getFd() , ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
 					return ;
