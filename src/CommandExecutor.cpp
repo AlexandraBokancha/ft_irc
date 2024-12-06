@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/06 21:24:45 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/06 21:31:45 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -150,7 +150,7 @@ namespace {
 	 */
 	void	mode_user( Server& serv, Client& client, Message& msg ) {
 		if (msg.getParam()[0].compare(client.getNickname()) != 0) { //!< Nickname not matching user
-			serv.respond(NULL, client.getFd(), ERR_USERSDONTMATCH);
+			serv.respond(NULL, client.getFd(), ERR_USERSDONTMATCH, client.getNickname().c_str());
 			return ;
 		}
 		if (msg.getParam().size() == 1) { //!< Send User mode
@@ -252,13 +252,8 @@ namespace {
 		Channel										new_chan = *chan;
 		int											sign;
 
-		std::cout << "parma size: " << msg.getParam().size() << std::endl;
-		// for (prm_it = msg.getParam().begin(); prm_it != msg.getParam().end() && prm_it->length() != 0; prm_it++) {
-		// 	std::cout << "  " << prm_it->size() << " - " << *prm_it << std::endl;
-		// }
-
 		if (msg.getParam().size() == 1)
-			return (serv.respond(NULL, client.getFd(), RPL_UMODEIS, chan->getName().c_str(), chan->modeToString().c_str()));
+			return (serv.respond(NULL, client.getFd(), RPL_CHANNELMODEIS, client.getNickname().c_str(), chan->getName().c_str(), chan->modeToString().c_str()));
 		
 		for (prm_it = msg.getParam().begin() + 1; prm_it != msg.getParam().end() && prm_it->length() != 0; prm_it++) {
 			if (prm_it->length() == 0) //!< INIFINITE LOOP PROBLEM
@@ -267,7 +262,6 @@ namespace {
 			mode_prm_it = prm_it + 1;
 			if (sign != '+' && sign != '-') //!< Invalid mode cmd
 				return (war_log("[MODE] invalid parameter : %s ...Ignore", prm_it->c_str()));
-				// throw (); //!< because it shouldnt happen
 			
 			for (std::string::const_iterator mode_it = prm_it->begin() + 1; mode_it != prm_it->end(); mode_it++) {
 				res_prm = (mode_prm_it == msg.getParam().end() ? "" : *mode_prm_it);
@@ -277,7 +271,7 @@ namespace {
 				switch (*mode_it) {
 					case 'o' :
 						if (!chan->getClient(*mode_prm_it))
-							return (serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, mode_prm_it->c_str()));
+							return (serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), mode_prm_it->c_str()));
 						new_chan.changeUserMode(*mode_prm_it, sign, *mode_it);
 						break ;
 					case 'k' :
@@ -304,10 +298,6 @@ namespace {
 					new_chan.changeMode(sign, *mode_it);
 				result = addMode(result, sign, *mode_it, res_prm);
 				
-				for (std::vector<std::string>::const_iterator it = result.begin(); it != result.end(); it++) {
-					std::cout << *it << std::endl;
-				}
-
 			}
 			if (mode_prm_it == msg.getParam().end())
 				break ;
@@ -322,7 +312,7 @@ namespace {
 			else
 				response += " " + *prm_it;
 		}
-		serv.respond(NULL, client.getFd(), RPL_UMODEIS, chan->getName().c_str(), response.c_str());
+		serv.respond(NULL, client.getFd(), RPL_CHANNELMODEIS, client.getNickname().c_str(), chan->getName().c_str(), response.c_str());
 	}
 
 	/**
@@ -344,7 +334,7 @@ namespace {
 		if (channel.find(msg.getParam()[0][0]) != std::string::npos) {
 			Channel*	chan = serv.findChannel(msg.getParam()[0]);
 			if (!chan)
-				return (serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0] .c_str()));
+				return (serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), msg.getParam()[0].c_str()));
 			return (mode_channel(serv, chan, client, msg));
 		}
 		return (mode_user(serv, client, msg));
@@ -471,7 +461,7 @@ namespace {
 			serv.respond(NULL, client.getFd(), RPL_ENDOFNAMES, client.getNickname().c_str(), ch->getName().c_str());
 			
 			//! broadcast to channel
-			serv.broadcastToChannel(response, ch, client.getFd());
+			serv.broadcastToChannel(NULL, response, ch, client.getFd());
 			
 			return ;
 		}
@@ -504,7 +494,7 @@ namespace {
 		for (channel_it = channel_name.begin(); channel_it != channel_name.end(); channel_it++) {
 			channel = serv.findChannel(*channel_it);
 			if (!channel) { //!< Channel not found
-				serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, channel_it->c_str());
+				serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), channel_it->c_str());
 				continue ;
 			}
 			if (!channel->getClient(client.getFd())) { //!< Client not in channel
@@ -525,7 +515,7 @@ namespace {
 			}
 		
 			//! broadcast to channel
-			serv.broadcastToChannel(response, channel, client.getFd());	
+			serv.broadcastToChannel(NULL, response, channel, client.getFd());	
 		}
 	}
 
@@ -548,8 +538,8 @@ namespace {
 		}
 		
 		channel = serv.findChannel(msg.getParam()[0]);
-		if (!channel) { //!< Channel not found
-			serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0].c_str());
+		if (!channel){ //!< Channel not found
+			serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, client.getNickname().c_str(), msg.getParam()[0].c_str());
 			return ;
 		}
 		
@@ -581,7 +571,7 @@ namespace {
 				serv.respond(NULL, client.getFd(), msg.c_str());
 			
 				//!< broadcast to channel
-				serv.broadcastToChannel(msg, channel, client.getFd());
+				serv.broadcastToChannel(NULL, msg, channel, client.getFd());
 			}
 		}
 	}
@@ -613,7 +603,7 @@ namespace {
 		
 		std::string nick_target = msg.getParam()[0];
 		if (serv.findClient(nick_target) == NULL){ //!< No nick found
-			serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, nick_target.c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), nick_target.c_str());
 			return ;
 		}
 		
@@ -697,7 +687,7 @@ namespace {
 		serv.respond(NULL, client.getFd(), response.c_str());
 		
 		//!< broadcast to channel
-		serv.broadcastToChannel(response, channel, client.getFd());
+		serv.broadcastToChannel(NULL, response, channel, client.getFd());
 	}
 
 		/* ************************************************************************** */
@@ -788,7 +778,7 @@ namespace {
 					continue ;
 				}
 				text = ":" + client.getNickname() +" PRIVMSG " + channelReceiver->getName() + " :" + msg.getParam()[1];
-				serv.broadcastToChannel(text, channelReceiver, client.getFd());
+				serv.broadcastToChannel(NULL, text, channelReceiver, client.getFd());
 			}
 			else { //!< it's a client
 				clientReceiver = serv.findClient((*receiver_it)); 
@@ -938,7 +928,6 @@ namespace {
 		
 		int index = serv.findClientIndex(tmp[0]);
 		index++; // -> disconnectClient() fait -1 de l'index
-		std::cout << "index : " << index << std::endl;
 		serv.disconnectClient(index); //!< this client was deconnected from the server
 	}
 

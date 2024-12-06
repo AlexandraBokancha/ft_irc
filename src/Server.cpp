@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/05 12:38:00 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/05 20:58:22 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -381,10 +381,14 @@ void	Server::disconnectClient( int& index ) {
 		return ;
 	
 	int	client_sock = this->_pollFd[index].fd;
+	Client	*client = this->findClient(client_sock);
 	//! Find every channel were client is connected
 	if (client_sock > 0) {
 		for (std::vector<Channel>::iterator it = _channel.begin(); it != _channel.end(); it++) {
-			it->removeClient(client_sock);
+			if (it->getClient(client_sock) != NULL) {
+				it->removeClient(client_sock);
+				this->broadcastToChannel(client, "QUIT :Quit: ", &(*it), client_sock);
+			}
 			if (it->isEmpty()) {
 				this->_channel.erase(it);
 				log("Removing channel %s", it->getName().c_str());
@@ -547,8 +551,6 @@ int Server::sendMsg(int socket, const char *buf, int len) const {
         total += b;
         left -= b;
     }
-	log("Sending %s", buf); 
-    // *len = total; //!< Why
     return (b == -1 ? -1 : 0); // return -1 on error, 0 on success
 }
 
@@ -590,11 +592,12 @@ void	Server::broadcast(const char *buffer, int len, int fd) const {
 	}
 }
 
-void Server::broadcastToChannel( const std::string& msg, const Channel * ch, int fd ) const {
+void Server::broadcastToChannel( const Client* src, const std::string& msg, const Channel * ch, int fd ) const {
 	const std::vector< std::pair<Client *, int> >& clients = ch->getClients(); //!< clients connected to this channel
+
 	for (std::vector<std::pair<Client *,int> >::const_iterator it = clients.begin(); it != clients.end(); ++it){
 			if (it->first->getFd() != fd)
-				Server::respond(NULL, it->first->getFd(), msg.c_str());
+				this->respond(src, it->first->getFd(), msg.c_str());
 	}
 }
 
