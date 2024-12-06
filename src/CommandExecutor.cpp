@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/06 21:31:45 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/06 22:51:34 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -187,7 +187,7 @@ namespace {
 				}
 			}
 		}
-		log("Changed client %d mode", client.getFd());
+		log("Changed client %d mode to %d", client.getFd(), flag);
 		client.setMode(flag);
 	}
 
@@ -347,12 +347,12 @@ namespace {
 	
 
 	/* we need to broadcast info about next commands:
-		- MODE -
-		- KICK +
+		- JOIN + 
 		- PART + 
+		- KICK +
+		- MODE +
 		- QUIT -
 		- PRIVMSG/NOTICE -
-		- JOIN + 
 	*/
 
 	/**
@@ -435,9 +435,9 @@ namespace {
 			}
 			
 			//! response to client
-			// std::string response = std::string(":") + client.getNickname() + std::string("!~") + client.getUsername() + 
-			// 	std::string("@") + serv.getPrefix() + std::string(" JOIN ") + ch->getName();
-			std::string response = "JOIN " + ch->getName();
+			std::string response = std::string(":") + client.getNickname() + std::string("!~") + client.getUsername() + 
+				std::string("@") + serv.getPrefix() + std::string(" JOIN ") + ch->getName();
+		//	std::string response = ":" + client.getNickname() + " JOIN " + ch->getName();
 			serv.respond(&client, client.getFd(), response.c_str());	
 			
 			//! RPL_TOPIC
@@ -667,8 +667,9 @@ namespace {
 			serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
 			return;
 		}
-
-		if (client.getMode() & ~OPERATOR && client.getMode() & ~LOCAL_OPERATOR){ //!< Client has no privilages
+		int flag = client.getMode();
+		std::cout << "CLIENT MODE: " << flag << std::endl;
+		if (client.getMode() & ~OPERATOR || client.getMode() & ~LOCAL_OPERATOR){ //!< Client has no privilages
 			serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
 			return ;
 		}
