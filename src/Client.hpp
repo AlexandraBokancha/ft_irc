@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/05 11:46:37 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/06 21:11:37 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,7 @@ public:
 	void				setRealname( const std::string& realname );
 	void				setRegistred( void );
 	void				setConnected( void );
+	void				setDisconnected( void );
 	void				setNetId( struct sockaddr_in addr );
 	void				setFd( int fd );
 	void				setOperator( void );

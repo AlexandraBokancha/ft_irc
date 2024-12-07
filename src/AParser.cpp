@@ -83,7 +83,7 @@ bool		AParser::isNickname( const char& c ) {
  * @return true: s is a valid nickname, else false
  */
 bool		AParser::isNickname( const std::string& s ) {
-	if (s.length() < 1) //! Empty string security
+	if (s.length() < 1 || s.length() > 9) //! Empty string security (max len 9 char)
 		return (false);
 
 	std::string::const_iterator it = s.begin();

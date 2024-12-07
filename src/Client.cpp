@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/05 11:48:07 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/06 21:12:45 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,6 +122,10 @@ void Client::setConnected( void ){
 	this->_connected = true;
 }
 
+void Client::setDisconnected( void ){
+	this->_connected = false;
+}
+
 void Client::setRegistred( void ){
 	this->_registred = true;
 }
@@ -170,6 +174,7 @@ void	Client::setMode(const short mode) {
 void	Client::setJoinedChannel( void ){
 	this->_joinedChannel++;	
 }
+
 
 /* ************************************************************************** */
 /* *                             Operator Overload                          * */
