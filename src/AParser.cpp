@@ -69,7 +69,7 @@ bool		AParser::isShortHost( const char& c ) {
  *  @return True if c is a valid nickname char, else False
  */
 bool		AParser::isNickname( const char& c ) {
-	if (!(std::isalnum(c) || isSpecial(c || c == MINUS)))
+	if (!(std::isalnum(c) || isSpecial(c) || c == MINUS))
 		return (false);
 	return (true);
 }

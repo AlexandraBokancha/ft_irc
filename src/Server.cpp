@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/05 20:58:22 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/07 09:16:14 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -276,6 +276,11 @@ void	Server::respond(const Client* src, const int& client_sock, const char* fmt,
 					buffer.append(ss.str());
 					break ;
 				}
+				case 'c' : {
+					char c = static_cast<char>(va_arg(args, int));
+					buffer.append(1, c);
+					break ;
+				}
 				default :
 				   break ;
 			}
@@ -376,8 +381,7 @@ Channel*	Server::findChannel( const std::string& name ) {
  *
  * @param index	The client index in the pollFd
  */
-void	Server::disconnectClient( int& index ) {
-	if (index == 0)
+void	Server::disconnectClient( int& index ) { if (index == 0)
 		return ;
 	
 	int	client_sock = this->_pollFd[index].fd;

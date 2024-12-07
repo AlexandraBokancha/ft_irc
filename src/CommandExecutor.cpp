@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/05 19:27:42 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/07 09:21:24 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -288,9 +288,9 @@ namespace {
 					case 't' : //!< Special
 						break ;
 					default :
-						return (serv.respond(NULL, client.getFd(), ERR_UNKNOWNMODE, *mode_it));
+						return (serv.respond(NULL, client.getFd(), ERR_UNKNOWNMODE, client.getNickname().c_str(), static_cast<int>(*mode_it)));
 				}
-				if (*mode_it != 'o' && sign == PLUS)
+				if (*mode_it != 'o')
 					new_chan.changeMode(sign, *mode_it);
 				result = addMode(result, sign, *mode_it, res_prm);
 				
@@ -924,6 +924,7 @@ namespace {
 		int index = serv.findClientIndex(client.getNickname());
 		index++; // -> disconnectClient() fait -1 de l'index
 		success_log("Client %s will be disconnected from the server", client.getNickname().c_str());
+		serv.respond(NULL, client.getFd(), CMD_ERROR, "");
 		serv.disconnectClient(index);
 	}
 

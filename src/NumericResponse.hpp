@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/05 17:34:30 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/07 09:18:58 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@
 # define ERR_USERNOTINCHANNEL   "441 %s %s :They aren't on that channel"
 # define ERR_KEYSET             "467 %s :Channel key already set"
 # define ERR_CHANOPRIVSNEEDED   "482 %s :You're not channel operator"
-# define ERR_UNKNOWNMODE        "472 %s :is unknown mode char to me for %s"
+# define ERR_UNKNOWNMODE        "472 %s %c :is unknown mode char to me"
 
 
 # define RPL_CHANNELMODEIS      "324 %s %s %s"
@@ -90,4 +90,6 @@
 
 //! WHOIS
 #define RPL_WHOISUSER           "311 %s %s %s * :%s"
+
+#define CMD_ERROR				"ERROR :%s"
 #endif // !NUMERIC_RESPONSE_HPP
