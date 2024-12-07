@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/07 09:26:11 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/07 09:34:36 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -404,22 +404,22 @@ namespace {
 
 				channel_mode = ch->getMode();
 				if (channel_mode & CHN_I) { //!< Invite only channel
-					serv.respond(NULL, client.getFd(), ERR_INVITEONLYCHAN, channel_it->c_str());
+					serv.respond(NULL, client.getFd(), ERR_INVITEONLYCHAN, client.getNickname().c_str(), channel_it->c_str());
 					continue ;
 				}
 				if (ch->isFull()) { //!< User limit set and reached
-					serv.respond(NULL, client.getFd(), ERR_CHANNELISFULL, channel_it->c_str());
+					serv.respond(NULL, client.getFd(), ERR_CHANNELISFULL, client.getNickname().c_str(), channel_it->c_str());
 					continue ;
 				}
 				if (key_it != key.end()) { //!< Invalid key
 					if (!ch->validPassword(*key_it)) {
-						serv.respond(NULL, client.getFd(), ERR_BADCHANNELKEY, channel_it->c_str());
+						serv.respond(NULL, client.getFd(), ERR_BADCHANNELKEY, client.getNickname().c_str(), channel_it->c_str());
 						continue ;
 					}
 					key_it++;
 				}
 				if (client.getJoinedChannel() >= MAX_CHANNEL_PER_CLIENT) { //!< Maximum channel joined
-					serv.respond(NULL, client.getFd(), ERR_TOOMANYCHANNELS, channel_it->c_str());
+					serv.respond(NULL, client.getFd(), ERR_TOOMANYCHANNELS, client.getNickname().c_str(), channel_it->c_str());
 					continue ;
 				}
 

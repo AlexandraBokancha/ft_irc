@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/07 09:18:58 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/07 09:34:17 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,11 +35,11 @@
 
 //! JOIN
 # define ERR_NOSUCHCHANNEL		"403 %s :No such channel"
-# define ERR_TOOMANYCHANNELS	"405 %s :You have joined too many channels"
+# define ERR_TOOMANYCHANNELS	"405 %s %s :You have joined too many channels"
 # define ERR_TOOMANYTARGETS 	"407 %s :%d recipients. %s"
-# define ERR_CHANNELISFULL  	"471 %s :Cannot join channel (+l)"
-# define ERR_INVITEONLYCHAN 	"473 %s :Cannot join channel (+i)"
-# define ERR_BADCHANNELKEY  	"475 %s :Cannot join channel (+k)"
+# define ERR_CHANNELISFULL  	"471 %s %s :Cannot join channel (+l)"
+# define ERR_INVITEONLYCHAN 	"473 %s %s :Cannot join channel (+i)"
+# define ERR_BADCHANNELKEY  	"475 %s %s :Cannot join channel (+k)"
 # define RPL_NAMERPLY           "353 %s = %s :%s"
 # define RPL_ENDOFNAMES         "366 %s %s :End of /NAMES list"
 
