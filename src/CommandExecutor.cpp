@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/07 09:36:51 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/07 10:52:26 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -442,7 +442,7 @@ namespace {
 			
 			//! RPL_TOPIC
 			if (!ch->getTopic().empty()) { //!< send topic if it's set
-				serv.respond(NULL, client.getFd(), RPL_TOPIC, ch->getName().c_str(), ch->getTopic().c_str());
+				serv.respond(NULL, client.getFd(), RPL_TOPIC, client.getNickname().c_str(), ch->getName().c_str(), ch->getTopic().c_str());
 			}
 
 			//!RPL_NAMERPLY
@@ -550,10 +550,10 @@ namespace {
 		
 		if (msg.getParam().size() == 1){ //!< view the topic of the channel if exists
 			if (!channel->getTopic().empty()) {
-				serv.respond(NULL, client.getFd(), RPL_TOPIC, channel->getName().c_str(), channel->getTopic().c_str());
+				serv.respond(NULL, client.getFd(), RPL_TOPIC, client.getNickname().c_str(), channel->getName().c_str(), channel->getTopic().c_str());
 			}
 			else { //!< no topic for this channel
-				serv.respond(NULL, client.getFd(), RPL_NOTOPIC, channel->getName().c_str());
+				serv.respond(NULL, client.getFd(), RPL_NOTOPIC, client.getNickname().c_str(), channel->getName().c_str());
 			}
 		}
 		else if (msg.getParam().size() >= 2) { //!< change the topic, if you have the rights
@@ -633,7 +633,7 @@ namespace {
 		serv.respond(NULL, serv.findClient(nick_target)->getFd(), response.c_str());
 		
 		//!< reply by server
-		serv.respond(NULL, client.getFd(), RPL_INVITING, channel_target.c_str(), nick_target.c_str());
+		serv.respond(NULL, client.getFd(), RPL_INVITING, client.getNickname().c_str(), channel_target.c_str(), nick_target.c_str());
 	}
 
 
@@ -713,7 +713,7 @@ namespace {
 		if (pos != std::string::npos) {
 			timeStr.erase(pos, 1); //<! Supprime \n a la find de timeStr
 		}
-		serv.respond(NULL, client.getFd(), RPL_TIME, timeStr.c_str());
+		serv.respond(NULL, client.getFd(), RPL_TIME, client.getNickname().c_str(), serv.getPrefix().c_str(), timeStr.c_str());
 	}
 
 	/**
@@ -735,9 +735,9 @@ namespace {
 		
 		for (std::vector<std::string>::const_iterator it = infoMessages.begin(); it \
 				!= infoMessages.end(); ++it) {
-			serv.respond(NULL, client.getFd(), RPL_INFO, it->c_str());
+			serv.respond(NULL, client.getFd(), RPL_INFO, client.getNickname().c_str(), it->c_str());
 		}
-		serv.respond(NULL, client.getFd(), RPL_ENDOFINFO);
+		serv.respond(NULL, client.getFd(), RPL_ENDOFINFO, client.getNickname().c_str());
 	}
 
 
@@ -893,7 +893,7 @@ namespace {
 		}
 		
 		client.setOperator(); // !< this client is now Server operator
-		serv.respond(NULL, client.getFd(), RPL_YOUREOPER);
+		serv.respond(NULL, client.getFd(), RPL_YOUREOPER, client.getNickname().c_str());
 		
 		success_log("MODE +o %s", client.getNickname().c_str());
 	}
