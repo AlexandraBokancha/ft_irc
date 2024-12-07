@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/07 09:21:24 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/07 09:26:11 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -467,7 +467,7 @@ namespace {
 			serv.respond(NULL, client.getFd(), RPL_ENDOFNAMES, client.getNickname().c_str(), ch->getName().c_str());
 			
 			//! broadcast to channel
-			serv.broadcastToChannel(NULL, response, ch, client.getFd());
+			serv.broadcastToChannel(&client, response, ch, client.getFd());
 			
 			return ;
 		}
