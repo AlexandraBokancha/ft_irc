@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/07 10:52:32 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/08 09:47:48 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@
 # define RPL_TOPIC              "332 %s %s :%s"
 # define RPL_INVITING           "341 %s %s %s"
 # define RPL_NAMERPLY           "353 %s = %s :%s"
+# define RPL_ENDOFNAMES         "366 %s %s :End of /NAMES list"
 # define RPL_INFO				"371 %s %s"
 # define RPL_ENDOFINFO			"374 %s :End of /INFO"
 # define RPL_YOUREOPER			"381 %s :You are now an IRC operator"
@@ -39,34 +40,31 @@
 
 //! ERRORS
 # define ERR_NOSUCHNICK         "401 %s %s :No such nick/channel"
-# define ERR_NOSUCHCHANNEL		"403 %s :No such channel"
+# define ERR_NOSUCHCHANNEL		"403 %s %s :No such channel"
+# define ERR_CANNOTSENDTOCHAN   "404 %s %s :Cannot send to channel"
 # define ERR_TOOMANYCHANNELS	"405 %s %s :You have joined too many channels"
-# define ERR_CANNOTSENDTOCHAN   "404 %s :Cannot send to channel"
 # define ERR_TOOMANYTARGETS 	"407 %s :%d recipients. %s"
-
-
-# define ERR_NORECIPIENT        "411 :No recipient given (%s)"
-# define ERR_NOTEXTTOSEND       "412 :No text to send"
-# define ERR_NONICKNAMEGIVEN	"431 :No nickname given"
-# define ERR_ERRONEUSNICKNAME	"432 * %s :Erroneus nickname"
-# define ERR_NICKNAMEINUSE		"433 * %s :Nickname is already in use" 
-# define ERR_USERNOTINCHANNEL   "441 %s %s :They aren't on that channel"
-# define ERR_NOTONCHANNEL		"442 %s :You're not on that channel"
-# define ERR_USERONCHANNEL      "443 %s %s :is already on channel"
-# define ERR_NEEDMOREPARAMS		"461 %s :Not enough parameters"
+# define ERR_NORECIPIENT        "411 %s :No recipient given (%s)"
+# define ERR_NOTEXTTOSEND       "412 %s :No text to send"
+# define ERR_NONICKNAMEGIVEN	"431 %s :No nickname given"
+# define ERR_ERRONEUSNICKNAME	"432 %s %s :Erroneus nickname"
+# define ERR_NICKNAMEINUSE		"433 %s %s :Nickname is already in use" 
+# define ERR_USERNOTINCHANNEL   "441 %s %s %s :They aren't on that channel"
+# define ERR_NOTONCHANNEL		"442 %s %s :You're not on that channel"
+# define ERR_USERONCHANNEL      "443 %s %s %s :is already on channel"
+# define ERR_NEEDMOREPARAMS		"461 %s %s :Not enough parameters"
 # define ERR_ALREADYREGISTRED	"462 %s :You may not reregister."
-# define ERR_PASSWDMISMATCH		"464 * :Password incorrect." // avec "*" a la place de nick car pass est 
-# define RPL_ENDOFNAMES         "366 %s %s :End of /NAMES list"
+# define ERR_PASSWDMISMATCH		"464 %s :Password incorrect." // avec "*" a la place de nick car pass est 
 # define ERR_KEYSET             "467 %s :Channel key already set"
 # define ERR_CHANNELISFULL  	"471 %s %s :Cannot join channel (+l)"
 # define ERR_UNKNOWNMODE        "472 %s %c :is unknown mode char to me"
 # define ERR_INVITEONLYCHAN 	"473 %s %s :Cannot join channel (+i)"
 # define ERR_BADCHANNELKEY  	"475 %s %s :Cannot join channel (+k)"
 # define ERR_NOCHANMODES        "477 %s :Channel doesn't support modes"
-# define ERR_NOPRIVILEGES       "481 :Permission Denied- You're not an IRC opertator"
-# define ERR_CHANOPRIVSNEEDED   "482 %s :You're not channel operator"
-# define ERR_NOOPERHOST			"491 :No O-lines for your host"
-# define ERR_UMODEUNKNOWNFLAG   "501 :Unknown MODE flag"
+# define ERR_NOPRIVILEGES       "481 %s :Permission Denied- You're not an IRC opertator"
+# define ERR_CHANOPRIVSNEEDED   "482 %s %s :You're not channel operator"
+# define ERR_NOOPERHOST			"491 %s :No O-lines for your host"
+# define ERR_UMODEUNKNOWNFLAG   "501 %s :Unknown MODE flag"
 # define ERR_USERSDONTMATCH     "502 %s :Cannot change mode for other users"
 
 //! MISC

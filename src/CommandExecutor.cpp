@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/07 10:52:26 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/08 09:47:29 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,12 +62,12 @@ namespace {
 				success_log("Password confirmed");
 			}
 			else {
-				serv.respond(NULL, client.getFd(), ERR_PASSWDMISMATCH);
+				serv.respond(NULL, client.getFd(), ERR_PASSWDMISMATCH, "*");
 				client.setDisconnected();
 			}
 		}
 		else {
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
 		}
 		return ;
 	}
@@ -86,11 +86,11 @@ namespace {
 	void	nick( Server& serv, Client& client, Message& msg ) {
 		if (msg.getParam().size() >= 1) {
 			if (serv.findClient(msg.getParam()[0]) != NULL) { //! Nickname is already in used by another client
-				serv.respond(NULL, client.getFd(), ERR_NICKNAMEINUSE, msg.getParam()[0].c_str());
+				serv.respond(NULL, client.getFd(), ERR_NICKNAMEINUSE, client.getNickname().c_str(), msg.getParam()[0].c_str());
 				return ;
 			}
 			if (!AParser::isNickname(msg.getParam()[0])) { //! Invalid nickname
-				serv.respond(NULL, client.getFd(), ERR_ERRONEUSNICKNAME, msg.getParam()[0].c_str());
+				serv.respond(NULL, client.getFd(), ERR_ERRONEUSNICKNAME, "*", msg.getParam()[0].c_str());
 				return ;
 			}
 			client.setNickname(msg.getParam()[0]);
@@ -102,7 +102,7 @@ namespace {
 			}
 		}
 		else {
-			serv.respond(NULL, client.getFd(), ERR_NONICKNAMEGIVEN);
+			serv.respond(NULL, client.getFd(), ERR_NONICKNAMEGIVEN, client.getNickname().c_str());
 		}
 		return ;
 	}
@@ -135,7 +135,7 @@ namespace {
 			}
 		}
 		else {
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
 		}
 	}
 
@@ -182,7 +182,7 @@ namespace {
 						flag = (sign > 0 ? flag : flag & ~LOCAL_OPERATOR);
 						break ;
 					default :
-						serv.respond(NULL, client.getFd(), ERR_UMODEUNKNOWNFLAG);
+						serv.respond(NULL, client.getFd(), ERR_UMODEUNKNOWNFLAG, client.getNickname().c_str());
 						return ;
 				}
 			}
@@ -267,7 +267,7 @@ namespace {
 				res_prm = (mode_prm_it == msg.getParam().end() ? "" : *mode_prm_it);
 
 				if (mode_prm_it == msg.getParam().end() && requireParam(*mode_it, sign))
-						return (serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, "MODE"));
+						return (serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), "MODE"));
 				switch (*mode_it) {
 					case 'o' :
 						if (!chan->getClient(*mode_prm_it))
@@ -328,7 +328,7 @@ namespace {
 		std::string	channel = "#&!+";
 
 		if (msg.getParam().size() == 0) { //!< No parameters
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
 			return ;
 		}
 		if (channel.find(msg.getParam()[0][0]) != std::string::npos) {
@@ -374,7 +374,7 @@ namespace {
 		int											channel_mode;
 		
 		if (msg.getParam().size() == 0) {
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
 			return ;
 		}
 
@@ -485,7 +485,7 @@ namespace {
 		std::string									part_msg;
 
 		if (msg.getParam().size() == 0) { //!< No parameter
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
 			return ;
 		}
 
@@ -498,7 +498,7 @@ namespace {
 				continue ;
 			}
 			if (!channel->getClient(client.getFd())) { //!< Client not in channel
-				serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+				serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, client.getNickname().c_str(), channel->getName().c_str());
 				continue ;
 			}
 			//! Remove from channel
@@ -533,7 +533,7 @@ namespace {
 		Channel	*channel;
 		
 		if (msg.getParam().size() == 0) { //!< No parameter
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
 			return ;
 		}
 		
@@ -544,7 +544,7 @@ namespace {
 		}
 		
 		if (!channel->getClient(client.getFd())) { //!< Client not on channel									 
-			serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, client.getNickname().c_str(), channel->getName().c_str());
 			return;
 		}
 		
@@ -558,7 +558,7 @@ namespace {
 		}
 		else if (msg.getParam().size() >= 2) { //!< change the topic, if you have the rights
 			if ((channel->getMode() & CHN_T) && (client.getMode() & ~LOCAL_OPERATOR || client.getMode() & ~OPERATOR)){ //!< topic settable by channel operator only
-				serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+				serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), channel->getName().c_str());
 				return;
 			}
 			else { //!< you can change the topic
@@ -597,7 +597,7 @@ namespace {
 		std::string	response;
 		
 		if (msg.getParam().size() <= 1) { //!< No parameter
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
 			return ;
 		}
 		
@@ -612,17 +612,17 @@ namespace {
 		
 		if (channel) {
 			if (!channel->getClient(client.getFd())) { //!< Client trying to sent an invitation not on a channel									 
-				serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+				serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, client.getNickname().c_str(), channel->getName().c_str());
 				return ;
 			}
 			if (channel->getClient(nick_target)) { //!< Client tries to invite a user to a channel they are already on
-				serv.respond(NULL, client.getFd(), ERR_USERONCHANNEL, channel->getClient(nick_target)->getUsername().c_str(), \
+				serv.respond(NULL, client.getFd(), ERR_USERONCHANNEL, client.getNickname().c_str(), channel->getClient(nick_target)->getUsername().c_str(), \
 					channel_target.c_str());
 				return ;
 			}
 			if (channel->getMode() & CHN_I) { //! Invite-only channel -> client sending a msg has to be a channel operator
 				if (client.getMode() & ~OPERATOR && client.getMode() & ~LOCAL_OPERATOR){
-					serv.respond(NULL, client.getFd() , ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+					serv.respond(NULL, client.getFd() , ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), channel->getName().c_str());
 					return ;
 				}
 			}
@@ -653,24 +653,24 @@ namespace {
 		std::string response;
 		
 		if (msg.getParam().size() <= 1) { //!< No parameter
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
 			return ;
 		}
 
 		channel = serv.findChannel(msg.getParam()[0]);
 		if (!channel){ //!< Channel not found
-			serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, msg.getParam()[0].c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, client.getNickname().c_str(), msg.getParam()[0].c_str());
 			return ;
 		}
 		
 		if (!channel->getClient(client.getFd())){ //!< Client not in channel									 
-			serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channel->getName().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, client.getNickname().c_str(), channel->getName().c_str());
 			return;
 		}
 		int flag = client.getMode();
 		std::cout << "CLIENT MODE: " << flag << std::endl;
 		if (client.getMode() & ~OPERATOR || client.getMode() & ~LOCAL_OPERATOR){ //!< Client has no privilages
-			serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, channel->getName().c_str());
+			serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), channel->getName().c_str());
 			return ;
 		}
 
@@ -757,11 +757,11 @@ namespace {
 
 		
 		if (msg.getParam().size() == 0){ //!< no receiver given
-			serv.respond(NULL, client.getFd(), ERR_NORECIPIENT, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NORECIPIENT, client.getNickname().c_str(), msg.getCommand().c_str());
 			return ;
 		}
 		if (msg.getParam().size() <= 1){ //!< no text to be sent given
-			serv.respond(NULL, client.getFd(), ERR_NOTEXTTOSEND);
+			serv.respond(NULL, client.getFd(), ERR_NOTEXTTOSEND, client.getNickname().c_str());
 			return ;
 		}
 		
@@ -771,11 +771,11 @@ namespace {
 			if ((*receiver_it)[0] == '#' || (*receiver_it)[0] == '&'){ //!< it's a channel{
 				channelReceiver = serv.findChannel((*receiver_it));
 				if (!channelReceiver){ //!< no such channel
-					serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, receiver_it->c_str());
+					serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, client.getNickname().c_str(), receiver_it->c_str());
 					continue ;
 				}
 				if (!channelReceiver->getClient(client.getFd())){ // !< client sending a msg not on  channel
-					serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channelReceiver->getName().c_str());
+					serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, client.getNickname().c_str(), channelReceiver->getName().c_str());
 					continue ;
 				}
 				text = ":" + client.getNickname() +" PRIVMSG " + channelReceiver->getName() + " :" + msg.getParam()[1];
@@ -876,19 +876,19 @@ namespace {
 	*/
 	void oper( Server & serv, Client & client, Message & msg ){
 		if (msg.getParam().size() < 2){
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
 			return (war_log("ERR_NEEDMOREPARAMS sent to Client %d", client.getFd()));
 		}
 		
 		std::vector<std::string> tmp = msg.getParam();	
 		
 		if (tmp[0] != serv.getOpUser()){
-			serv.respond(NULL, client.getFd(), ERR_NOOPERHOST);
+			serv.respond(NULL, client.getFd(), ERR_NOOPERHOST, client.getNickname().c_str());
 			return(war_log("ERR_NOOPERHOST sent to Client %d", client.getFd()));
 		}
 		
 		if (tmp[1] != serv.getOpPasswd()){
-			serv.respond(NULL, client.getFd(), ERR_PASSWDMISMATCH);
+			serv.respond(NULL, client.getFd(), ERR_PASSWDMISMATCH, client.getNickname().c_str());
 			return (war_log("ERR_PASSWDMISMATCH sent to Client %d", client.getFd()));
 		}
 		
@@ -913,11 +913,11 @@ namespace {
 	 */
 	void kill( Server & serv, Client & client, Message & msg){
 		if (!client.isOperator()){
-			serv.respond(NULL, client.getFd(), ERR_NOPRIVILEGES);
+			serv.respond(NULL, client.getFd(), ERR_NOPRIVILEGES, client.getNickname().c_str());
 			return (war_log("ERR_NOPRIVILEGES sent to Client %d", client.getFd()));
 		}
 		if (msg.getParam().size() < 2){
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
 			return (war_log("ERR_NEEDMOREPARAMS sent to Client %d", client.getFd()));
 		}
 		std::vector<std::string> tmp = msg.getParam();
@@ -944,7 +944,7 @@ namespace {
 	void restart( Server & serv, Client & client, Message & msg ){
 		(void) msg;
 		if (!client.isOperator()){
-			serv.respond(NULL, client.getFd(), ERR_NOPRIVILEGES);
+			serv.respond(NULL, client.getFd(), ERR_NOPRIVILEGES, client.getNickname().c_str());
 			return (war_log("ERR_NOPRIVILEGES sent to Client %d", client.getFd()));
 		}
 		
