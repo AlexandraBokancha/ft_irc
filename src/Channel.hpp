@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/05 19:49:32 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/09 10:22:10 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,9 +27,9 @@
 // # define K 0x10//!< Set/remove the channel key (password)
 
 //! Chanel user flag
-# define CHNUSR_BIGO	0x01
-# define CHNUSR_O		0x02
-# define CHNUSR_V		0x04
+# define CHNUSR_BIGO	0x01 //!< Channel creator
+# define CHNUSR_O		0x02 //!< Channel operator
+# define CHNUSR_V		0x04 //!< Voice privilege
 
 //! Chanel flag
 # define CHN_I	0x01	//!< Invite-mode
@@ -66,7 +66,7 @@ public:
 
 	void		setTopic(const std::string & topic);
 
-	void		isOperator( const std::string nick );
+	bool		isOperator( const std::string nick );
 
 	bool		isFull( void ) const;
 	bool		isEmpty( void ) const;

@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/05 19:47:47 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/09 10:30:25 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ Channel::Channel( Client* creator, const std::string& name )
 		_mode(CHN_T), _userLimit(0), _password("")
 {
 	this->_name = name;
-	this->_client.push_back(std::pair<Client*, int>(creator, LOCAL_OPERATOR));
+	this->_client.push_back(std::pair<Client*, int>(creator, CHNUSR_BIGO));
 	// this->_client = std::vector< std::pair< Client*, int > >(1, std::pair<Client*,int>(creator, LOCAL_OPERATOR));
 	if (name[0] == '!') {
 		time_t now = time(NULL);
@@ -191,6 +191,21 @@ void Channel::setTopic( const std::string & topic ){
 /* ************************************************************************** */
 /* *                        Public member functions                         * */
 /* ************************************************************************** */
+/**
+ * @brief Check if user is an operator on that channel
+ *
+ * @param nick The client nickname
+ * @return True is it is an operator, else False
+ */
+bool	Channel::isOperator( const std::string nick ) {
+	std::vector< std::pair<Client*, int> >::const_iterator it;
+
+	for (it = this->_client.begin(); it != this->_client.end(); it++) {
+		if (it->first->getNickname() == nick)
+			return (it->second & CHNUSR_O || it->second & CHNUSR_BIGO);
+	}
+	return (false); //!< Client not in channel
+}
 
 /**
  * @brief Add or remove channel mode
@@ -238,9 +253,9 @@ void		Channel::changeUserMode( const std::string& nick,  const char sign, const 
 	if (it == _client.end())
 		return ;
 	if (sign == PLUS)
-		it->second &= mode;
+		it->second |= mode;
 	if (sign == MINUS)
-		it->second |= ~mode;
+		it->second &= ~mode;
 	return ;
 }
 

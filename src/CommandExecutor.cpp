@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/08 09:47:29 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/09 10:32:50 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 
 # include "log.hpp"
 #include <algorithm>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -252,8 +253,10 @@ namespace {
 		Channel										new_chan = *chan;
 		int											sign;
 
-		if (msg.getParam().size() == 1)
+		if (msg.getParam().size() == 1) //!< Channel mode information
 			return (serv.respond(NULL, client.getFd(), RPL_CHANNELMODEIS, client.getNickname().c_str(), chan->getName().c_str(), chan->modeToString().c_str()));
+		if (!chan->isOperator(client.getNickname())) //!< Not a channel operator
+			return (serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), chan->getName().c_str()));
 		
 		for (prm_it = msg.getParam().begin() + 1; prm_it != msg.getParam().end() && prm_it->length() != 0; prm_it++) {
 			if (prm_it->length() == 0) //!< INIFINITE LOOP PROBLEM
@@ -272,7 +275,7 @@ namespace {
 					case 'o' :
 						if (!chan->getClient(*mode_prm_it))
 							return (serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), mode_prm_it->c_str()));
-						new_chan.changeUserMode(*mode_prm_it, sign, *mode_it);
+						new_chan.changeUserMode(*mode_prm_it, sign, CHNUSR_O);
 						break ;
 					case 'k' :
 						//! Check ERR_KEYSET ???
@@ -451,7 +454,7 @@ namespace {
 			for (std::vector<std::pair<Client *, int> >::const_iterator it = members.begin(); it != members.end(); ++ it){
 				if (it != members.begin()){
 					names += " ";
-				} if (it->second & LOCAL_OPERATOR || it->second & OPERATOR){
+				} if (it->second & CHNUSR_BIGO || it->second & CHNUSR_O){
 					names += "@";
 				}
 				names += it->first->getNickname();
