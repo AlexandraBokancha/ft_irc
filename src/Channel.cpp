@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/09 15:18:47 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/09 21:46:04 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,7 @@ Channel::Channel( Client* creator, const std::string& name )
 		this->_name = ("!" + std::string(result.rbegin(), result.rend()) + name.substr(1, name.size()));
 	}
 	this->_operator = (name[0] == '+' ? std::vector<Client*>() : std::vector<Client*>(1, creator));
+	creator->addJoinedChannel();
 	return ;
 }
 

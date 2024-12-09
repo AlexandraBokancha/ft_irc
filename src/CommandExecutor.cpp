@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/09 21:39:43 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/09 21:51:04 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -390,6 +390,8 @@ namespace {
 		for (channel_it = channel_name.begin(); channel_it != channel_name.end(); channel_it++) {
 			if (channel_it->size() <= 1) //!< Invalid channel name
 				continue ;
+			if (client.getJoinedChannel() >= 10)
+				return (serv.respond(NULL, client.getFd(), ERR_TOOMANYCHANNELS, client.getNickname().c_str(), channel_it->c_str()));
 
 			//! Error Checking
 			ch = serv.findChannel(*channel_it);
@@ -434,7 +436,7 @@ namespace {
 				//! SUCCESS
 				//! add client to channel
 				ch->addClient(&client);
-				client.setJoinedChannel();
+				client.addJoinedChannel();
 
 			}
 			

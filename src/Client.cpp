@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/06 21:12:45 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/09 21:46:07 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,7 +171,7 @@ void	Client::setMode(const short mode) {
 	this->_mode = mode;
 }
 
-void	Client::setJoinedChannel( void ){
+void	Client::addJoinedChannel( void ){
 	this->_joinedChannel++;	
 }
 
