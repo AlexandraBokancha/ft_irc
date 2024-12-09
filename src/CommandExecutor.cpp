@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/09 14:59:55 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/09 21:39:43 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -247,18 +247,19 @@ namespace {
 	static void	mode_channel(Server& serv, Channel* chan, Client& client, Message& msg) {
 		std::vector<std::string>::const_iterator	prm_it;
 		std::vector<std::string>::const_iterator	mode_prm_it;
+		std::vector<std::string>					param = msg.getParam();
 		std::vector<std::string>					result;
 		std::string									res_prm;
 		std::string									response;
 		Channel										new_chan = *chan;
 		int											sign;
 
-		if (msg.getParam().size() == 1) //!< Channel mode information
+		if (param.size() == 1) //!< Channel mode information
 			return (serv.respond(NULL, client.getFd(), RPL_CHANNELMODEIS, client.getNickname().c_str(), chan->getName().c_str(), chan->modeToString().c_str()));
 		if (!chan->isOperator(client.getNickname())) //!< Not a channel operator
 			return (serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), chan->getName().c_str()));
 		
-		for (prm_it = msg.getParam().begin() + 1; prm_it != msg.getParam().end() && prm_it->length() != 0; prm_it++) {
+		for (prm_it = param.begin() + 1; prm_it != param.end() && prm_it->length() != 0; prm_it++) {
 			if (prm_it->length() == 0) //!< INIFINITE LOOP PROBLEM
 				break ;
 			sign = (*prm_it)[0];
@@ -267,9 +268,9 @@ namespace {
 				return (war_log("[MODE] invalid parameter : %s ...Ignore", prm_it->c_str()));
 			
 			for (std::string::const_iterator mode_it = prm_it->begin() + 1; mode_it != prm_it->end(); mode_it++) {
-				res_prm = (mode_prm_it == msg.getParam().end() ? "" : *mode_prm_it);
+				res_prm = (mode_prm_it == param.end() ? "" : *mode_prm_it);
 
-				if (mode_prm_it == msg.getParam().end() && requireParam(*mode_it, sign))
+				if (mode_prm_it == param.end() && requireParam(*mode_it, sign))
 						return (serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), "MODE"));
 				switch (*mode_it) {
 					case 'o' :
@@ -281,14 +282,14 @@ namespace {
 						//! Check ERR_KEYSET ???
 						new_chan.setPassword(( sign == PLUS ? *mode_prm_it : ""));
 						if (sign == PLUS)
-							mode_prm_it = ( mode_prm_it == msg.getParam().end() ? mode_prm_it : mode_prm_it + 1 );
+							mode_prm_it = ( mode_prm_it == param.end() ? mode_prm_it : mode_prm_it + 1 );
 						break ;
 					case 'l' :
 						if (sign == PLUS) {
 							int lim = std::atoi(mode_prm_it->c_str());
 							if (lim > 0)
 								new_chan.setLimit(lim);
-							mode_prm_it = ( mode_prm_it == msg.getParam().end() ? mode_prm_it : mode_prm_it + 1 );
+							mode_prm_it = ( mode_prm_it == param.end() ? mode_prm_it : mode_prm_it + 1 );
 						}
 						break ;
 					case 'i' :
@@ -302,7 +303,7 @@ namespace {
 				result = addMode(result, sign, *mode_it, res_prm);
 				
 			}
-			if (mode_prm_it == msg.getParam().end())
+			if (mode_prm_it == param.end())
 				break ;
 			prm_it = mode_prm_it;
 		}
