@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/08 09:47:48 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/09 14:56:41 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@
 # define RPL_UNIQOPIS           "325 %s %s"
 # define RPL_NOTOPIC            "331 %s %s :No topic is set"
 # define RPL_TOPIC              "332 %s %s :%s"
-# define RPL_INVITING           "341 %s %s %s"
+# define RPL_INVITING           "341 %s %s"
 # define RPL_NAMERPLY           "353 %s = %s :%s"
 # define RPL_ENDOFNAMES         "366 %s %s :End of /NAMES list"
 # define RPL_INFO				"371 %s %s"
@@ -39,7 +39,7 @@
 # define RPL_TIME				"391 %s %s %s"
 
 //! ERRORS
-# define ERR_NOSUCHNICK         "401 %s %s :No such nick/channel"
+# define ERR_NOSUCHNICK         "401 %s :No such nick/channel"
 # define ERR_NOSUCHCHANNEL		"403 %s %s :No such channel"
 # define ERR_CANNOTSENDTOCHAN   "404 %s %s :Cannot send to channel"
 # define ERR_TOOMANYCHANNELS	"405 %s %s :You have joined too many channels"
@@ -50,7 +50,7 @@
 # define ERR_ERRONEUSNICKNAME	"432 %s %s :Erroneus nickname"
 # define ERR_NICKNAMEINUSE		"433 %s %s :Nickname is already in use" 
 # define ERR_USERNOTINCHANNEL   "441 %s %s %s :They aren't on that channel"
-# define ERR_NOTONCHANNEL		"442 %s %s :You're not on that channel"
+# define ERR_NOTONCHANNEL		"442 %s :You're not on that channel"
 # define ERR_USERONCHANNEL      "443 %s %s %s :is already on channel"
 # define ERR_NEEDMOREPARAMS		"461 %s %s :Not enough parameters"
 # define ERR_ALREADYREGISTRED	"462 %s :You may not reregister."

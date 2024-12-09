@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/09 10:32:50 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/09 14:59:55 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -273,7 +273,7 @@ namespace {
 						return (serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), "MODE"));
 				switch (*mode_it) {
 					case 'o' :
-						if (!chan->getClient(*mode_prm_it))
+						if (!chan->getClientbyNick(*mode_prm_it))
 							return (serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), mode_prm_it->c_str()));
 						new_chan.changeUserMode(*mode_prm_it, sign, CHNUSR_O);
 						break ;
@@ -337,7 +337,7 @@ namespace {
 		if (channel.find(msg.getParam()[0][0]) != std::string::npos) {
 			Channel*	chan = serv.findChannel(msg.getParam()[0]);
 			if (!chan)
-				return (serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), msg.getParam()[0].c_str()));
+				return (serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, msg.getParam()[0].c_str()));
 			return (mode_channel(serv, chan, client, msg));
 		}
 		return (mode_user(serv, client, msg));
@@ -410,7 +410,7 @@ namespace {
 				}
 
 				channel_mode = ch->getMode();
-				if (channel_mode & CHN_I) { //!< Invite only channel
+				if (channel_mode & CHN_I && !ch->isInvited(client.getNickname())) { //!< Invite only channel
 					serv.respond(NULL, client.getFd(), ERR_INVITEONLYCHAN, client.getNickname().c_str(), channel_it->c_str());
 					continue ;
 				}
@@ -497,7 +497,7 @@ namespace {
 		for (channel_it = channel_name.begin(); channel_it != channel_name.end(); channel_it++) {
 			channel = serv.findChannel(*channel_it);
 			if (!channel) { //!< Channel not found
-				serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), channel_it->c_str());
+				serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, channel_it->c_str());
 				continue ;
 			}
 			if (!channel->getClient(client.getFd())) { //!< Client not in channel
@@ -560,7 +560,7 @@ namespace {
 			}
 		}
 		else if (msg.getParam().size() >= 2) { //!< change the topic, if you have the rights
-			if ((channel->getMode() & CHN_T) && (client.getMode() & ~LOCAL_OPERATOR || client.getMode() & ~OPERATOR)){ //!< topic settable by channel operator only
+			if ((channel->getMode() & CHN_T) && (client.getMode() & ~CHNUSR_BIGO && client.getMode() & ~CHNUSR_O)){ //!< topic settable by channel operator only
 				serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), channel->getName().c_str());
 				return;
 			}
@@ -606,7 +606,7 @@ namespace {
 		
 		std::string nick_target = msg.getParam()[0];
 		if (serv.findClient(nick_target) == NULL){ //!< No nick found
-			serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), nick_target.c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, nick_target.c_str());
 			return ;
 		}
 		
@@ -618,13 +618,13 @@ namespace {
 				serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, client.getNickname().c_str(), channel->getName().c_str());
 				return ;
 			}
-			if (channel->getClient(nick_target)) { //!< Client tries to invite a user to a channel they are already on
-				serv.respond(NULL, client.getFd(), ERR_USERONCHANNEL, client.getNickname().c_str(), channel->getClient(nick_target)->getUsername().c_str(), \
+			if (channel->getClientbyNick(nick_target)) { //!< Client tries to invite a user to a channel they are already on
+				serv.respond(NULL, client.getFd(), ERR_USERONCHANNEL, client.getNickname().c_str(), channel->getClientbyNick(nick_target)->getUsername().c_str(), \
 					channel_target.c_str());
 				return ;
 			}
 			if (channel->getMode() & CHN_I) { //! Invite-only channel -> client sending a msg has to be a channel operator
-				if (client.getMode() & ~OPERATOR && client.getMode() & ~LOCAL_OPERATOR){
+				if (client.getMode() & ~CHNUSR_BIGO && client.getMode() & ~CHNUSR_O){
 					serv.respond(NULL, client.getFd() , ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), channel->getName().c_str());
 					return ;
 				}
@@ -632,11 +632,12 @@ namespace {
 		}
 		
 		//!< send invitation
-		response = ":" + client.getNickname() + " INVITE " + nick_target + " #" + channel_target;
+		response = ":" + client.getNickname() + " INVITE " + nick_target + " " + channel_target;
 		serv.respond(NULL, serv.findClient(nick_target)->getFd(), response.c_str());
+		channel->setInvited(nick_target);
 		
 		//!< reply by server
-		serv.respond(NULL, client.getFd(), RPL_INVITING, client.getNickname().c_str(), channel_target.c_str(), nick_target.c_str());
+		serv.respond(NULL, client.getFd(), RPL_INVITING, channel_target.c_str(), nick_target.c_str());
 	}
 
 
@@ -670,28 +671,28 @@ namespace {
 			serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, client.getNickname().c_str(), channel->getName().c_str());
 			return;
 		}
-		int flag = client.getMode();
-		std::cout << "CLIENT MODE: " << flag << std::endl;
-		if (client.getMode() & ~OPERATOR || client.getMode() & ~LOCAL_OPERATOR){ //!< Client has no privilages
+		if (!channel->isOperator(client.getNickname())){ //!< Client has no privilages
 			serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), channel->getName().c_str());
 			return ;
 		}
+		else{
 
-		//!< kick client from channel
-		channel->removeClient(channel->getClientByUsername(msg.getParam()[1])->getFd());
-		
-		if (msg.getParam().size() > 2){
-			comment = " :" + msg.getParam()[2];
-		}
-		
-		response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
-			" KICK " + channel->getName() + " " + msg.getParam()[1] + comment;
+			//!< kick client from channel
+			channel->removeClient(channel->getClientbyNick(msg.getParam()[1])->getFd());
 			
-		//!< response to client
-		serv.respond(NULL, client.getFd(), response.c_str());
-		
-		//!< broadcast to channel
-		serv.broadcastToChannel(NULL, response, channel, client.getFd());
+			if (msg.getParam().size() > 2){
+				comment = " :" + msg.getParam()[2];
+			}
+			
+			response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
+				" KICK " + channel->getName() + " " + msg.getParam()[1] + comment;
+				
+			//!< response to client
+			serv.respond(NULL, client.getFd(), response.c_str());
+			
+			//!< broadcast to channel
+			serv.broadcastToChannel(NULL, response, channel, client.getFd());
+		}
 	}
 
 		/* ************************************************************************** */
@@ -778,7 +779,7 @@ namespace {
 					continue ;
 				}
 				if (!channelReceiver->getClient(client.getFd())){ // !< client sending a msg not on  channel
-					serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, client.getNickname().c_str(), channelReceiver->getName().c_str());
+					serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channelReceiver->getName().c_str());
 					continue ;
 				}
 				text = ":" + client.getNickname() +" PRIVMSG " + channelReceiver->getName() + " :" + msg.getParam()[1];
@@ -786,8 +787,9 @@ namespace {
 			}
 			else { //!< it's a client
 				clientReceiver = serv.findClient((*receiver_it)); 
+				std::cout << "RECEIVER" << *receiver_it << std::endl;
 				if (!clientReceiver){ //!< no such client on server
-					serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, receiver_it->c_str());
+					serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, (*receiver_it).c_str());
 					continue ;
 				}
 				text = ":" + client.getNickname() + " PRIVMSG " + clientReceiver->getNickname() + " :" + msg.getParam()[1];
@@ -829,7 +831,8 @@ namespace {
 	 */
 	void whoisReply( Server& serv, Client& client, Message& msg ){
 		(void) msg;
-		serv.respond(NULL, client.getFd(), RPL_WHOISUSER, client.getNickname().c_str(), client.getUsername().c_str(), client.getHostname().c_str(), client.getRealname().c_str());
+		serv.respond(NULL, client.getFd(), RPL_WHOISUSER, client.getNickname().c_str(), \
+			client.getUsername().c_str(), client.getHostname().c_str(), client.getRealname().c_str());
 	}
 	
 	/**
