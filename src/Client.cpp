@@ -151,7 +151,7 @@ void	Client::setMode(const short mode) {
 	this->_mode = mode;
 }
 
-void	Client::setJoinedChannel( void ){
+void	Client::addJoinedChannel( void ){
 	this->_joinedChannel++;	
 }
 
