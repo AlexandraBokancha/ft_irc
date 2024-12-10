@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/10 12:45:05 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/10 14:25:08 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -628,7 +628,7 @@ namespace {
 				return ;
 			}
 			if (channel->getMode() & CHN_I) { //! Invite-only channel -> client sending a msg has to be a channel operator
-				if (client.getMode() & ~CHNUSR_BIGO && client.getMode() & ~CHNUSR_O){
+				if (!channel->isOperator(client.getNickname())){
 					serv.respond(NULL, client.getFd() , ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), channel->getName().c_str());
 					return ;
 				}
@@ -657,6 +657,7 @@ namespace {
 	*/
 	void	kick( Server& serv, Client& client, Message& msg ) {
 		Channel *channel;
+		Client	*clientToKick;
 		std::string comment = "";
 		std::string response;
 		
@@ -680,9 +681,13 @@ namespace {
 			return ;
 		}
 		else{
-
+			
+			clientToKick = channel->getClientByUsername(msg.getParam()[1]);
+			if (!clientToKick){ //!< user doesn't exists protection
+				return ;
+			}
 			//!< kick client from channel
-			channel->removeClient(channel->getClientbyNick(msg.getParam()[1])->getFd());
+			channel->removeClient(clientToKick->getFd());
 			
 			if (msg.getParam().size() > 2) {
 				comment = " :" + msg.getParam()[2];
@@ -864,7 +869,6 @@ namespace {
 		int index = serv.findClientIndex(client.getNickname());
 		index++; // -> disconnectClient() fait -1 de l'index
 		success_log("Client %s will be disconnected from the server", client.getNickname().c_str());
-		serv.respond(NULL, client.getFd(), CMD_ERROR, "");
 		serv.disconnectClient(index);
 	}
 
@@ -903,7 +907,6 @@ namespace {
 		client.setOperator(); // !< this client is now Server operator
 		serv.respond(NULL, client.getFd(), RPL_YOUREOPER, client.getNickname().c_str());
 		
-		success_log("MODE +o %s", client.getNickname().c_str());
 	}
 
 	/** @brief IRC KILL command
@@ -929,7 +932,7 @@ namespace {
 			return (war_log("ERR_NEEDMOREPARAMS sent to Client %d", client.getFd()));
 		}
 		std::vector<std::string> tmp = msg.getParam();
-		if (serv.findClient(tmp[0]) == NULL){
+		if (!serv.findClient(tmp[0])){
 			serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, tmp[0].c_str());
 			return (war_log("ERR_NOSUCHNICK sent to Client %d", client.getFd()));
 		}
@@ -1009,7 +1012,9 @@ namespace {
 		
 		commandMap.push_back(std::make_pair("OPER", oper));
 		commandMap.push_back(std::make_pair("kill", kill));
+		commandMap.push_back(std::make_pair("KILL", kill));
 		commandMap.push_back(std::make_pair("restart", restart));
+		commandMap.push_back(std::make_pair("RESTART", restart));
 		
 		commandMap.push_back(std::make_pair("PRIVMSG", privmsg));
 		commandMap.push_back(std::make_pair("NOTICE", notice)); 

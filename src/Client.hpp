@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/10 12:44:15 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/10 12:49:10 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ class Client {
 		void				setFd( int fd );
 		void				setOperator( void );
 		void				setMode( const short mode );
-		void				setJoinedChannel( void );
+		void				addJoinedChannel( void );
 		
 		std::string			modeToString( void ) const;
 		bool				isServOperator( void ) const;
