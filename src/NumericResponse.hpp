@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/09 14:56:41 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/09 15:47:30 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,7 @@
 # define NUMERIC_RESPONSE_HPP
 
 //! GENERAL
-                                                              // une premiere cmd a executer (logiquement 
-                                                              // on peut pas avoir le nick)
+
 //! RPL
 # define RPL_WELCOME			"001 %s :Welcome to the Inernet Relay Network, %s!%s@%s"
 # define RPL_UMODEIS            "221 %s :%s"
@@ -54,7 +53,7 @@
 # define ERR_USERONCHANNEL      "443 %s %s %s :is already on channel"
 # define ERR_NEEDMOREPARAMS		"461 %s %s :Not enough parameters"
 # define ERR_ALREADYREGISTRED	"462 %s :You may not reregister."
-# define ERR_PASSWDMISMATCH		"464 %s :Password incorrect." // avec "*" a la place de nick car pass est 
+# define ERR_PASSWDMISMATCH		"464 %s :Password incorrect."
 # define ERR_KEYSET             "467 %s :Channel key already set"
 # define ERR_CHANNELISFULL  	"471 %s %s :Cannot join channel (+l)"
 # define ERR_UNKNOWNMODE        "472 %s %c :is unknown mode char to me"

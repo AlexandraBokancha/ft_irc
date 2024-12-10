@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/09 15:18:47 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/09 15:21:50 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -261,7 +261,6 @@ void	Channel::changeMode( const char sign, const int mode ) {
 		this->_mode &= ~mode_val;
 }
 
-
 /**
  * @brief Add or remove channel user mode
  *
@@ -287,7 +286,6 @@ void	Channel::changeUserMode( const std::string& nick,  const char sign, const i
 		it->second &= ~mode;
 	return ;
 }
-
 
 /**
  * @brief Check if the inputed password is the right one

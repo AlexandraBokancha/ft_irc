@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/07 09:16:14 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/09 15:57:52 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,11 +81,12 @@ void	set_signal( void ) {
 Server::Server( void )
 	: _port(8080), _passwd("0000"), _opPasswd("admin"), _opUser("admin")
 {
-	this->_serverInfo = NULL;
 	this->_socket = -1;
 	this->_channel = std::vector<Channel>();
 	this->_client = std::vector<Client*>();
 	this->_pollFd = std::vector<struct pollfd>();
+	this->_clientNbr = 0;
+	this->_serverInfo = NULL;
 	return ;
 }
 
@@ -139,7 +140,7 @@ std::string	Server::getPrefix( void ) const {
 	return (this->_ip);
 }
 
-std::string Server::getOpPasswd( void ) const {
+std::string	Server::getOpPasswd( void ) const {
 	return (this->_opPasswd);
 }
 
@@ -151,7 +152,7 @@ std::string Server::getPasswd( void ) const{
 	return (this->_passwd);
 }
 
-int Server::getPort( void ) const{
+int	Server::getPort( void ) const {
 	return (this->_port);
 }
 
@@ -166,7 +167,7 @@ int Server::getPort( void ) const{
  * @param fd The socket file descriptor to add
  * @param events The poll event mask
  */
-void	Server::pollPushBack(int fd, short events) {
+void	Server::pollPushBack( int fd, short events ) {
 	struct pollfd	new_socket;
 	
 	new_socket.fd = fd;
@@ -183,7 +184,7 @@ void	Server::pollPushBack(int fd, short events) {
  * @param str The client pass argument to be compared with server password
  * @return 0 when match password, else 1
  */
-int Server::comparePassword(const std::string& str) const {
+int Server::comparePassword( const std::string& str ) const {
 	return ((str.compare(this->_passwd) == 0 ? 0 : 1));
 }
 
@@ -221,7 +222,7 @@ Client*	Server::findClient( const std::string& nick ) {
 	return (NULL);
 }
 
-int Server::findClientIndex( const std::string & nick ){
+int Server::findClientIndex( const std::string & nick ) {
 	for (std::size_t i = 0; i < _client.size(); ++i){
 		if (_client[i]->getNickname() == nick){
 			return (static_cast<int>(i));
@@ -229,7 +230,6 @@ int Server::findClientIndex( const std::string & nick ){
 	}
 	return (-1);
 }
-
 
 /**
  * @brief Server response to client command
@@ -347,26 +347,12 @@ Channel*	Server::findChannel( const std::string& name ) {
 		//! Used to check if a safe channel with the same shortname exist
 		if (channel_name[0] == '!' && safe_channel
 			&& (strcmp(channel_name.c_str() + 6, name.c_str() + 1) == 0))
-			return (&(*it)); // on peut remplacer par -> channel_name.substr(6).compare(name.substr(1)) == 0
+			return (&(*it));
 		if (name.compare(it->getName()) == 0)
 			return (&(*it));
 	}
 	return (NULL);
 }
-
-
-// std::vector<Channel*>	Server::clientOnChannel(Client* client ){
-// 	std::vector<Channel*>	clientChannels;
-// 	std::vector<Channel>::iterator it;
-//
-// 	for (it = this->_channel.begin(); it != this->_channel.end(); it++){
-// 		if (std::find((*it).getClients().begin(), (*it).getClients().end(), client) != (*it).getClients().end()) {
-//             clientChannels.push_back(&(*it));
-//         }
-// 	}
-// 	return (clientChannels);
-// }	
-
 
 /**
  * @brief Disconnect client and remove it from poll
@@ -415,9 +401,6 @@ void	Server::disconnectClient( int& index ) { if (index == 0)
 }
 
                            /* SERVER HANDLING */
-// TESTING
-
-// END TESTING
 
 /**
  * @brief Start the server
@@ -451,8 +434,6 @@ void	Server::startServer( const char *port_str ) {
         break; // We only need the first IP address
     }
 	this->_ip = ipstr;
-
-	// this->_socket = socket(this->_serverInfo->ai_family, this->_serverInfo->ai_socktype, this->_serverInfo->ai_protocol);
 	this->_socket = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
 	if (this->_socket == -1)
 		throw (std::runtime_error(std::string("socket: ") + std::strerror(errno)));
@@ -524,7 +505,6 @@ void	Server::acceptNewClient( void ) {
 
 		//! Add client
 		new_client->setFd(client_socket);
-		// new_client.setFd(&client_socket);
 		new_client->setNetId(client_addr);
 		this->_client.push_back(new_client);
 
@@ -618,7 +598,6 @@ void	Server::receiveMsg( int& i ) {
 	char	buffer[512]; //<! 512 = max irc message size
 	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
 
-	/* TESTING */
 	if (buffer_size > 0) { //!< Received msg
 		try{
 			buffer[buffer_size] = '\0';
@@ -630,8 +609,6 @@ void	Server::receiveMsg( int& i ) {
 				Message msg(buffer, msg_i, buffer_size);
 				
 				CommandExecutor::execute(*this, *sender, msg);
-
-				// broadcast(buffer + start, msg_i - start - 2, this->_pollFd[i].fd);
 			}
 		}
 		catch (std::exception & e){

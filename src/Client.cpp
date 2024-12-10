@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/06 21:12:45 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/09 15:46:30 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ Client::Client( void ) {
 	this->_realname = "";
 	this->_connected = false;
 	this->_registred = false;
-	this->_isOperator = false;
+	this->_servOper = false;
 	this->_joinedChannel = 0;
 	this->_fd = -1;
 	this->_mode = 0;
@@ -41,7 +41,7 @@ Client::Client( const Client & rhs ) {
 	this->_realname = rhs._realname;
 	this->_connected = rhs._connected;
 	this->_registred = rhs._registred;
-	this->_isOperator = rhs._isOperator;
+	this->_servOper = rhs._servOper;
 	this->_joinedChannel = rhs._joinedChannel;
 	this->_fd = rhs._fd;
 	this->_mode = 0;
@@ -95,12 +95,64 @@ int	Client::getFd( void ) const {
 	return (this->_fd);
 }
 
-int		Client::getJoinedChannel( void ) const {
+int	Client::getJoinedChannel( void ) const {
 	return (this->_joinedChannel);
 }
 
-int		Client::getMode( void ) const {
+int	Client::getMode( void ) const {
 	return (this->_mode);
+}
+
+void	Client::setHostname( const std::string& hostname ) {
+	this->_hostname = hostname;
+}
+
+void	Client::setUsername( const std::string& username ) {
+	this->_username = username;
+}
+
+void	Client::setNickname( const std::string& nick ) {
+	this->_nickname = nick;
+}
+
+void	Client::setServername( const std::string& servername ) {
+	this->_servername = servername;
+}
+
+void	Client::setRealname( const std::string& realname ) {
+	this->_realname = realname;
+}
+
+void	Client::setRegistred( void ) {
+	this->_registred = true;
+}
+
+void	Client::setConnected( void ) {
+	this->_connected = true;
+}
+
+void	Client::setDisconnected( void ) {
+	this->_connected = false;
+}
+
+void	Client::setNetId( struct sockaddr_in netId) {
+	this->_netId = netId;
+}
+
+void	Client::setFd( int fd ) {
+	this->_fd = fd;
+}
+
+void	Client::setOperator( void ) {
+	this->_servOper = true;
+}
+
+void	Client::setMode(const short mode) {
+	this->_mode = mode;
+}
+
+void	Client::setJoinedChannel( void ){
+	this->_joinedChannel++;	
 }
 
 std::string	Client::modeToString( void ) const {
@@ -118,63 +170,9 @@ std::string	Client::modeToString( void ) const {
 	return ((result.length() == 1 ? "" : result));
 }
 
-void Client::setConnected( void ){
-	this->_connected = true;
+bool	Client::isServOperator( void ) const {
+	return (this->_servOper);
 }
-
-void Client::setDisconnected( void ){
-	this->_connected = false;
-}
-
-void Client::setRegistred( void ){
-	this->_registred = true;
-}
-
-void	Client::setNetId( struct sockaddr_in netId) {
-	this->_netId = netId;
-}
-
-
-void	Client::setFd( int fd ) {
-	this->_fd = fd;
-}
-
-void	Client::setHostname( const std::string& hostname ) {
-	this->_hostname = hostname;
-}
-
-void	Client::setUsername( const std::string& username ) {
-	this->_username = username;
-}
-
-void	Client::setNickname( const std::string& nick ) {
-	this->_nickname = nick;
-}
-
-void	Client::setOperator( void ){
-	this->_isOperator = true;
-}
-
-bool 	Client::isOperator( void ) const {
-	return (this->_isOperator);
-}
-
-void	Client::setServername( const std::string& servername ) {
-	this->_servername = servername;
-}
-
-void	Client::setRealname( const std::string& realname ) {
-	this->_realname = realname;
-}
-
-void	Client::setMode(const short mode) {
-	this->_mode = mode;
-}
-
-void	Client::setJoinedChannel( void ){
-	this->_joinedChannel++;	
-}
-
 
 /* ************************************************************************** */
 /* *                             Operator Overload                          * */
@@ -188,8 +186,11 @@ Client&	Client::operator=( Client const& rhs ) {
 		this->_servername = rhs._servername;
 		this->_realname = rhs._realname;
 		this->_connected = rhs._connected;
-		this->_realname = rhs._registred;
+		this->_registred = rhs._registred;
+		this->_servOper = rhs._servOper;
+		this->_joinedChannel = rhs._joinedChannel;
 		this->_fd = rhs._fd;
+		this->_mode = rhs._mode;
 	}
 	return (*this);
 }

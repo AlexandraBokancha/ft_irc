@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/09 14:59:55 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/09 22:28:39 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,9 +50,6 @@ namespace {
 	 * @param msg Msg sent to server from client
 	 */
 	void	pass( Server& serv, Client& client, Message& msg ) {
-		// // if (client.getConnected() == true) {
-		// 	return ;
-		// }
 		if (client.getRegistred() == true) {
 			serv.respond(NULL, client.getFd(), ERR_ALREADYREGISTRED, client.getNickname().c_str());
 			return ;
@@ -65,12 +62,13 @@ namespace {
 			else {
 				serv.respond(NULL, client.getFd(), ERR_PASSWDMISMATCH, "*");
 				client.setDisconnected();
+				return ;
 			}
 		}
 		else {
 			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
+			return ;
 		}
-		return ;
 	}
 
 	/**
@@ -104,8 +102,8 @@ namespace {
 		}
 		else {
 			serv.respond(NULL, client.getFd(), ERR_NONICKNAMEGIVEN, client.getNickname().c_str());
+			return ;
 		}
-		return ;
 	}
 
 	/**
@@ -137,6 +135,7 @@ namespace {
 		}
 		else {
 			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
+			return ;
 		}
 	}
 
@@ -161,8 +160,8 @@ namespace {
 
 		int	sign = 0; //<! MODE sign ('-' < 0 | ??? == 0 | '+' > 0)
 		int flag = client.getMode();
-		std::vector<std::string>::const_iterator it;
-		std::vector<std::string>	mode_list = AParser::getModeList(msg.getParam()[1]);
+		std::vector<std::string>					mode_list = AParser::getModeList(msg.getParam()[1]);
+		std::vector<std::string>::const_iterator	it;
 		for (it = mode_list.begin(); it != mode_list.end(); it++) {
 			sign = (it->begin()[0] == '+' ? 1 : -1);
 			for (std::string::const_iterator s_it = it->begin() + 1; s_it != it->end(); s_it++) {
@@ -254,9 +253,11 @@ namespace {
 		int											sign;
 
 		if (msg.getParam().size() == 1) //!< Channel mode information
-			return (serv.respond(NULL, client.getFd(), RPL_CHANNELMODEIS, client.getNickname().c_str(), chan->getName().c_str(), chan->modeToString().c_str()));
+			return (serv.respond(NULL, client.getFd(), RPL_CHANNELMODEIS, client.getNickname().c_str(), \
+				chan->getName().c_str(), chan->modeToString().c_str()));
 		if (!chan->isOperator(client.getNickname())) //!< Not a channel operator
-			return (serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), chan->getName().c_str()));
+			return (serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), \
+				chan->getName().c_str()));
 		
 		for (prm_it = msg.getParam().begin() + 1; prm_it != msg.getParam().end() && prm_it->length() != 0; prm_it++) {
 			if (prm_it->length() == 0) //!< INIFINITE LOOP PROBLEM
@@ -300,7 +301,6 @@ namespace {
 				if (*mode_it != 'o')
 					new_chan.changeMode(sign, *mode_it);
 				result = addMode(result, sign, *mode_it, res_prm);
-				
 			}
 			if (mode_prm_it == msg.getParam().end())
 				break ;
@@ -396,7 +396,7 @@ namespace {
 				Channel	new_channel(&client, *channel_it);
 				serv.addChannel(new_channel);
 				ch = serv.findChannel(*channel_it);
-				// continue; ;
+				// continue; 
 			}
 			else {
 				if (ch->getClient(client.getFd())) //!< Client already in channel
@@ -434,27 +434,27 @@ namespace {
 				//! add client to channel
 				ch->addClient(&client);
 				client.setJoinedChannel();
-
 			}
 			
 			//! response to client
 			std::string response = std::string(":") + client.getNickname() + std::string("!~") + client.getUsername() + 
 				std::string("@") + serv.getPrefix() + std::string(" JOIN ") + ch->getName();
-		//	std::string response = ":" + client.getNickname() + " JOIN " + ch->getName();
 			serv.respond(&client, client.getFd(), response.c_str());	
 			
 			//! RPL_TOPIC
 			if (!ch->getTopic().empty()) { //!< send topic if it's set
-				serv.respond(NULL, client.getFd(), RPL_TOPIC, client.getNickname().c_str(), ch->getName().c_str(), ch->getTopic().c_str());
+				serv.respond(NULL, client.getFd(), RPL_TOPIC, client.getNickname().c_str(), \
+					ch->getName().c_str(), ch->getTopic().c_str());
 			}
 
 			//!RPL_NAMERPLY
 			std::string names = ":";
 			const std::vector<std::pair<Client *, int> >& members = ch->getClients();
 			for (std::vector<std::pair<Client *, int> >::const_iterator it = members.begin(); it != members.end(); ++ it){
-				if (it != members.begin()){
+				if (it != members.begin()) {
 					names += " ";
-				} if (it->second & CHNUSR_BIGO || it->second & CHNUSR_O){
+				} 
+				if (it->second & CHNUSR_BIGO || it->second & CHNUSR_O) {
 					names += "@";
 				}
 				names += it->first->getNickname();
@@ -532,7 +532,7 @@ namespace {
 	 * BEWARE: to test this function MODE function has to be finished
 	 * 
 	 */
-	void topic( Server& serv, Client& client, Message& msg ) {
+	void	topic( Server& serv, Client& client, Message& msg ) {
 		Channel	*channel;
 		
 		if (msg.getParam().size() == 0) { //!< No parameter
@@ -560,7 +560,7 @@ namespace {
 			}
 		}
 		else if (msg.getParam().size() >= 2) { //!< change the topic, if you have the rights
-			if ((channel->getMode() & CHN_T) && (client.getMode() & ~CHNUSR_BIGO && client.getMode() & ~CHNUSR_O)){ //!< topic settable by channel operator only
+			if ((channel->getMode() & CHN_T) && (!channel->isOperator(client.getNickname()))) { //!< topic settable by channel operator only
 				serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), channel->getName().c_str());
 				return;
 			}
@@ -595,7 +595,7 @@ namespace {
 	 * channel operator on the given channel.
 	 * 
 	 */
-	void invite( Server& serv, Client& client, Message& msg ) {
+	void	invite( Server& serv, Client& client, Message& msg ) {
 		Channel	*channel;
 		std::string	response;
 		
@@ -629,12 +629,12 @@ namespace {
 					return ;
 				}
 			}
+			channel->setInvited(nick_target); // segfault
 		}
 		
 		//!< send invitation
-		response = ":" + client.getNickname() + " INVITE " + nick_target + " " + channel_target;
+		response = ":" + client.getNickname() + " INVITE " + channel_target + " " + nick_target;
 		serv.respond(NULL, serv.findClient(nick_target)->getFd(), response.c_str());
-		channel->setInvited(nick_target);
 		
 		//!< reply by server
 		serv.respond(NULL, client.getFd(), RPL_INVITING, channel_target.c_str(), nick_target.c_str());
@@ -651,7 +651,7 @@ namespace {
 	 * Only a channel operator may kick another user out of a channel.
 	 * 
 	*/
-	void kick( Server& serv, Client& client, Message& msg ) {
+	void	kick( Server& serv, Client& client, Message& msg ) {
 		Channel *channel;
 		std::string comment = "";
 		std::string response;
@@ -667,7 +667,7 @@ namespace {
 			return ;
 		}
 		
-		if (!channel->getClient(client.getFd())){ //!< Client not in channel									 
+		if (!channel->getClient(client.getFd())){ //!< Client not on channel									 
 			serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, client.getNickname().c_str(), channel->getName().c_str());
 			return;
 		}
@@ -680,7 +680,7 @@ namespace {
 			//!< kick client from channel
 			channel->removeClient(channel->getClientbyNick(msg.getParam()[1])->getFd());
 			
-			if (msg.getParam().size() > 2){
+			if (msg.getParam().size() > 2) {
 				comment = " :" + msg.getParam()[2];
 			}
 			
@@ -749,10 +749,9 @@ namespace {
 	 * @brief IRC PRIVMSG command
 	 * 
 	 * <receiver>{,<receiver>} <text to be sent>
-	 * 
-	 * 
+	 *
 	 */
-	void privmsg( Server& serv, Client& client, Message& msg ) {
+	void	privmsg( Server& serv, Client& client, Message& msg ) {
 		std::vector<std::string>					receiver;
 		std::vector<std::string>::const_iterator	receiver_it;
 		std::string									text;
@@ -772,7 +771,7 @@ namespace {
 		receiver = AParser::getReceiverList(msg.getParam()[0]);
 		
 		for (receiver_it = receiver.begin(); receiver_it != receiver.end(); receiver_it++){
-			if ((*receiver_it)[0] == '#' || (*receiver_it)[0] == '&'){ //!< it's a channel{
+			if ((*receiver_it)[0] == '#' || (*receiver_it)[0] == '&') { //!< it's a channel
 				channelReceiver = serv.findChannel((*receiver_it));
 				if (!channelReceiver){ //!< no such channel
 					serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, client.getNickname().c_str(), receiver_it->c_str());
@@ -808,7 +807,7 @@ namespace {
 	 * must never be sent in response to a NOTICE message.
 	 * 
 	 */
-	void notice( Server& serv, Client& client, Message& msg ) {
+	void	notice( Server& serv, Client& client, Message& msg ) {
 		std::string nick_target;
 		std::string text_target;
 
@@ -827,7 +826,6 @@ namespace {
 	/**
 	 * @brief Reply to WHOIS command
 	 * 
-
 	 */
 	void whoisReply( Server& serv, Client& client, Message& msg ){
 		(void) msg;
@@ -918,7 +916,7 @@ namespace {
 	 * 
 	 */
 	void kill( Server & serv, Client & client, Message & msg){
-		if (!client.isOperator()){
+		if (!client.isServOperator()){
 			serv.respond(NULL, client.getFd(), ERR_NOPRIVILEGES, client.getNickname().c_str());
 			return (war_log("ERR_NOPRIVILEGES sent to Client %d", client.getFd()));
 		}
@@ -949,7 +947,7 @@ namespace {
 	*/
 	void restart( Server & serv, Client & client, Message & msg ){
 		(void) msg;
-		if (!client.isOperator()){
+		if (!client.isServOperator()){
 			serv.respond(NULL, client.getFd(), ERR_NOPRIVILEGES, client.getNickname().c_str());
 			return (war_log("ERR_NOPRIVILEGES sent to Client %d", client.getFd()));
 		}
@@ -1011,13 +1009,13 @@ namespace {
 		
 		commandMap.push_back(std::make_pair("PRIVMSG", privmsg));
 		commandMap.push_back(std::make_pair("NOTICE", notice)); 
-		commandMap.push_back(std::make_pair("time", time)); // irssi l'envoie en minuscule
-		commandMap.push_back(std::make_pair("info", info)); // irssi l'envoie en minuscule
-		commandMap.push_back(std::make_pair("PING", pong)); // PONG reagit a la cmd PING envoye par le client
+		commandMap.push_back(std::make_pair("time", time));
+		commandMap.push_back(std::make_pair("info", info));
+		commandMap.push_back(std::make_pair("PING", pong)); //!< PONG reagit a la cmd PING envoye par le client
 		commandMap.push_back(std::make_pair("QUIT", quit));
 		commandMap.push_back(std::make_pair("MODE", mode));
 		commandMap.push_back(std::make_pair("INFO", info));
-		commandMap.push_back(std::make_pair("PING", pong));
+
 
 		return (commandMap);
 	}
