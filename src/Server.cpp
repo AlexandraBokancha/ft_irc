@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/10 15:32:38 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/10 15:59:45 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,7 @@ void	signal_handler(int signum) {
 void	set_signal( void ) {
 	signal(SIGQUIT, signal_handler);
 	signal(SIGINT, signal_handler);
-	signal(SIGPIPE, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN); //!< for python test
 }
 
 /* ************************************************************************** */

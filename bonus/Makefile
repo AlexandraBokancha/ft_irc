@@ -10,7 +10,7 @@ PROJECT_DIR = ./
 SRC_DIR = ./
 
 SRC_FILE = main.cpp \
-		   Bot.cpp
+		   Bot.cpp 
 
 ## OBJECT FILE ###
 OBJ_DIR = .obj

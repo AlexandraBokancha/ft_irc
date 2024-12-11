@@ -1,5 +1,21 @@
 #include "Bot.hpp"
 
+/* ************************************************************************** */
+/* *                             Signal Handling                            * */
+/* ************************************************************************** */
+int g_signal = 0;
+
+void	signal_handler(int signum) {
+	if (signum == SIGINT || signum == SIGQUIT) {
+		g_signal = signum;
+	}
+}
+
+void	set_signal( void ) {
+	signal(SIGQUIT, signal_handler);
+	signal(SIGINT, signal_handler);
+}
+
 int sendMsg(int socket, const char *buf, int len) {
     int total = 0; // bytes sent
     int left = len; // bytes left to sent
@@ -67,15 +83,30 @@ void Bot::startBot( void ) {
     }
 }
 
+bool Bot::hasFword(const std::string &msg, const std::string &word){
+    size_t pos = msg.find(word);
+    if (pos != std::string::npos) {
+        std::cout << "F word found at index " << pos << std::endl;
+        return (true);
+    }
+    return (false);
+}
+
+
 void Bot::runBot( void ) {
     int     nbytes;
     char    buf[512];
     
+    set_signal();
+
     sendMsg(this->_sockfd, "PASS pass\r\n", 11);
     sendMsg(this->_sockfd, "NICK bot\r\n", 10);
     sendMsg(this->_sockfd, "USER ircBot localhost bot :Bot\r\n", 32);
     
     for (;;){
+        if (g_signal == SIGINT || g_signal == SIGQUIT){
+            continue; //! bot has a blocking socket, it will ignore signals
+        }
         if ((nbytes = recv(this->_sockfd, buf, 512, 0)) == -1){
             throw (std::runtime_error("recv() error"));
         }
@@ -91,10 +122,10 @@ void Bot::runBot( void ) {
         if (pos != std::string::npos){
             sendMsg(this->_sockfd, "JOIN #main\r\n", 12);
         }
-        
+            
         //!< send welcoming message
         size_t join_pos = str.find("JOIN");
-        if (join_pos != std::string::npos){
+        if (join_pos != std::string::npos) { 
             size_t nick_pos = str.find('!');
             if (nick_pos != std::string::npos){
                 if (str.substr(1, nick_pos - 1) != "bot"){
@@ -103,8 +134,27 @@ void Bot::runBot( void ) {
                 }
             }
         }
+        //!< kick user from the channel #main if he's sending "F*" word
+        size_t privmsg_pos = str.find("PRIVMSG #main");
+        if (privmsg_pos != std::string::npos) {
+            size_t msg_pos = str.find(" :");
+            if (msg_pos != std::string::npos) {
+                std::string message = str.substr(msg_pos + 2);
+                message.erase(message.find_last_not_of(" \t\n\r\f\v") + 1);  // Trim the message
 
-        // OPER + KICK if user sent "fuck" word
+                if (hasFword(message, "fuck")) {
+                    size_t nick_start = str.find(':') + 1;
+                    size_t nick_end = str.find(' ');
+                    if (nick_start != std::string::npos && nick_end != std::string::npos){
+                        std::string user = str.substr(nick_start, nick_end - nick_start);
+                        std::string kick_msg = "KICK #main " + user + " :No F* words allowed. You've been removed.\r\n";
+                        sendMsg(this->_sockfd, kick_msg.c_str(), kick_msg.length());
+                        std::string notice_msg = "NOTICE " + user + " :No F* words allowed. You've been removed.\r\n";
+                        sendMsg(this->_sockfd, notice_msg.c_str(), notice_msg.length());
+                    }
+                }
+            }
+        }
     }
 }
 

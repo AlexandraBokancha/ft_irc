@@ -7,6 +7,11 @@
 # include <exception>
 # include <unistd.h>
 # include <sstream>
+# include <signal.h>
+# include <fcntl.h>
+# include <cerrno>
+
+extern int g_signal;
 
 class Bot
 {
@@ -17,6 +22,7 @@ class Bot
         Bot &operator=(const Bot &other);
         ~Bot();
         
+        bool hasFword(const std::string &msg, const std::string &word);
         void startBot( void );
         void runBot( void );
         void stopBot( void );
