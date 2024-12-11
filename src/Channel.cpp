@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/13 19:35:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/09 21:46:04 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/11 09:05:52 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ Channel::Channel( const Channel& rhs ) {
 
 Channel::Channel( Client* creator, const std::string& name )
 	: _client(), _operator(), _invited(), _name(name), _topic(""), \
-		_mode(CHN_T), _userLimit(0), _password("") {
+		_mode(0), _userLimit(0), _password("") {
 	this->_name = name;
 	this->_client.push_back(std::pair<Client*, int>(creator, CHNUSR_BIGO));
 	// this->_client = std::vector< std::pair< Client*, int > >(1, std::pair<Client*,int>(creator, LOCAL_OPERATOR));
