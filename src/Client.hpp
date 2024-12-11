@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/09 21:45:51 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/11 08:56:30 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,6 +70,7 @@ public:
 	void				setOperator( void );
 	bool				isOperator( void ) const;
 	void				setMode( const short mode );
+	void				setJoinedChannel( const int i );
 	void				addJoinedChannel( void  );
 
 private:

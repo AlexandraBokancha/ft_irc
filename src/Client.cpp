@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 09:34:22 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/09 21:46:07 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/11 08:56:56 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -169,6 +169,10 @@ void	Client::setRealname( const std::string& realname ) {
 
 void	Client::setMode(const short mode) {
 	this->_mode = mode;
+}
+
+void	Client::setJoinedChannel( const int i ) {
+	this->_joinedChannel = i;
 }
 
 void	Client::addJoinedChannel( void ){

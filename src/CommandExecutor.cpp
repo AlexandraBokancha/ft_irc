@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/09 21:51:04 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/11 09:00:36 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -436,8 +436,7 @@ namespace {
 				//! SUCCESS
 				//! add client to channel
 				ch->addClient(&client);
-				client.addJoinedChannel();
-
+				client.setJoinedChannel(client.getJoinedChannel() + 1);
 			}
 			
 			//! response to client
@@ -509,6 +508,7 @@ namespace {
 			}
 			//! Remove from channel
 			channel->removeClient(client.getFd());
+			client.setJoinedChannel(client.getJoinedChannel() - 1);
 			
 			//! response to client
 			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + \
