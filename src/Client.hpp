@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/11 15:50:23 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/11 15:53:10 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ class Client {
 	void				setNetId( struct sockaddr_in addr );
 	void				setFd( int fd );
 	void				setOperator( void );
-	bool				isOperator( void ) const;
+	bool				isServOperator( void ) const;
 	void				setMode( const short mode );
 	void				setJoinedChannel( const int i );
 	void				addJoinedChannel( void  );
