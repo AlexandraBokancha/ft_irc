@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 08:52:50 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/10 12:49:10 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/11 15:50:23 by alexandra        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,35 +42,36 @@ class Client {
 
 		Client& operator=( Client const & rhs );
 
-		struct sockaddr_in	getNetId( void ) const;
-		std::string			getHostname( void ) const;
-		std::string			getUsername( void ) const;
-		std::string			getNickname( void ) const;
-		std::string			getServername( void ) const;
-		std::string			getRealname( void ) const;
-		std::string			getPrefix( void ) const;
-		bool				getConnected( void ) const;
-		bool				getRegistred( void ) const;
-		int					getFd( void ) const;
-		int					getJoinedChannel( void ) const;
-		int					getMode( void ) const;
-		
-		void				setHostname( const std::string& hostname );
-		void				setUsername( const std::string& username );
-		void				setNickname( const std::string& nickname );
-		void				setServername( const std::string& servername );
-		void				setRealname( const std::string& realname );
-		void				setRegistred( void );
-		void				setConnected( void );
-		void				setDisconnected( void );
-		void				setNetId( struct sockaddr_in addr );
-		void				setFd( int fd );
-		void				setOperator( void );
-		void				setMode( const short mode );
-		void				addJoinedChannel( void );
-		
-		std::string			modeToString( void ) const;
-		bool				isServOperator( void ) const;
+	//* Getters and Setters *//
+	struct sockaddr_in	getNetId( void ) const;
+	std::string			getHostname( void ) const;
+	std::string			getUsername( void ) const;
+	std::string			getNickname( void ) const;
+	std::string			getServername( void ) const;
+	std::string			getRealname( void ) const;
+	std::string			getPrefix( void ) const;
+	bool				getConnected( void ) const;
+	bool				getRegistred( void ) const;
+	int					getFd( void ) const;
+	int					getJoinedChannel( void ) const;
+	int					getMode( void ) const;
+	std::string			modeToString( void ) const;
+
+	void				setHostname( const std::string& hostname );
+	void				setUsername( const std::string& username );
+	void				setNickname( const std::string& nickname );
+	void				setServername( const std::string& servername );
+	void				setRealname( const std::string& realname );
+	void				setRegistred( void );
+	void				setConnected( void );
+	void				setDisconnected( void );
+	void				setNetId( struct sockaddr_in addr );
+	void				setFd( int fd );
+	void				setOperator( void );
+	bool				isOperator( void ) const;
+	void				setMode( const short mode );
+	void				setJoinedChannel( const int i );
+	void				addJoinedChannel( void  );
 
 	private:
 		struct sockaddr_in	_netId;		//!< Client addr
