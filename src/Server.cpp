@@ -598,10 +598,11 @@ void	Server::receiveMsg( int& i ) {
 	char	buffer[512]; //<! 512 = max irc message size
 	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
 	
-	if (buffer_size > 510) {
-		err_log("IRC protocol limit (512) was exceeded : %d bytes", buffer_size);
-		return ;
-	}
+	// if (buffer_size > 510) {
+	// 	err_log("IRC protocol limit (512) was exceeded : %d bytes", buffer_size);
+	// 	return ;
+	// }
+
 	if (buffer_size > 0) { //!< Received msg
 		
 		buffer[buffer_size] = '\0';
@@ -610,18 +611,18 @@ void	Server::receiveMsg( int& i ) {
 			
 		sender->setBuffer(buffer); //!< add new data to the client's existing buffer
 
-		//!< check for IRC linit (512)
-		if (sender->getBuffer().size() > 512) {
-			err_log("IRC protocol limit (512) was exceeded : %d bytes", buffer_size);
-			sender->cleanBuffer(512);
-			return ;
-		}
+		// //!< check for IRC linit (512)
+		// if (sender->getBuffer().size() > 512) {
+		// 	err_log("IRC protocol limit (512) was exceeded : %d bytes", buffer_size);
+		// 	sender->cleanBuffer(512);
+		// 	return ;
+		// }
 
 		size_t n_pos;
-		while ((n_pos = sender->getBuffer().find("\n")) != std::string::npos) {
+		while ((n_pos = sender->getBuffer().find(CR)) != std::string::npos) {
 				
 			std::string fullMsg = sender->getBuffer().substr(0, n_pos + 2);
-			sender->cleanBuffer(n_pos); 
+			sender->cleanBuffer(n_pos + 2); 
 
 			try {
 				int msg_i = 0;

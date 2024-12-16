@@ -168,7 +168,12 @@ void	Client::addJoinedChannel( void ){
 }
 
 void Client::cleanBuffer( size_t n_pos ) {
-	this->_buffer.erase(0, n_pos + 2);
+	if (n_pos >= this->_buffer.size()){
+		this->_buffer.clear();
+	}
+	else{
+		this->_buffer = this->_buffer.substr(n_pos);
+	}
 }
 
 std::string	Client::modeToString( void ) const {
