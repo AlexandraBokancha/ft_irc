@@ -103,6 +103,10 @@ int	Client::getMode( void ) const {
 	return (this->_mode);
 }
 
+std::string Client::getBuffer( void ) const{
+	return (this->_buffer);
+}
+
 void	Client::setHostname( const std::string& hostname ) {
 	this->_hostname = hostname;
 }
@@ -147,6 +151,10 @@ void	Client::setOperator( void ) {
 	this->_servOper = true;
 }
 
+void	Client::setBuffer( const char *buffToAdd ) {
+	this->_buffer += buffToAdd;
+}
+
 void	Client::setMode(const short mode) {
 	this->_mode = mode;
 }
@@ -157,6 +165,10 @@ void	Client::setJoinedChannel( const int i ) {
 
 void	Client::addJoinedChannel( void ){
 	this->_joinedChannel++;	
+}
+
+void Client::cleanBuffer( size_t n_pos ) {
+	this->_buffer.erase(0, n_pos + 2);
 }
 
 std::string	Client::modeToString( void ) const {

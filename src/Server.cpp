@@ -599,20 +599,27 @@ void	Server::receiveMsg( int& i ) {
 	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
 
 	if (buffer_size > 0) { //!< Received msg
-		try{
-			buffer[buffer_size] = '\0';
-			int msg_i = 0;
-			Client* sender = findClient(this->_pollFd[i].fd);
-
-			log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
-			while (msg_i < buffer_size - 2){
-				Message msg(buffer, msg_i, buffer_size);
+		
+		buffer[buffer_size] = '\0';
+		Client* sender = findClient(this->_pollFd[i].fd);
+		log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
+			
+		sender->setBuffer(buffer); //!< add new data to the client's existing buffer
+			
+		size_t n_pos;
+		while ((n_pos = sender->getBuffer().find("\n")) != std::string::npos) {
 				
+			std::string fullMsg = sender->getBuffer().substr(0, n_pos + 2);
+			sender->cleanBuffer(n_pos); 
+
+			try {
+				int msg_i = 0;
+				Message msg(fullMsg.c_str(), msg_i, fullMsg.size());	
 				CommandExecutor::execute(*this, *sender, msg);
 			}
-		}
-		catch (std::exception & e){
-			err_log("MESSAGE: %s : %s", buffer, e.what());
+			catch (std::exception & e) {
+				err_log("MESSAGE: %s : %s", fullMsg.c_str(), e.what());
+			}
 		}
 		return;
 	}

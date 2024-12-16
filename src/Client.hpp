@@ -55,7 +55,10 @@ class Client {
 	int					getFd( void ) const;
 	int					getJoinedChannel( void ) const;
 	int					getMode( void ) const;
+	std::string			getBuffer( void ) const;
+
 	std::string			modeToString( void ) const;
+	void				cleanBuffer( size_t n_pos );
 
 	void				setHostname( const std::string& hostname );
 	void				setUsername( const std::string& username );
@@ -68,6 +71,7 @@ class Client {
 	void				setNetId( struct sockaddr_in addr );
 	void				setFd( int fd );
 	void				setOperator( void );
+	void				setBuffer(const char *bufToAdd);
 	bool				isServOperator( void ) const;
 	void				setMode( const short mode );
 	void				setJoinedChannel( const int i );
@@ -89,6 +93,7 @@ class Client {
 		int					_joinedChannel; //!< Number of joinend channel
 		int					_fd; //!< Pointer to server_poll fd
 		short				_mode;
+		std::string			_buffer;
 };
 
 std::ostream&	operator<<( std::ostream& os, const struct sockaddr_in& rhs );
