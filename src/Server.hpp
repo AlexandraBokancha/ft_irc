@@ -105,7 +105,7 @@ class Server {
 
 		std::vector<Channel>		_channel;
 
-		std::vector<Client>		_client;
+		std::vector<Client*>		_client;
 
 		std::vector<struct pollfd>	_pollFd;
 		

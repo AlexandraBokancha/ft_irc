@@ -518,8 +518,8 @@ namespace {
 			client.setJoinedChannel(client.getJoinedChannel() - 1);
 			
 			//! response to client
-			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + \
-				std::string(inet_ntoa((client.getNetId().sin_addr))) + std::string(" PART ") + channel->getName() + " :" + part_msg;
+			std::string response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" \
+				 + std::string(" PART ") + channel->getName() + " :" + part_msg;
 			serv.respond(NULL, client.getFd(), response.c_str());
 			
 			if (channel->isEmpty()) { //!< Remove channel
