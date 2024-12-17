@@ -30,6 +30,7 @@ Client::Client( void ) {
 	this->_joinedChannel = 0;
 	this->_fd = -1;
 	this->_mode = 0;
+	this->_buffer = "";
 	return ;
 }
 
@@ -45,6 +46,7 @@ Client::Client( const Client & rhs ) {
 	this->_joinedChannel = rhs._joinedChannel;
 	this->_fd = rhs._fd;
 	this->_mode = 0;
+	this->_buffer = rhs._buffer;
 	return ;
 }
 
@@ -103,7 +105,7 @@ int	Client::getMode( void ) const {
 	return (this->_mode);
 }
 
-std::string Client::getBuffer( void ) const{
+const std::string & Client::getBuffer( void ) const{
 	return (this->_buffer);
 }
 
@@ -212,6 +214,7 @@ Client&	Client::operator=( Client const& rhs ) {
 		this->_joinedChannel = rhs._joinedChannel;
 		this->_fd = rhs._fd;
 		this->_mode = rhs._mode;
+		this->_buffer = rhs._buffer;
 	}
 	return (*this);
 }

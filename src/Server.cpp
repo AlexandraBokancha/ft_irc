@@ -373,6 +373,7 @@ void	Server::disconnectClient( int& index ) { if (index == 0)
 	
 	int	client_sock = this->_pollFd[index].fd;
 	Client	*client = this->findClient(client_sock);
+	client->cleanBuffer(512);
 	//! Find every channel were client is connected
 	if (client_sock > 0) {
 		for (std::vector<Channel>::iterator it = _channel.begin(); it != _channel.end(); it++) {
@@ -391,7 +392,6 @@ void	Server::disconnectClient( int& index ) { if (index == 0)
 	log("Closing socket %d.", this->_pollFd[index].fd);
 	close(this->_pollFd[index].fd);
 	this->_pollFd.erase(this->_pollFd.begin() + index);
-
 	//! Remove client from client vector
 	delete (this->_client[index - 1]);
 	this->_client.erase(this->_client.begin() + index - 1);

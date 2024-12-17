@@ -55,7 +55,7 @@ class Client {
 	int					getFd( void ) const;
 	int					getJoinedChannel( void ) const;
 	int					getMode( void ) const;
-	std::string			getBuffer( void ) const;
+	const std::string &			getBuffer( void ) const;
 
 	std::string			modeToString( void ) const;
 	void				cleanBuffer( size_t n_pos );

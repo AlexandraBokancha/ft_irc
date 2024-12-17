@@ -422,7 +422,7 @@ namespace {
 					continue ;
 				}
 				if (key_it != key.end()) { //!< Invalid key
-					if (!ch->validPassword(*key_it)) {
+					if (key.empty() || !ch->validPassword(*key_it)) {
 						serv.respond(NULL, client.getFd(), ERR_BADCHANNELKEY, client.getNickname().c_str(), channel_it->c_str());
 						continue ;
 					}
@@ -867,7 +867,6 @@ namespace {
 			log("Client %s quit the server with next message: %s", client.getNickname().c_str(), msg.getParam()[0].c_str());
 		}
 		int index = serv.findClientIndex(client.getNickname());
-		index++; // -> disconnectClient() fait -1 de l'index
 		success_log("Client %s will be disconnected from the server", client.getNickname().c_str());
 		serv.disconnectClient(index);
 	}
@@ -967,9 +966,11 @@ namespace {
 		
 		std::stringstream ss;
 		ss << serv.getPort();
+		std::string port = ss.str();
+		std::string passwd = serv.getPasswd();
 		
 		const char *program = "./ircserv";
-		const char *const args[] = { "./ircserv", ss.str().c_str(), serv.getPasswd().c_str(), NULL};
+		const char *const args[] = { "./ircserv", port.c_str(), passwd.c_str(), NULL};
 
 		if (execv(program, const_cast<char *const*>(args)) == -1) { //<! will restart the server with the same port/passwor
 			fatal_log("Failed to restart server");
