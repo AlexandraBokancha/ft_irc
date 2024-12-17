@@ -422,7 +422,7 @@ namespace {
 					continue ;
 				}
 				if (channel_mode & CHN_K){
-					if (key.empty()){
+					if (key.empty()){ //!< no key argument is given
 						serv.respond(NULL, client.getFd(), ERR_BADCHANNELKEY, client.getNickname().c_str(), channel_it->c_str());
 						continue ;
 					}
@@ -874,6 +874,7 @@ namespace {
 		}
 		int index = serv.findClientIndex(client.getNickname());
 		success_log("Client %s will be disconnected from the server", client.getNickname().c_str());
+		index++;
 		serv.disconnectClient(index);
 	}
 

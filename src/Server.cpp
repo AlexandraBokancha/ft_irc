@@ -84,7 +84,7 @@ Server::Server( void )
 {
 	this->_socket = -1;
 	this->_channel = std::vector<Channel>();
-	this->_client = std::vector<Client*>();
+	this->_client = std::vector<Client>();
 	this->_pollFd = std::vector<struct pollfd>();
 	this->_clientNbr = 0;
 	this->_serverInfo = NULL;
@@ -98,7 +98,7 @@ Server::Server(const int port, const std::string password )
 	this->_serverInfo = NULL;
 	this->_socket = -1;
 	this->_channel = std::vector<Channel>();
-	this->_client = std::vector<Client*>();
+	this->_client = std::vector<Client>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
 }
@@ -109,7 +109,7 @@ Server::Server( Server const &rhs )
 	this->_serverInfo = NULL;
 	this->_socket = -1;
 	this->_channel = std::vector<Channel>();
-	this->_client = std::vector<Client*>();
+	this->_client = std::vector<Client>();
 	this->_pollFd = std::vector<struct pollfd>();
 	return ;
 }
@@ -198,10 +198,9 @@ int Server::comparePassword( const std::string& str ) const {
  * @preturn The client which the sockt is refering to, NULL if not found
  */
 Client*	Server::findClient( int client_sock ) {
-	std::vector<Client*>::iterator it;
-	for (it = this->_client.begin(); it != this->_client.end(); it++) {
-		if ((*it)->getFd() == client_sock)
-			return (*it);
+	for (size_t i = 0; i < _client.size(); ++i){
+		if (_client[i].getFd() == client_sock)
+			return (&_client[i]);
 	}
 	return (NULL);
 }
@@ -215,17 +214,16 @@ Client*	Server::findClient( int client_sock ) {
  * @return Client pointer if found, else NULL
  */
 Client*	Server::findClient( const std::string& nick ) {
-	std::vector<Client*>::iterator it;
-	for (it = this->_client.begin(); it != this->_client.end(); it++) {
-		if ((*it)->getNickname() == nick)
-			return (*it);
+	for (size_t i = 0; i < _client.size(); ++i) {
+		if (_client[i].getNickname() == nick)
+			return (&_client[i]);
 	}
 	return (NULL);
 }
 
 int Server::findClientIndex( const std::string & nick ) {
 	for (std::size_t i = 0; i < _client.size(); ++i){
-		if (_client[i]->getNickname() == nick){
+		if (_client[i].getNickname() == nick){
 			return (static_cast<int>(i));
 		}
 	}
@@ -368,7 +366,8 @@ Channel*	Server::findChannel( const std::string& name ) {
  *
  * @param index	The client index in the pollFd
  */
-void	Server::disconnectClient( int& index ) { if (index == 0)
+void	Server::disconnectClient( int& index ) { 
+	if (index == 0)
 		return ;
 	
 	int	client_sock = this->_pollFd[index].fd;
@@ -393,8 +392,7 @@ void	Server::disconnectClient( int& index ) { if (index == 0)
 	close(this->_pollFd[index].fd);
 	this->_pollFd.erase(this->_pollFd.begin() + index);
 	//! Remove client from client vector
-	delete (this->_client[index - 1]);
-	this->_client.erase(this->_client.begin() + index - 1);
+	this->_client.erase(this->_client.begin() + (index - 1));
 
 	index--;
 
@@ -488,7 +486,8 @@ void		Server::stopServer( void ) {
  * Accept new client after a POLLIN event have been caught on the Server socket
  */
 void	Server::acceptNewClient( void ) {
-	Client				*new_client = new Client();
+	Client				new_client;
+	//;
 
 	int					client_socket;
 	struct sockaddr_in	client_addr;
@@ -504,8 +503,8 @@ void	Server::acceptNewClient( void ) {
 		this->pollPushBack(client_socket, POLLIN); //!< add client fd to poll
 
 		//! Add client
-		new_client->setFd(client_socket);
-		new_client->setNetId(client_addr);
+		new_client.setFd(client_socket);
+		new_client.setNetId(client_addr);
 		this->_client.push_back(new_client);
 
 }
