@@ -421,12 +421,18 @@ namespace {
 					serv.respond(NULL, client.getFd(), ERR_CHANNELISFULL, client.getNickname().c_str(), channel_it->c_str());
 					continue ;
 				}
-				if (key_it != key.end()) { //!< Invalid key
-					if (key.empty() || !ch->validPassword(*key_it)) {
+				if (channel_mode & CHN_K){
+					if (key.empty()){
 						serv.respond(NULL, client.getFd(), ERR_BADCHANNELKEY, client.getNickname().c_str(), channel_it->c_str());
 						continue ;
 					}
-					key_it++;
+					if (key_it != key.end()) { //!< Invalid key
+						if (!ch->validPassword(*key_it)) {
+							serv.respond(NULL, client.getFd(), ERR_BADCHANNELKEY, client.getNickname().c_str(), channel_it->c_str());
+							continue ;
+						}
+						key_it++;
+					}
 				}
 				if (client.getJoinedChannel() >= MAX_CHANNEL_PER_CLIENT) { //!< Maximum channel joined
 					serv.respond(NULL, client.getFd(), ERR_TOOMANYCHANNELS, client.getNickname().c_str(), channel_it->c_str());
