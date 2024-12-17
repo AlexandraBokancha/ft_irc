@@ -639,11 +639,11 @@ namespace {
 					return ;
 				}
 			}
-			channel->setInvited(nick_target); // segfault
+			channel->setInvited(nick_target);
 		}
 		
 		//!< send invitation
-		response = ":" + client.getNickname() + " INVITE " + channel_target + " " + nick_target;
+		response = ":" + client.getNickname() + " INVITE " + nick_target + " " + channel_target;
 		serv.respond(NULL, serv.findClient(nick_target)->getFd(), response.c_str());
 		
 		//!< reply by server
@@ -868,15 +868,15 @@ namespace {
 	 * [<Quit message>] is optional
 	 * 
 	 */
-	void quit( Server& serv, Client& client, Message& msg ) {
-		if (!msg.getParam().empty()){
-			log("Client %s quit the server with next message: %s", client.getNickname().c_str(), msg.getParam()[0].c_str());
-		}
-		int index = serv.findClientIndex(client.getNickname());
-		success_log("Client %s will be disconnected from the server", client.getNickname().c_str());
-		index++;
-		serv.disconnectClient(index);
-	}
+	// void quit( Server& serv, Client& client, Message& msg ) {
+	// 	if (!msg.getParam().empty()){
+	// 		log("Client %s quit the server with next message: %s", client.getNickname().c_str(), msg.getParam()[0].c_str());
+	// 	}
+	// 	int index = serv.findClientIndex(client.getNickname());
+	// 	success_log("Client %s will be disconnected from the server", client.getNickname().c_str());
+	// 	index++;
+	// 	serv.disconnectClient(index);
+	// }
 
 	/* ************************************************************************** */
 	/* *                         IRC Operator's commands                        * */
@@ -1029,7 +1029,7 @@ namespace {
 		commandMap.push_back(std::make_pair("time", time));
 		commandMap.push_back(std::make_pair("info", info));
 		commandMap.push_back(std::make_pair("PING", pong)); //!< PONG reagit a la cmd PING envoye par le client
-		commandMap.push_back(std::make_pair("QUIT", quit));
+	//	commandMap.push_back(std::make_pair("QUIT", quit));
 		commandMap.push_back(std::make_pair("MODE", mode));
 		commandMap.push_back(std::make_pair("INFO", info));
 

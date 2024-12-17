@@ -395,7 +395,7 @@ void	Server::disconnectClient( int& index ) {
 	this->_pollFd.erase(this->_pollFd.begin() + index);
 	//! Remove client from client vector
 	this->_client.erase(this->_client.begin() + index - 1);
-	delete (this->_client[index]);
+	delete (this->_client[index - 1]);
 
 	index--;
 
@@ -597,6 +597,11 @@ void Server::broadcastToChannel( const Client* src, const std::string& msg, cons
 void	Server::receiveMsg( int& i ) {
 	
 	char	buffer[512]; //<! 512 = max irc message size
+	
+	Client* sender = findClient(this->_pollFd[i].fd);
+	if (!sender){
+		return;
+	}
 	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
 	
 	if (buffer_size > 510) { //!< check for IRC limit (512)
@@ -607,7 +612,6 @@ void	Server::receiveMsg( int& i ) {
 	if (buffer_size > 0) { //!< Received msg
 		
 		buffer[buffer_size] = '\0';
-		Client* sender = findClient(this->_pollFd[i].fd);
 		log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
 			
 		sender->setBuffer(buffer); //!< add new data to the client's existing buffer
