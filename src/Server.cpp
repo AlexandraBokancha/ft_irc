@@ -356,162 +356,6 @@ Channel*	Server::findChannel( const std::string& name ) {
 }
 
 /**
- * @brief Disconnect client and remove it from poll
- *
- * This function remove the client-index from poll.
- * It does it by first closing the client socket,
- * then it remove all of it's data from poll
- *
- * BEWARE:
- *     The index is reduced by one and this behavioue shouldn't be changed
- *     For the moment !
- *
- * @param index	The client index in the pollFd
- */
-void	Server::disconnectClient( int& index ) { 
-	if (index == 0)
-		return ;
-	
-	int	client_sock = this->_pollFd[index].fd;
-	Client	*client = this->findClient(client_sock);
-	client->cleanBuffer(512);
-	//! Find every channel were client is connected
-	if (client_sock > 0) {
-		for (std::vector<Channel>::iterator it = _channel.begin(); it != _channel.end(); it++) {
-			if (it->getClient(client_sock) != NULL) {
-				it->removeClient(client_sock);
-				this->broadcastToChannel(client, "QUIT :Quit: ", &(*it), client_sock);
-			}
-			if (it->isEmpty()) {
-				this->_channel.erase(it);
-				log("Removing channel %s", it->getName().c_str());
-				it--;
-			}
-		}
-	}
-
-	log("Closing socket %d.", this->_pollFd[index].fd);
-	close(this->_pollFd[index].fd);
-	this->_pollFd.erase(this->_pollFd.begin() + index);
-	//! Remove client from client vector
-	this->_client.erase(this->_client.begin() + index - 1);
-	delete (this->_client[index - 1]);
-
-	index--;
-
-}
-
-                           /* SERVER HANDLING */
-
-/**
- * @brief Start the server
- *
- * Init server variable and signals, create socket, bind it and start listening
- *
- * @param Port in char* format just for an easier access to get_addr
- */
-void	Server::startServer( const char *port_str ) {
-	struct addrinfo	hints, *p;
-	struct addrinfo	*servInfo;
-
-	std::memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;		 //!< Use AF_UNSPEC for both ipv4 ipv6 interfaces
-	hints.ai_socktype = SOCK_STREAM; //!< TCP stream socket
-	hints.ai_flags = AI_PASSIVE;	 //!< <=> INADDR_ANY <=> "0.0.0.0"
-									 //!< Used by application that indent to accept
-									 //!< connexion on any of the host net adresses
-	if (getaddrinfo(NULL, port_str, &hints, &servInfo) != 0)
-		throw (std::runtime_error(std::string("getaddrinfo: ") + std::strerror(errno)));
-
-	this->_serverInfo = servInfo;
-
-    char ipstr[INET_ADDRSTRLEN];
-    for (p = servInfo; p != NULL; p = p->ai_next) {
-        struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
-        void *addr = &(ipv4->sin_addr);
-
-        // Convert the IP to a string and return it
-        inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));
-        break; // We only need the first IP address
-    }
-	this->_ip = ipstr;
-	this->_socket = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
-	if (this->_socket == -1)
-		throw (std::runtime_error(std::string("socket: ") + std::strerror(errno)));
-	this->pollPushBack(this->_socket, POLLIN); //!< Add server to poll
-	int	reusable_addr = 1;
-	if (setsockopt(this->_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &reusable_addr, sizeof(reusable_addr)) < 0)
-		throw (std::runtime_error(std::string("setsockopt: ") + std::strerror(errno)));
-
-	success_log("Socket %d created", this->_socket);
-
-	if (bind(this->_socket, this->_serverInfo->ai_addr, this->_serverInfo->ai_addrlen) < 0)
-		throw (std::runtime_error(std::string("bind: ") + std::strerror(errno)));
-
-	success_log("Binded socket %d.", this->_socket);
-
-	if (listen(this->_socket, 256) < 0)
-		throw (std::runtime_error(std::string("listen: ") + std::strerror(errno)));
-
-	log("Socket %d is listening on port %d.", this->_socket, this->_port);
-
-	set_signal();
-}
-
-/**
- * @brief Stop the server
- *
- * Stop the server by disconnecting every client and closing associated sockets
- * Should be called just before server desctructor / End of program
- */
-void		Server::stopServer( void ) {
-	if (this->_pollFd.size() > 1) {
-		log("Disconecting every client...");
-		int i = this->_pollFd.size() - 1;
-		while (i > 0)
-			disconnectClient(i);
-	}
-	log("%sStopping server%s", WHT, RESET);
-	if (this->_socket != -1) {
-		log("Closing socket %d.", this->_socket);
-		close(this->_socket);
-	}
-	if (this->_serverInfo != NULL) {
-		log("Freeing server informations");
-		freeaddrinfo(this->_serverInfo);
-	}
-	log("Server stopped!");
-}
-
-/**
- * @brief Accept a new client connecting to the server
- *
- * Accept new client after a POLLIN event have been caught on the Server socket
- */
-void	Server::acceptNewClient( void ) {
-	Client				*new_client = new Client();
-
-	int					client_socket;
-	struct sockaddr_in	client_addr;
-	int					addr_len = sizeof(client_addr);
-
-		client_socket = accept(this->_socket, (struct sockaddr*)&client_addr,
-			reinterpret_cast<socklen_t *>(&addr_len));
-		if (client_socket < 0) //!< accept error
-			return (err_log("%sInternal error%s: %saccept%s: %s",
-					RED, RESET, MAG, RESET, std::strerror(errno)));
-		success_log("accepted client on: %s", inet_ntoa(client_addr.sin_addr));
-
-		this->pollPushBack(client_socket, POLLIN); //!< add client fd to poll
-
-		//! Add client
-		new_client->setFd(client_socket);
-		new_client->setNetId(client_addr);
-		this->_client.push_back(new_client);
-
-}
-
-/**
  * @brief Send the complete message to Client
  *
  * Protected send ensuring that the full message real the client at one time
@@ -586,6 +430,87 @@ void Server::broadcastToChannel( const Client* src, const std::string& msg, cons
 	}
 }
 
+
+
+                           /* SERVER HANDLING */
+
+
+/**
+ * @brief Stop the server
+ *
+ * Stop the server by disconnecting every client and closing associated sockets
+ * Should be called just before server desctructor / End of program
+ */
+void		Server::stopServer( void ) {
+	if (this->_pollFd.size() > 1) {
+		log("Disconecting every client...");
+		int i = this->_pollFd.size() - 1;
+		while (i > 0)
+			disconnectClient(i);
+	}
+	log("%sStopping server%s", WHT, RESET);
+	if (this->_socket != -1) {
+		log("Closing socket %d.", this->_socket);
+		close(this->_socket);
+	}
+	if (this->_serverInfo != NULL) {
+		log("Freeing server informations");
+		freeaddrinfo(this->_serverInfo);
+	}
+	log("Server stopped!");
+}
+
+
+/**
+ * @brief Disconnect client and remove it from poll
+ *
+ * This function remove the client-index from poll.
+ * It does it by first closing the client socket,
+ * then it remove all of it's data from poll
+ *
+ * BEWARE:
+ *     The index is reduced by one and this behavioue shouldn't be changed
+ *     For the moment !
+ *
+ * @param index	The client index in the pollFd
+ */
+void	Server::disconnectClient( int& index ) { 
+	if (index == 0)
+		return ;
+	
+	int	client_sock = this->_pollFd[index].fd;
+	Client*	client = this->findClient(client_sock);
+	
+	client->cleanBuffer(512);
+	
+	//! Find every channel were client is connected
+	if (client_sock > 0) {
+		for (std::vector<Channel>::iterator it = _channel.begin(); it != _channel.end(); it++) {
+			if (it->getClient(client_sock) != NULL) {
+				it->removeClient(client_sock);
+				this->broadcastToChannel(client, "QUIT :Quit: ", &(*it), client_sock);
+			}
+			if (it->isEmpty()) {
+				log("Removing channel %s", it->getName().c_str());
+				this->_channel.erase(it);
+				it--;
+			}
+		}
+	}
+
+	log("Closing socket %d.", this->_pollFd[index].fd);
+	
+	close(client_sock);
+	this->_pollFd.erase(this->_pollFd.begin() + index);
+	
+	//! Remove client from client vector
+	delete (client);
+	this->_client.erase(this->_client.begin() + (index - 1));
+
+	index--;
+
+}
+
 /**
  * @brief Receive client message after POLLIN event
  *
@@ -596,13 +521,8 @@ void Server::broadcastToChannel( const Client* src, const std::string& msg, cons
  */
 void	Server::receiveMsg( int& i ) {
 	
-	char	buffer[512]; //<! 512 = max irc message size
-	
-	Client* sender = findClient(this->_pollFd[i].fd);
-	if (!sender){
-		return;
-	}
-	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
+	char	buffer[512]; //<! 512 = max irc message size	
+	int		buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
 	
 	if (buffer_size > 510) { //!< check for IRC limit (512)
 		err_log("IRC protocol limit (512) was exceeded : %d bytes", buffer_size);
@@ -611,7 +531,11 @@ void	Server::receiveMsg( int& i ) {
 
 	if (buffer_size > 0) { //!< Received msg
 		
+		Client*	sender = findClient(this->_pollFd[i].fd);
+		if (!sender)
+			return ;
 		buffer[buffer_size] = '\0';
+		
 		log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
 			
 		sender->setBuffer(buffer); //!< add new data to the client's existing buffer
@@ -625,11 +549,11 @@ void	Server::receiveMsg( int& i ) {
 		size_t n_pos;
 		while ((n_pos = sender->getBuffer().find(CR)) != std::string::npos) {
 				
-			std::string fullMsg = sender->getBuffer().substr(0, n_pos + 2);
+			std::string	fullMsg = sender->getBuffer().substr(0, n_pos + 2);
 			sender->cleanBuffer(n_pos + 2);
 
 			try {
-				int msg_i = 0;
+				int	msg_i = 0;
 				Message msg(fullMsg.c_str(), msg_i, fullMsg.size());	
 				CommandExecutor::execute(*this, *sender, msg);
 			}
@@ -645,6 +569,7 @@ void	Server::receiveMsg( int& i ) {
 		err_log("Could not received data on socket %d: %srecv%s: %s.", this->_pollFd[i].fd, MAG, RESET, std::strerror(errno));
 	disconnectClient(i);
 }
+
 
 /**
  * @brief Check if an event have been received and treat it if received
@@ -677,6 +602,35 @@ void	Server::checkEvent( int& i ) {
 }
 
 /**
+ * @brief Accept a new client connecting to the server
+ *
+ * Accept new client after a POLLIN event have been caught on the Server socket
+ */
+void	Server::acceptNewClient( void ) {
+	Client				*new_client = new Client();
+
+	struct sockaddr_in	client_addr;
+	int					client_socket;
+	int					addr_len = sizeof(client_addr);
+
+		client_socket = accept(this->_socket, (struct sockaddr*)&client_addr,
+			reinterpret_cast<socklen_t *>(&addr_len));
+		if (client_socket < 0){ //!< accept() error
+			return (err_log("%sInternal error%s: %saccept%s: %s", \
+				RED, RESET, MAG, RESET, std::strerror(errno)));
+		}
+		
+		success_log("accepted client on: %s", inet_ntoa(client_addr.sin_addr));
+
+		this->pollPushBack(client_socket, POLLIN); //!< add client fd to poll
+
+		//! Add client
+		new_client->setFd(client_socket);
+		new_client->setNetId(client_addr);
+		this->_client.push_back(new_client);
+}
+
+/**
  * @brief Run the server
  */
 void	Server::runServer( void ) {
@@ -694,7 +648,7 @@ void	Server::runServer( void ) {
 		for (int i = 1; i < static_cast<int>(this->_pollFd.size()); i++) {
 			if (this->_pollFd[i].fd > 0)
 				this->checkEvent(i);
-			else if (this->_pollFd[i].fd == 0) { //! Case unused fd
+			else if (this->_pollFd[i].fd == 0) { //! Case unused fdreturn
 				war_log("Removed unused fd from pollfd [%sShouldn't happened%s]", YEL, RESET);
 				disconnectClient(i);
 			} else
@@ -705,6 +659,63 @@ void	Server::runServer( void ) {
         if (status < 0)
 			fatal_log("poll(): %s.", std::strerror(errno));
 	}
+}
+
+/**
+ * @brief Start the server
+ *
+ * Init server variable and signals, create socket, bind it and start listening
+ *
+ * @param Port in char* format just for an easier access to get_addr
+ */
+void	Server::startServer( const char *port_str ) {
+	struct addrinfo	hints, *p;
+	struct addrinfo	*servInfo;
+
+	std::memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;		 //!< Use AF_UNSPEC for both ipv4 ipv6 interfaces
+	hints.ai_socktype = SOCK_STREAM; //!< TCP stream socket
+	hints.ai_flags = AI_PASSIVE;	 //!< <=> INADDR_ANY <=> "0.0.0.0"
+									 //!< Used by application that indent to accept
+									 //!< connexion on any of the host net adresses
+	if (getaddrinfo(NULL, port_str, &hints, &servInfo) != 0)
+		throw (std::runtime_error(std::string("getaddrinfo: ") + std::strerror(errno)));
+
+	this->_serverInfo = servInfo;
+
+    char ipstr[INET_ADDRSTRLEN];
+    for (p = servInfo; p != NULL; p = p->ai_next) {
+        struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+        void *addr = &(ipv4->sin_addr);
+
+        // Convert the IP to a string and return it
+        inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));
+        break; // We only need the first IP address
+    }
+	this->_ip = ipstr;
+	this->_socket = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
+	if (this->_socket == -1)
+		throw (std::runtime_error(std::string("socket: ") + std::strerror(errno)));
+	
+	this->pollPushBack(this->_socket, POLLIN); //!< Add server to poll
+	
+	int	reusable_addr = 1;
+	if (setsockopt(this->_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &reusable_addr, sizeof(reusable_addr)) < 0)
+		throw (std::runtime_error(std::string("setsockopt: ") + std::strerror(errno)));
+
+	success_log("Socket %d created", this->_socket);
+
+	if (bind(this->_socket, this->_serverInfo->ai_addr, this->_serverInfo->ai_addrlen) < 0)
+		throw (std::runtime_error(std::string("bind: ") + std::strerror(errno)));
+
+	success_log("Binded socket %d.", this->_socket);
+
+	if (listen(this->_socket, 256) < 0)
+		throw (std::runtime_error(std::string("listen: ") + std::strerror(errno)));
+
+	log("Socket %d is listening on port %d.", this->_socket, this->_port);
+
+	set_signal();
 }
 
 /* ************************************************************************** */
