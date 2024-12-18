@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/18 17:39:11 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/18 17:41:05 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -384,24 +384,10 @@ int Server::sendMsg( int socket, const char *buf, int len ) const {
 			err_log("send(): %s.", std::strerror(errno));
 			break;
 		}
-// <<<<<<< HEAD
-// 	}
-//
-// 	log("Closing socket %d.", this->_pollFd[index].fd);
-// 	close(this->_pollFd[index].fd);
-// 	this->_pollFd.erase(this->_pollFd.begin() + index);
-// 	//! Remove client from client vector
-// 	delete (this->_client[index - 1]);
-// 	this->_client.erase(this->_client.begin() + index - 1);
-//
-// 	index--;
-//
-// =======
         total += b;
         left -= b;
     }
     return (b == -1 ? -1 : 0); // return -1 on error, 0 on success
-// >>>>>>> albokanc
 }
 
 /**
