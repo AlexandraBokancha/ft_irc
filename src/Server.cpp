@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/10 15:59:45 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/18 16:22:29 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -394,8 +394,8 @@ void	Server::disconnectClient( int& index ) {
 	close(this->_pollFd[index].fd);
 	this->_pollFd.erase(this->_pollFd.begin() + index);
 	//! Remove client from client vector
-	this->_client.erase(this->_client.begin() + index - 1);
 	delete (this->_client[index - 1]);
+	this->_client.erase(this->_client.begin() + index - 1);
 
 	index--;
 
@@ -632,6 +632,8 @@ void	Server::receiveMsg( int& i ) {
 				int msg_i = 0;
 				Message msg(fullMsg.c_str(), msg_i, fullMsg.size());	
 				CommandExecutor::execute(*this, *sender, msg);
+				if (msg.getCommand() == "QUIT")
+					return ;
 			}
 			catch (std::exception & e) {
 				err_log("MESSAGE: %s : %s", fullMsg.c_str(), e.what());

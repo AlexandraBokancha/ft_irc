@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/11 15:50:29 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/18 16:11:43 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,7 +85,7 @@ namespace {
 	void	nick( Server& serv, Client& client, Message& msg ) {
 		if (msg.getParam().size() >= 1) {
 			if (serv.findClient(msg.getParam()[0]) != NULL) { //! Nickname is already in used by another client
-				serv.respond(NULL, client.getFd(), ERR_NICKNAMEINUSE, client.getNickname().c_str(), msg.getParam()[0].c_str());
+				serv.respond(NULL, client.getFd(), ERR_NICKNAMEINUSE, "*", msg.getParam()[0].c_str());
 				return ;
 			}
 			if (!AParser::isNickname(msg.getParam()[0])) { //! Invalid nickname
@@ -868,15 +868,15 @@ namespace {
 	 * [<Quit message>] is optional
 	 * 
 	 */
-	// void quit( Server& serv, Client& client, Message& msg ) {
-	// 	if (!msg.getParam().empty()){
-	// 		log("Client %s quit the server with next message: %s", client.getNickname().c_str(), msg.getParam()[0].c_str());
-	// 	}
-	// 	int index = serv.findClientIndex(client.getNickname());
-	// 	success_log("Client %s will be disconnected from the server", client.getNickname().c_str());
-	// 	index++;
-	// 	serv.disconnectClient(index);
-	// }
+	void quit( Server& serv, Client& client, Message& msg ) {
+		if (!msg.getParam().empty()){
+			log("Client %s quit the server with next message: %s", client.getNickname().c_str(), msg.getParam()[0].c_str());
+		}
+		int index = serv.findClientIndex(client.getNickname());
+		success_log("Client %s will be disconnected from the server", client.getNickname().c_str());
+		index++;
+		serv.disconnectClient(index);
+	}
 
 	/* ************************************************************************** */
 	/* *                         IRC Operator's commands                        * */
@@ -1029,7 +1029,7 @@ namespace {
 		commandMap.push_back(std::make_pair("time", time));
 		commandMap.push_back(std::make_pair("info", info));
 		commandMap.push_back(std::make_pair("PING", pong)); //!< PONG reagit a la cmd PING envoye par le client
-	//	commandMap.push_back(std::make_pair("QUIT", quit));
+		commandMap.push_back(std::make_pair("QUIT", quit));
 		commandMap.push_back(std::make_pair("MODE", mode));
 		commandMap.push_back(std::make_pair("INFO", info));
 

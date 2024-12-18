@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/09 15:47:30 by alexandra        ###   ########.fr       */
+/*   Updated: 2024/12/18 16:08:46 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@
 # define ERR_NONICKNAMEGIVEN	"431 %s :No nickname given"
 # define ERR_ERRONEUSNICKNAME	"432 %s %s :Erroneus nickname"
 # define ERR_NICKNAMEINUSE		"433 %s %s :Nickname is already in use" 
+// # define ERR_NICKNAMEINUSE		"433 %s :Nickname is already in use" 
 # define ERR_USERNOTINCHANNEL   "441 %s %s %s :They aren't on that channel"
 # define ERR_NOTONCHANNEL		"442 %s :You're not on that channel"
 # define ERR_USERONCHANNEL      "443 %s %s %s :is already on channel"
