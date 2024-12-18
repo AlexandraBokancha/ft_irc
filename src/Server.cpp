@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/18 16:22:29 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/18 17:39:11 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -207,7 +207,7 @@ Client*	Server::findClient( int client_sock ) {
 }
 
 /**
- * @brief Return lient based on client nickname
+ * @brief Return client based on client nickname
  *
  * Find client based on nickname (Check client existence)
  *
@@ -223,9 +223,16 @@ Client*	Server::findClient( const std::string& nick ) {
 	return (NULL);
 }
 
+/**
+ * @brief Return client index based on client nickname
+ *
+ *
+ * @param nick Nickname to search
+ * @return Client index if found, else -1
+ */
 int Server::findClientIndex( const std::string & nick ) {
-	for (std::size_t i = 0; i < _client.size(); ++i){
-		if (_client[i]->getNickname() == nick){
+	for (std::size_t i = 0; i < _client.size(); ++i) {
+		if (_client[i]->getNickname() == nick) {
 			return (static_cast<int>(i));
 		}
 	}
@@ -323,8 +330,8 @@ void	Server::delChannel( Channel& channel ) {
 
 	for (it = this->_channel.begin(); it != this->_channel.end(); it++) {
 		if (it->getName() == channel.getName()) {
-			this->_channel.erase(it);
 			log("Deleting channel: %s", it->getName().c_str());
+			this->_channel.erase(it);
 			return ;
 		}
 	}
@@ -340,8 +347,8 @@ void	Server::delChannel( Channel& channel ) {
  */
 Channel*	Server::findChannel( const std::string& name ) {
 	std::vector<Channel>::iterator	it;
-	int								safe_channel = (name[0] == '!' ? 1 : 0);
 	std::string						channel_name;
+	int								safe_channel = (name[0] == '!' ? 1 : 0);
 
 	for (it = this->_channel.begin(); it != this->_channel.end(); it++) {
 		channel_name = it->getName();
@@ -356,107 +363,102 @@ Channel*	Server::findChannel( const std::string& name ) {
 }
 
 /**
- * @brief Disconnect client and remove it from poll
+ * @brief Send the complete message to Client
  *
- * This function remove the client-index from poll.
- * It does it by first closing the client socket,
- * then it remove all of it's data from poll
+ * Protected send ensuring that the full message real the client at one time
  *
- * BEWARE:
- *     The index is reduced by one and this behavioue shouldn't be changed
- *     For the moment !
+ * @param socket The client socket
+ * @param buf The buffer containing the message to send
+ * @param len The message len
  *
- * @param index	The client index in the pollFd
+ * @return 0 on SUCCESS; -1 on ERROR
  */
-void	Server::disconnectClient( int& index ) { 
-	if (index == 0)
-		return ;
-	
-	int	client_sock = this->_pollFd[index].fd;
-	Client	*client = this->findClient(client_sock);
-	client->cleanBuffer(512);
-	//! Find every channel were client is connected
-	if (client_sock > 0) {
-		for (std::vector<Channel>::iterator it = _channel.begin(); it != _channel.end(); it++) {
-			if (it->getClient(client_sock) != NULL) {
-				it->removeClient(client_sock);
-				this->broadcastToChannel(client, "QUIT :Quit: ", &(*it), client_sock);
-			}
-			if (it->isEmpty()) {
-				this->_channel.erase(it);
-				log("Removing channel %s", it->getName().c_str());
-				it--;
-			}
+int Server::sendMsg( int socket, const char *buf, int len ) const {
+    int total = 0; // bytes sent
+    int left = len; // bytes left to sent
+    int b;
+
+    while (total < len){
+        b = send(socket, buf + total, left, MSG_DONTWAIT);
+        if (b == -1) {
+			err_log("send(): %s.", std::strerror(errno));
+			break;
 		}
-	}
-
-	log("Closing socket %d.", this->_pollFd[index].fd);
-	close(this->_pollFd[index].fd);
-	this->_pollFd.erase(this->_pollFd.begin() + index);
-	//! Remove client from client vector
-	delete (this->_client[index - 1]);
-	this->_client.erase(this->_client.begin() + index - 1);
-
-	index--;
-
+// <<<<<<< HEAD
+// 	}
+//
+// 	log("Closing socket %d.", this->_pollFd[index].fd);
+// 	close(this->_pollFd[index].fd);
+// 	this->_pollFd.erase(this->_pollFd.begin() + index);
+// 	//! Remove client from client vector
+// 	delete (this->_client[index - 1]);
+// 	this->_client.erase(this->_client.begin() + index - 1);
+//
+// 	index--;
+//
+// =======
+        total += b;
+        left -= b;
+    }
+    return (b == -1 ? -1 : 0); // return -1 on error, 0 on success
+// >>>>>>> albokanc
 }
-
-                           /* SERVER HANDLING */
 
 /**
- * @brief Start the server
+ * @brief Send a message to client socket
  *
- * Init server variable and signals, create socket, bind it and start listening
+ * Just on easier way to send a msg object directly instead of buffer
  *
- * @param Port in char* format just for an easier access to get_addr
+ * @param socket Client socket to send message to
+ * @param msg Message to send
+ *
+ * @return 0 on SUCCESS; -1 on ERROR
  */
-void	Server::startServer( const char *port_str ) {
-	struct addrinfo	hints, *p;
-	struct addrinfo	*servInfo;
+int Server::sendMsg( int socket, const Message& msg ) const {
+	std::string	buffer = msg.toString();
 
-	std::memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;		 //!< Use AF_UNSPEC for both ipv4 ipv6 interfaces
-	hints.ai_socktype = SOCK_STREAM; //!< TCP stream socket
-	hints.ai_flags = AI_PASSIVE;	 //!< <=> INADDR_ANY <=> "0.0.0.0"
-									 //!< Used by application that indent to accept
-									 //!< connexion on any of the host net adresses
-	if (getaddrinfo(NULL, port_str, &hints, &servInfo) != 0)
-		throw (std::runtime_error(std::string("getaddrinfo: ") + std::strerror(errno)));
-
-	this->_serverInfo = servInfo;
-
-    char ipstr[INET_ADDRSTRLEN];
-    for (p = servInfo; p != NULL; p = p->ai_next) {
-        struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
-        void *addr = &(ipv4->sin_addr);
-
-        // Convert the IP to a string and return it
-        inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));
-        break; // We only need the first IP address
-    }
-	this->_ip = ipstr;
-	this->_socket = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
-	if (this->_socket == -1)
-		throw (std::runtime_error(std::string("socket: ") + std::strerror(errno)));
-	this->pollPushBack(this->_socket, POLLIN); //!< Add server to poll
-	int	reusable_addr = 1;
-	if (setsockopt(this->_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &reusable_addr, sizeof(reusable_addr)) < 0)
-		throw (std::runtime_error(std::string("setsockopt: ") + std::strerror(errno)));
-
-	success_log("Socket %d created", this->_socket);
-
-	if (bind(this->_socket, this->_serverInfo->ai_addr, this->_serverInfo->ai_addrlen) < 0)
-		throw (std::runtime_error(std::string("bind: ") + std::strerror(errno)));
-
-	success_log("Binded socket %d.", this->_socket);
-
-	if (listen(this->_socket, 256) < 0)
-		throw (std::runtime_error(std::string("listen: ") + std::strerror(errno)));
-
-	log("Socket %d is listening on port %d.", this->_socket, this->_port);
-
-	set_signal();
+    return (this->sendMsg(socket, buffer.c_str(), buffer.size()));
 }
+
+/**
+ * @brief Send msg to all client except the one specified by fd
+ *
+ * This function is needed to broadcast the irc message when needed
+ * Used in RESTART function;
+ *
+ * @param buffer The buffer containing the message to send
+ * @param len The message len
+ * @param fd The client exluded from receiving the message (the sender)
+ */
+void	Server::broadcast(const char *buffer, int len, int fd) const {
+	for (unsigned long int i = 1; i < this->_pollFd.size(); i++) {
+		if (this->_pollFd[i].fd == fd)
+			continue ;
+
+		log("Sending back msg received on socket %d to %d", fd, this->_pollFd[i].fd);
+
+		if (sendMsg(this->_pollFd[i].fd, buffer, len) == -1)
+			err_log("Msg could not be sent on socket %d", this->_pollFd[i].fd);
+	}
+}
+
+/**
+ * @brief Send msg to all client on specified channel
+ * except the one specified by fd
+ */
+void Server::broadcastToChannel( const Client* src, const std::string& msg, const Channel * ch, int fd ) const {
+	const std::vector< std::pair<Client *, int> >& clients = ch->getClients(); //!< clients connected to this channel
+
+	for (std::vector<std::pair<Client *, int> >::const_iterator it = clients.begin(); it != clients.end(); ++it){
+			if (it->first->getFd() != fd)
+				this->respond(src, it->first->getFd(), msg.c_str());
+	}
+}
+
+
+/* ************************************************************************** */
+/* *                            Server Handling                             * */
+/* ************************************************************************** */
 
 /**
  * @brief Stop the server
@@ -484,106 +486,53 @@ void		Server::stopServer( void ) {
 }
 
 /**
- * @brief Accept a new client connecting to the server
+ * @brief Disconnect client and remove it from poll
  *
- * Accept new client after a POLLIN event have been caught on the Server socket
+ * This function remove the client-index from poll.
+ * It does it by first closing the client socket,
+ * then it remove all of it's data from poll
+ *
+ * BEWARE:
+ *     The index is reduced by one and this behavioue shouldn't be changed
+ *     For the moment !
+ *
+ * @param index	The client index in the pollFd
  */
-void	Server::acceptNewClient( void ) {
-	Client				*new_client = new Client();
-
-	int					client_socket;
-	struct sockaddr_in	client_addr;
-	int					addr_len = sizeof(client_addr);
-
-		client_socket = accept(this->_socket, (struct sockaddr*)&client_addr,
-			reinterpret_cast<socklen_t *>(&addr_len));
-		if (client_socket < 0) //!< accept error
-			return (err_log("%sInternal error%s: %saccept%s: %s",
-					RED, RESET, MAG, RESET, std::strerror(errno)));
-		success_log("accepted client on: %s", inet_ntoa(client_addr.sin_addr));
-
-		this->pollPushBack(client_socket, POLLIN); //!< add client fd to poll
-
-		//! Add client
-		new_client->setFd(client_socket);
-		new_client->setNetId(client_addr);
-		this->_client.push_back(new_client);
-
-}
-
-/**
- * @brief Send the complete message to Client
- *
- * Protected send ensuring that the full message real the client at one time
- *
- * @param socket The client socket
- * @param buf The buffer containing the message to send
- * @param len The message len
- *
- * @return 0 on SUCCESS; -1 on ERROR
- */
-int Server::sendMsg(int socket, const char *buf, int len) const {
-    int total = 0; // bytes sent
-    int left = len; // bytes left to sent
-    int b;
-
-    while (total < len){
-        b = send(socket, buf + total, left, MSG_DONTWAIT);
-        if (b == -1) {
-			err_log("send(): %s.", std::strerror(errno));
-			break;
+void	Server::disconnectClient( int& index ) { 
+	if (index == 0)
+		return ;
+	
+	int	client_sock = this->_pollFd[index].fd;
+	Client*	client = this->findClient(client_sock);
+	
+	client->cleanBuffer(512);
+	
+	//! Find every channel were client is connected
+	if (client_sock > 0) {
+		for (std::vector<Channel>::iterator it = _channel.begin(); it != _channel.end(); it++) {
+			if (it->getClient(client_sock) != NULL) {
+				it->removeClient(client_sock);
+				this->broadcastToChannel(client, "QUIT :Quit: ", &(*it), client_sock);
+			}
+			if (it->isEmpty()) {
+				log("Removing channel %s", it->getName().c_str());
+				this->_channel.erase(it);
+				it--;
+			}
 		}
-        total += b;
-        left -= b;
-    }
-    return (b == -1 ? -1 : 0); // return -1 on error, 0 on success
-}
-
-
-/**
- * @brief Send a message to client socket
- *
- * Just on easier way to send a msg object directly instead of buffer
- *
- * @param socket Client socket to send message to
- * @param msg Message to send
- *
- * @return 0 on SUCCESS; -1 on ERROR
- */
-int Server::sendMsg(int socket, const Message& msg ) const {
-	std::string	buffer = msg.toString();
-
-    return (this->sendMsg(socket, buffer.c_str(), buffer.size()));
-}
-
-/**
- * @brief Send msg to all client except the one specified by fd
- *
- * This function is needed to broadcast the irc message when needed
- *
- * @param buffer The buffer containing the message to send
- * @param len The message len
- * @param fd The client exluded from receiving the message (the sender)
- */
-void	Server::broadcast(const char *buffer, int len, int fd) const {
-	for (unsigned long int i = 1; i < this->_pollFd.size(); i++) {
-		if (this->_pollFd[i].fd == fd)
-			continue ;
-
-		log("Sending back msg received on socket %d to %d", fd, this->_pollFd[i].fd);
-
-		if (sendMsg(this->_pollFd[i].fd, buffer, len) == -1)
-			err_log("Msg could not be sent on socket %d", this->_pollFd[i].fd);
 	}
-}
 
-void Server::broadcastToChannel( const Client* src, const std::string& msg, const Channel * ch, int fd ) const {
-	const std::vector< std::pair<Client *, int> >& clients = ch->getClients(); //!< clients connected to this channel
+	log("Closing socket %d.", this->_pollFd[index].fd);
+	
+	close(client_sock);
+	this->_pollFd.erase(this->_pollFd.begin() + index);
+	
+	//! Remove client from client vector
+	delete (client);
+	this->_client.erase(this->_client.begin() + (index - 1));
 
-	for (std::vector<std::pair<Client *,int> >::const_iterator it = clients.begin(); it != clients.end(); ++it){
-			if (it->first->getFd() != fd)
-				this->respond(src, it->first->getFd(), msg.c_str());
-	}
+	index--;
+
 }
 
 /**
@@ -596,13 +545,8 @@ void Server::broadcastToChannel( const Client* src, const std::string& msg, cons
  */
 void	Server::receiveMsg( int& i ) {
 	
-	char	buffer[512]; //<! 512 = max irc message size
-	
-	Client* sender = findClient(this->_pollFd[i].fd);
-	if (!sender){
-		return;
-	}
-	int buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
+	char	buffer[512]; //<! 512 = max irc message size	
+	int		buffer_size = recv(this->_pollFd[i].fd, buffer, 512 - 1, MSG_DONTWAIT);
 	
 	if (buffer_size > 510) { //!< check for IRC limit (512)
 		err_log("IRC protocol limit (512) was exceeded : %d bytes", buffer_size);
@@ -611,7 +555,11 @@ void	Server::receiveMsg( int& i ) {
 
 	if (buffer_size > 0) { //!< Received msg
 		
+		Client*	sender = findClient(this->_pollFd[i].fd);
+		if (!sender)
+			return ;
 		buffer[buffer_size] = '\0';
+		
 		log("Recevied from client on socket %d: %s", this->_pollFd[i].fd, buffer);
 			
 		sender->setBuffer(buffer); //!< add new data to the client's existing buffer
@@ -625,11 +573,11 @@ void	Server::receiveMsg( int& i ) {
 		size_t n_pos;
 		while ((n_pos = sender->getBuffer().find(CR)) != std::string::npos) {
 				
-			std::string fullMsg = sender->getBuffer().substr(0, n_pos + 2);
+			std::string	fullMsg = sender->getBuffer().substr(0, n_pos + 2);
 			sender->cleanBuffer(n_pos + 2);
 
 			try {
-				int msg_i = 0;
+				int	msg_i = 0;
 				Message msg(fullMsg.c_str(), msg_i, fullMsg.size());	
 				CommandExecutor::execute(*this, *sender, msg);
 				if (msg.getCommand() == "QUIT")
@@ -679,6 +627,35 @@ void	Server::checkEvent( int& i ) {
 }
 
 /**
+ * @brief Accept a new client connecting to the server
+ *
+ * Accept new client after a POLLIN event have been caught on the Server socket
+ */
+void	Server::acceptNewClient( void ) {
+	Client				*new_client = new Client();
+
+	struct sockaddr_in	client_addr;
+	int					client_socket;
+	int					addr_len = sizeof(client_addr);
+
+		client_socket = accept(this->_socket, (struct sockaddr*)&client_addr,
+			reinterpret_cast<socklen_t *>(&addr_len));
+		if (client_socket < 0){ //!< accept() error
+			return (err_log("%sInternal error%s: %saccept%s: %s", \
+				RED, RESET, MAG, RESET, std::strerror(errno)));
+		}
+		
+		success_log("accepted client on: %s", inet_ntoa(client_addr.sin_addr));
+
+		this->pollPushBack(client_socket, POLLIN); //!< add client fd to poll
+
+		//! Add client
+		new_client->setFd(client_socket);
+		new_client->setNetId(client_addr);
+		this->_client.push_back(new_client);
+}
+
+/**
  * @brief Run the server
  */
 void	Server::runServer( void ) {
@@ -696,7 +673,7 @@ void	Server::runServer( void ) {
 		for (int i = 1; i < static_cast<int>(this->_pollFd.size()); i++) {
 			if (this->_pollFd[i].fd > 0)
 				this->checkEvent(i);
-			else if (this->_pollFd[i].fd == 0) { //! Case unused fd
+			else if (this->_pollFd[i].fd == 0) { //! Case unused fdreturn
 				war_log("Removed unused fd from pollfd [%sShouldn't happened%s]", YEL, RESET);
 				disconnectClient(i);
 			} else
@@ -707,6 +684,63 @@ void	Server::runServer( void ) {
         if (status < 0)
 			fatal_log("poll(): %s.", std::strerror(errno));
 	}
+}
+
+/**
+ * @brief Start the server
+ *
+ * Init server variable and signals, create socket, bind it and start listening
+ *
+ * @param Port in char* format just for an easier access to get_addr
+ */
+void	Server::startServer( const char *port_str ) {
+	struct addrinfo	hints, *p;
+	struct addrinfo	*servInfo;
+
+	std::memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;		 //!< Use AF_UNSPEC for both ipv4 ipv6 interfaces
+	hints.ai_socktype = SOCK_STREAM; //!< TCP stream socket
+	hints.ai_flags = AI_PASSIVE;	 //!< <=> INADDR_ANY <=> "0.0.0.0"
+									 //!< Used by application that indent to accept
+									 //!< connexion on any of the host net adresses
+	if (getaddrinfo(NULL, port_str, &hints, &servInfo) != 0)
+		throw (std::runtime_error(std::string("getaddrinfo: ") + std::strerror(errno)));
+
+	this->_serverInfo = servInfo;
+
+    char ipstr[INET_ADDRSTRLEN];
+    for (p = servInfo; p != NULL; p = p->ai_next) {
+        struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+        void *addr = &(ipv4->sin_addr);
+
+        // Convert the IP to a string and return it
+        inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr));
+        break; // We only need the first IP address
+    }
+	this->_ip = ipstr;
+	this->_socket = socket(servInfo->ai_family, servInfo->ai_socktype, servInfo->ai_protocol);
+	if (this->_socket == -1)
+		throw (std::runtime_error(std::string("socket: ") + std::strerror(errno)));
+	
+	this->pollPushBack(this->_socket, POLLIN); //!< Add server to poll
+	
+	int	reusable_addr = 1;
+	if (setsockopt(this->_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &reusable_addr, sizeof(reusable_addr)) < 0)
+		throw (std::runtime_error(std::string("setsockopt: ") + std::strerror(errno)));
+
+	success_log("Socket %d created", this->_socket);
+
+	if (bind(this->_socket, this->_serverInfo->ai_addr, this->_serverInfo->ai_addrlen) < 0)
+		throw (std::runtime_error(std::string("bind: ") + std::strerror(errno)));
+
+	success_log("Binded socket %d.", this->_socket);
+
+	if (listen(this->_socket, 256) < 0)
+		throw (std::runtime_error(std::string("listen: ") + std::strerror(errno)));
+
+	log("Socket %d is listening on port %d.", this->_socket, this->_port);
+
+	set_signal();
 }
 
 /* ************************************************************************** */
