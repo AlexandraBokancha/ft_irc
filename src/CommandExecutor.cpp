@@ -66,7 +66,8 @@ namespace {
 			}
 		}
 		else {
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), \
+				msg.getCommand().c_str());
 			return ;
 		}
 	}
@@ -77,6 +78,7 @@ namespace {
 	 * Conditions checked:
 	 * - The nickname must be unique among connected clients.
 	 * - The nickname must not exceed 9 characters in length.
+	 * - The nickanme must not contain special caracters or numbers.
 	 * 
 	 * @param serv Actual server
 	 * @param client Client who send comand
@@ -92,15 +94,18 @@ namespace {
 				serv.respond(NULL, client.getFd(), ERR_ERRONEUSNICKNAME, "*", msg.getParam()[0].c_str());
 				return ;
 			}
+			//!< Succes
 			client.setNickname(msg.getParam()[0]);
+			
 			success_log("NICK %s enregistred", client.getNickname().c_str());
+			
 			if (!client.getUsername().empty()) {
 				client.setRegistred();
 				serv.respond(NULL, client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), \
 					client.getUsername().c_str(), client.getHostname().c_str());
 			}
 		}
-		else {
+		else { //!< Not enough parameters 
 			serv.respond(NULL, client.getFd(), ERR_NONICKNAMEGIVEN, client.getNickname().c_str());
 			return ;
 		}
@@ -116,7 +121,7 @@ namespace {
 	 * @param msg Msg sent to server from client
 	 */
 	void	user( Server& serv, Client& client, Message& msg ) {
-		if (client.getRegistred()) {
+		if (client.getRegistred()) { //! cannot change the username after registration
 			serv.respond(NULL, client.getFd(), ERR_ALREADYREGISTRED, client.getNickname().c_str());
 			return (war_log("Client is already registered"));
 		}
@@ -126,16 +131,150 @@ namespace {
 			client.setHostname(tmp[1]);
 			client.setServername(tmp[2]);
 			client.setRealname(tmp[3]);
+			
 			success_log("USER %s enregistred", client.getUsername().c_str());
+			
 			if (!client.getNickname().empty()) {
 				client.setRegistred();
 				serv.respond(NULL, client.getFd(), RPL_WELCOME, client.getNickname().c_str(), client.getNickname().c_str(), \
 					client.getUsername().c_str(), client.getHostname().c_str());
 			}
 		}
-		else {
+		else { // not enough parametrs
 			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
 			return ;
+		}
+	}
+
+
+	/* ************************************************************************** */
+	/* *                         IRC Channel's commands                        * */
+	/* ************************************************************************** */
+	
+
+	/* we need to broadcast info about next commands:
+		- JOIN + 
+		- PART + 
+		- KICK +
+		- MODE +
+		- QUIT -
+		- PRIVMSG/NOTICE -
+	*/
+
+	/**
+	 * @brief IRC JOIN command
+	 *
+	 * Perform IRC JOIN command and respond
+	 *
+	 * @param serv Actual server
+	 * @param client Client who send comand
+	 * @param msg Msg sent to server from client
+	 */
+	void	join( Server& serv, Client& client, Message& msg ) {
+
+		std::vector<std::string>					channel_name;
+		std::vector<std::string>::const_iterator	channel_it;
+		std::vector<std::string>					key;
+		std::vector<std::string>::const_iterator	key_it;
+		Channel										*ch;
+		int											channel_mode;
+		
+		if (msg.getParam().size() == 0) {
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
+			return ;
+		}
+
+		//<! Get channel list and key list
+		channel_name = AParser::getChannelList(msg.getParam()[0]);
+		key = (msg.getParam().size() > 1 ? AParser::getKeyList(msg.getParam()[1]) : std::vector<std::string>());
+		key_it = key.begin();
+		
+		for (channel_it = channel_name.begin(); channel_it != channel_name.end(); channel_it++) {
+			if (channel_it->size() <= 1) //!< Invalid channel name
+				continue ;
+			if (client.getJoinedChannel() >= 10)
+				return (serv.respond(NULL, client.getFd(), ERR_TOOMANYCHANNELS, client.getNickname().c_str(), channel_it->c_str()));
+
+			//! Error Checking
+			ch = serv.findChannel(*channel_it);
+			if (ch == NULL) { //! Create new channel
+				Channel	new_channel(&client, *channel_it);
+				serv.addChannel(new_channel);
+				ch = serv.findChannel(*channel_it);
+			}
+			else {
+				if (ch->getClient(client.getFd())) //!< Client already in channel
+					continue ;
+
+				//!< TOOMANYTARGET ERROR
+				if (ch->getName()[0] == '!' && channel_it->c_str()[0] == '!'
+						&& std::strcmp(ch->getName().c_str() + 6, channel_it->c_str() + 1) == 0) {
+					serv.respond(NULL, client.getFd(), ERR_TOOMANYTARGETS, channel_it->c_str(), 471, "Safe channel already exist");
+					continue ;
+				}
+
+				channel_mode = ch->getMode();
+				if (channel_mode & CHN_I && !ch->isInvited(client.getNickname())) { //!< Invite only channel
+					serv.respond(NULL, client.getFd(), ERR_INVITEONLYCHAN, client.getNickname().c_str(), channel_it->c_str());
+					continue ;
+				}
+				if (ch->isFull()) { //!< User limit set and reached
+					serv.respond(NULL, client.getFd(), ERR_CHANNELISFULL, client.getNickname().c_str(), channel_it->c_str());
+					continue ;
+				}
+				if (channel_mode & CHN_K){
+					if (key.empty()){ //!< no key argument is given
+						serv.respond(NULL, client.getFd(), ERR_BADCHANNELKEY, client.getNickname().c_str(), channel_it->c_str());
+						continue ;
+					}
+					if (key_it != key.end()) { //!< Invalid key
+						if (!ch->validPassword(*key_it)) {
+							serv.respond(NULL, client.getFd(), ERR_BADCHANNELKEY, client.getNickname().c_str(), channel_it->c_str());
+							continue ;
+						}
+						key_it++;
+					}
+				}
+				if (client.getJoinedChannel() >= MAX_CHANNEL_PER_CLIENT) { //!< Maximum channel joined
+					serv.respond(NULL, client.getFd(), ERR_TOOMANYCHANNELS, client.getNickname().c_str(), channel_it->c_str());
+					continue ;
+				}
+				//! SUCCESS
+				//! add client to channel
+				ch->addClient(&client);
+				client.setJoinedChannel(client.getJoinedChannel() + 1);
+			}
+			
+			//! response to client
+			std::string response = std::string(":") + client.getNickname() + std::string("!~") + client.getUsername() + 
+				std::string("@") + serv.getPrefix() + std::string(" JOIN ") + ch->getName();
+			serv.respond(&client, client.getFd(), response.c_str());	
+			
+			//! RPL_TOPIC
+			if (!ch->getTopic().empty()) { //!< send topic if it's set
+				serv.respond(NULL, client.getFd(), RPL_TOPIC, client.getNickname().c_str(), \
+					ch->getName().c_str(), ch->getTopic().c_str());
+			}
+
+			//!RPL_NAMERPLY
+			std::string names = ":";
+			const std::vector<std::pair<Client *, int> >& members = ch->getClients();
+			for (std::vector<std::pair<Client *, int> >::const_iterator it = members.begin(); it != members.end(); ++ it){
+				if (it != members.begin()) {
+					names += " ";
+				} 
+				if (it->second & CHNUSR_BIGO || it->second & CHNUSR_O) {
+					names += "@";
+				}
+				names += it->first->getNickname();
+			}
+			
+			serv.respond(NULL, client.getFd(), RPL_NAMERPLY, client.getNickname().c_str(), ch->getName().c_str(), names.c_str());
+			serv.respond(NULL, client.getFd(), RPL_ENDOFNAMES, client.getNickname().c_str(), ch->getName().c_str());
+			
+			//! broadcast to channel
+			serv.broadcastToChannel(&client, response, ch, client.getFd());
+
 		}
 	}
 
@@ -343,141 +482,6 @@ namespace {
 		}
 		return (mode_user(serv, client, msg));
 	}
-
-
-	/* ************************************************************************** */
-	/* *                         IRC Channel's commands                        * */
-	/* ************************************************************************** */
-	
-
-	/* we need to broadcast info about next commands:
-		- JOIN + 
-		- PART + 
-		- KICK +
-		- MODE +
-		- QUIT -
-		- PRIVMSG/NOTICE -
-	*/
-
-	/**
-	 * @brief IRC JOIN command
-	 *
-	 * Perform IRC JOIN command and respond
-	 *
-	 * @param serv Actual server
-	 * @param client Client who send comand
-	 * @param msg Msg sent to server from client
-	 */
-	void	join( Server& serv, Client& client, Message& msg ) {
-
-		std::vector<std::string>					channel_name;
-		std::vector<std::string>::const_iterator	channel_it;
-		std::vector<std::string>					key;
-		std::vector<std::string>::const_iterator	key_it;
-		Channel										*ch;
-		int											channel_mode;
-		
-		if (msg.getParam().size() == 0) {
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
-			return ;
-		}
-
-		//<! Get channel list and key list
-		channel_name = AParser::getChannelList(msg.getParam()[0]);
-		key = (msg.getParam().size() > 1 ? AParser::getKeyList(msg.getParam()[1]) : std::vector<std::string>());
-		key_it = key.begin();
-		
-		for (channel_it = channel_name.begin(); channel_it != channel_name.end(); channel_it++) {
-			if (channel_it->size() <= 1) //!< Invalid channel name
-				continue ;
-			if (client.getJoinedChannel() >= 10)
-				return (serv.respond(NULL, client.getFd(), ERR_TOOMANYCHANNELS, client.getNickname().c_str(), channel_it->c_str()));
-
-			//! Error Checking
-			ch = serv.findChannel(*channel_it);
-			if (ch == NULL) { //! Create new channel
-				Channel	new_channel(&client, *channel_it);
-				serv.addChannel(new_channel);
-				ch = serv.findChannel(*channel_it);
-				// continue; 
-			}
-			else {
-				if (ch->getClient(client.getFd())) //!< Client already in channel
-					continue ;
-
-				//!< TOOMANYTARGET ERROR
-				if (ch->getName()[0] == '!' && channel_it->c_str()[0] == '!'
-						&& std::strcmp(ch->getName().c_str() + 6, channel_it->c_str() + 1) == 0) {
-					serv.respond(NULL, client.getFd(), ERR_TOOMANYTARGETS, channel_it->c_str(), 471, "Safe channel already exist");
-					continue ;
-				}
-
-				channel_mode = ch->getMode();
-				if (channel_mode & CHN_I && !ch->isInvited(client.getNickname())) { //!< Invite only channel
-					serv.respond(NULL, client.getFd(), ERR_INVITEONLYCHAN, client.getNickname().c_str(), channel_it->c_str());
-					continue ;
-				}
-				if (ch->isFull()) { //!< User limit set and reached
-					serv.respond(NULL, client.getFd(), ERR_CHANNELISFULL, client.getNickname().c_str(), channel_it->c_str());
-					continue ;
-				}
-				if (channel_mode & CHN_K){
-					if (key.empty()){ //!< no key argument is given
-						serv.respond(NULL, client.getFd(), ERR_BADCHANNELKEY, client.getNickname().c_str(), channel_it->c_str());
-						continue ;
-					}
-					if (key_it != key.end()) { //!< Invalid key
-						if (!ch->validPassword(*key_it)) {
-							serv.respond(NULL, client.getFd(), ERR_BADCHANNELKEY, client.getNickname().c_str(), channel_it->c_str());
-							continue ;
-						}
-						key_it++;
-					}
-				}
-				if (client.getJoinedChannel() >= MAX_CHANNEL_PER_CLIENT) { //!< Maximum channel joined
-					serv.respond(NULL, client.getFd(), ERR_TOOMANYCHANNELS, client.getNickname().c_str(), channel_it->c_str());
-					continue ;
-				}
-
-				//! SUCCESS
-				//! add client to channel
-				ch->addClient(&client);
-				client.setJoinedChannel(client.getJoinedChannel() + 1);
-			}
-			
-			//! response to client
-			std::string response = std::string(":") + client.getNickname() + std::string("!~") + client.getUsername() + 
-				std::string("@") + serv.getPrefix() + std::string(" JOIN ") + ch->getName();
-			serv.respond(&client, client.getFd(), response.c_str());	
-			
-			//! RPL_TOPIC
-			if (!ch->getTopic().empty()) { //!< send topic if it's set
-				serv.respond(NULL, client.getFd(), RPL_TOPIC, client.getNickname().c_str(), \
-					ch->getName().c_str(), ch->getTopic().c_str());
-			}
-
-			//!RPL_NAMERPLY
-			std::string names = ":";
-			const std::vector<std::pair<Client *, int> >& members = ch->getClients();
-			for (std::vector<std::pair<Client *, int> >::const_iterator it = members.begin(); it != members.end(); ++ it){
-				if (it != members.begin()) {
-					names += " ";
-				} 
-				if (it->second & CHNUSR_BIGO || it->second & CHNUSR_O) {
-					names += "@";
-				}
-				names += it->first->getNickname();
-			}
-			
-			serv.respond(NULL, client.getFd(), RPL_NAMERPLY, client.getNickname().c_str(), ch->getName().c_str(), names.c_str());
-			serv.respond(NULL, client.getFd(), RPL_ENDOFNAMES, client.getNickname().c_str(), ch->getName().c_str());
-			
-			//! broadcast to channel
-			serv.broadcastToChannel(&client, response, ch, client.getFd());
-			
-			return ;
-		}
-	}
 	
 
 	/**
@@ -524,7 +528,7 @@ namespace {
 			
 			if (channel->isEmpty()) { //!< Remove channel
 				serv.delChannel(*channel);
-				return ;
+				continue ;
 			}
 		
 			//! broadcast to channel

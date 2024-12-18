@@ -207,7 +207,7 @@ Client*	Server::findClient( int client_sock ) {
 }
 
 /**
- * @brief Return lient based on client nickname
+ * @brief Return client based on client nickname
  *
  * Find client based on nickname (Check client existence)
  *
@@ -223,9 +223,16 @@ Client*	Server::findClient( const std::string& nick ) {
 	return (NULL);
 }
 
+/**
+ * @brief Return client index based on client nickname
+ *
+ *
+ * @param nick Nickname to search
+ * @return Client index if found, else -1
+ */
 int Server::findClientIndex( const std::string & nick ) {
-	for (std::size_t i = 0; i < _client.size(); ++i){
-		if (_client[i]->getNickname() == nick){
+	for (std::size_t i = 0; i < _client.size(); ++i) {
+		if (_client[i]->getNickname() == nick) {
 			return (static_cast<int>(i));
 		}
 	}
@@ -323,8 +330,8 @@ void	Server::delChannel( Channel& channel ) {
 
 	for (it = this->_channel.begin(); it != this->_channel.end(); it++) {
 		if (it->getName() == channel.getName()) {
-			this->_channel.erase(it);
 			log("Deleting channel: %s", it->getName().c_str());
+			this->_channel.erase(it);
 			return ;
 		}
 	}
@@ -340,8 +347,8 @@ void	Server::delChannel( Channel& channel ) {
  */
 Channel*	Server::findChannel( const std::string& name ) {
 	std::vector<Channel>::iterator	it;
-	int								safe_channel = (name[0] == '!' ? 1 : 0);
 	std::string						channel_name;
+	int								safe_channel = (name[0] == '!' ? 1 : 0);
 
 	for (it = this->_channel.begin(); it != this->_channel.end(); it++) {
 		channel_name = it->getName();
@@ -366,7 +373,7 @@ Channel*	Server::findChannel( const std::string& name ) {
  *
  * @return 0 on SUCCESS; -1 on ERROR
  */
-int Server::sendMsg(int socket, const char *buf, int len) const {
+int Server::sendMsg( int socket, const char *buf, int len ) const {
     int total = 0; // bytes sent
     int left = len; // bytes left to sent
     int b;
@@ -383,7 +390,6 @@ int Server::sendMsg(int socket, const char *buf, int len) const {
     return (b == -1 ? -1 : 0); // return -1 on error, 0 on success
 }
 
-
 /**
  * @brief Send a message to client socket
  *
@@ -394,7 +400,7 @@ int Server::sendMsg(int socket, const char *buf, int len) const {
  *
  * @return 0 on SUCCESS; -1 on ERROR
  */
-int Server::sendMsg(int socket, const Message& msg ) const {
+int Server::sendMsg( int socket, const Message& msg ) const {
 	std::string	buffer = msg.toString();
 
     return (this->sendMsg(socket, buffer.c_str(), buffer.size()));
@@ -404,6 +410,7 @@ int Server::sendMsg(int socket, const Message& msg ) const {
  * @brief Send msg to all client except the one specified by fd
  *
  * This function is needed to broadcast the irc message when needed
+ * Used in RESTART function;
  *
  * @param buffer The buffer containing the message to send
  * @param len The message len
@@ -421,19 +428,23 @@ void	Server::broadcast(const char *buffer, int len, int fd) const {
 	}
 }
 
+/**
+ * @brief Send msg to all client on specified channel
+ * except the one specified by fd
+ */
 void Server::broadcastToChannel( const Client* src, const std::string& msg, const Channel * ch, int fd ) const {
 	const std::vector< std::pair<Client *, int> >& clients = ch->getClients(); //!< clients connected to this channel
 
-	for (std::vector<std::pair<Client *,int> >::const_iterator it = clients.begin(); it != clients.end(); ++it){
+	for (std::vector<std::pair<Client *, int> >::const_iterator it = clients.begin(); it != clients.end(); ++it){
 			if (it->first->getFd() != fd)
 				this->respond(src, it->first->getFd(), msg.c_str());
 	}
 }
 
 
-
-                           /* SERVER HANDLING */
-
+/* ************************************************************************** */
+/* *                            Server Handling                             * */
+/* ************************************************************************** */
 
 /**
  * @brief Stop the server
@@ -459,7 +470,6 @@ void		Server::stopServer( void ) {
 	}
 	log("Server stopped!");
 }
-
 
 /**
  * @brief Disconnect client and remove it from poll
@@ -569,7 +579,6 @@ void	Server::receiveMsg( int& i ) {
 		err_log("Could not received data on socket %d: %srecv%s: %s.", this->_pollFd[i].fd, MAG, RESET, std::strerror(errno));
 	disconnectClient(i);
 }
-
 
 /**
  * @brief Check if an event have been received and treat it if received
