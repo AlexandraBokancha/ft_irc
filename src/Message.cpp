@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/16 23:00:49 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/04 22:24:47 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/18 16:49:29 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,6 +166,10 @@ void	Message::_init(const char *buf, int& i, const int len) {
 	}
 
 	this->_command = AParser::getCommand(buf, i, len);
+
+	while (i < len && buf[i] == SPACE)
+		i++;
+
 	this->_param = AParser::getParam(buf, i, len);
 
 	if (std::strncmp(buf + i, "\r\n", 2) != 0)

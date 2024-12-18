@@ -402,13 +402,13 @@ std::vector<std::string>	AParser::getParam( const char* buf, int& i, const int l
 	std::vector<std::string> param;
 
 	while (i < len && buf[i] != CR) {
-		if (buf[i] != SPACE)
-			throw (AParser::InvalidParameterException());
-		i++;
+		// if (buf[i] != SPACE)
+		// 	throw (AParser::InvalidParameterException());
 		if (buf[i] == ':')
 			param.push_back(AParser::getTrailingParam(buf, ++i, len));
 		else
 			param.push_back(AParser::getMiddleParam(buf, i, len));
+		i += buf[i] == SPACE;
 	}
 	return (param);
 }

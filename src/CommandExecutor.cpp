@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/18 16:11:43 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/18 16:31:45 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,7 +66,7 @@ namespace {
 			}
 		}
 		else {
-			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
+			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, "*", msg.getCommand().c_str());
 			return ;
 		}
 	}
