@@ -119,7 +119,8 @@ void    Bot::runBot( void ) {
         }
 
         //!< kick user from the channel #main if he's sending "F*" word
-        size_t privmsg_pos = str.find("PRIVMSG #main");
+        std::cout << str << std::endl;
+        size_t privmsg_pos = str.find("PRIVMSG  #main");
         if (privmsg_pos != std::string::npos) {
             size_t msg_pos = str.find(" :");
             if (msg_pos != std::string::npos) {
