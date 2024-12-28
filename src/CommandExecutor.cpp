@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/18 17:39:37 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/29 00:36:48 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <iostream>
 #include <ostream>
 #include <string>
 #include <algorithm>
@@ -288,7 +289,7 @@ namespace {
 	 */
 	void	mode_user( Server& serv, Client& client, Message& msg ) {
 		if (msg.getParam()[0].compare(client.getNickname()) != 0) { //!< Nickname not matching user
-			serv.respond(NULL, client.getFd(), ERR_USERSDONTMATCH, client.getNickname().c_str());
+			serv.respond(NULL, client.getFd(), ERR_USERSDONTMATCH);
 			return ;
 		}
 		if (msg.getParam().size() == 1) { //!< Send User mode
@@ -391,7 +392,7 @@ namespace {
 		Channel										new_chan = *chan;
 		int											sign;
 
-		if (param.size() == 1) //!< Channel mode information
+		if (param.size() == 1)  //!< Channel mode information
 			return (serv.respond(NULL, client.getFd(), RPL_CHANNELMODEIS, client.getNickname().c_str(), \
 				chan->getName().c_str(), chan->modeToString().c_str()));
 		if (!chan->isOperator(client.getNickname())) //!< Not a channel operator
@@ -413,8 +414,11 @@ namespace {
 						return (serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), "MODE"));
 				switch (*mode_it) {
 					case 'o' :
-						if (!chan->getClientbyNick(*mode_prm_it))
+						if (!chan->getClientbyNick(*mode_prm_it)) { //Not on channel
+							if (serv.findClient(*mode_prm_it)) //Nick exist
+								return (serv.respond(NULL, client.getFd(), ERR_USERNOTINCHANNEL, mode_prm_it->c_str(), chan->getName().c_str()));
 							return (serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), mode_prm_it->c_str()));
+						}
 						new_chan.changeUserMode(*mode_prm_it, sign, CHNUSR_O);
 						break ;
 					case 'k' :
@@ -445,16 +449,18 @@ namespace {
 				break ;
 			prm_it = mode_prm_it;
 		}
+		*chan = new_chan;
 
 		//! Server respond
-		*chan = new_chan;
+		response = "MODE " + chan->getName() + " ";
 		for (prm_it = result.begin(); prm_it != result.end(); prm_it++) {
 			if ((*prm_it)[0] == PLUS || (*prm_it)[0] == MINUS)
 				response += *prm_it;
 			else
 				response += " " + *prm_it;
 		}
-		serv.respond(NULL, client.getFd(), RPL_CHANNELMODEIS, client.getNickname().c_str(), chan->getName().c_str(), response.c_str());
+		serv.broadcastToChannel(&client, response, chan, client.getFd());
+		serv.respond(&client, client.getFd(), response.c_str());
 	}
 
 	/**
@@ -476,7 +482,7 @@ namespace {
 		if (channel.find(msg.getParam()[0][0]) != std::string::npos) {
 			Channel*	chan = serv.findChannel(msg.getParam()[0]);
 			if (!chan)
-				return (serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, msg.getParam()[0].c_str()));
+				return (serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, client.getNickname().c_str(), msg.getParam()[0].c_str()));
 			return (mode_channel(serv, chan, client, msg));
 		}
 		return (mode_user(serv, client, msg));
@@ -509,7 +515,7 @@ namespace {
 		for (channel_it = channel_name.begin(); channel_it != channel_name.end(); channel_it++) {
 			channel = serv.findChannel(*channel_it);
 			if (!channel) { //!< Channel not found
-				serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, channel_it->c_str());
+				serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, client.getNickname().c_str(), channel_it->c_str());
 				continue ;
 			}
 			if (!channel->getClient(client.getFd())) { //!< Client not in channel

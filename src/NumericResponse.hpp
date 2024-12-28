@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/18 16:08:46 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/29 00:36:42 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@
 # define RPL_TIME				"391 %s %s %s"
 
 //! ERRORS
-# define ERR_NOSUCHNICK         "401 %s :No such nick/channel"
+# define ERR_NOSUCHNICK         "401 %s %s :No such nick/channel"
 # define ERR_NOSUCHCHANNEL		"403 %s %s :No such channel"
 # define ERR_CANNOTSENDTOCHAN   "404 %s %s :Cannot send to channel"
 # define ERR_TOOMANYCHANNELS	"405 %s %s :You have joined too many channels"
@@ -48,8 +48,7 @@
 # define ERR_NONICKNAMEGIVEN	"431 %s :No nickname given"
 # define ERR_ERRONEUSNICKNAME	"432 %s %s :Erroneus nickname"
 # define ERR_NICKNAMEINUSE		"433 %s %s :Nickname is already in use" 
-// # define ERR_NICKNAMEINUSE		"433 %s :Nickname is already in use" 
-# define ERR_USERNOTINCHANNEL   "441 %s %s %s :They aren't on that channel"
+# define ERR_USERNOTINCHANNEL   "441 %s %s :They aren't on that channel"
 # define ERR_NOTONCHANNEL		"442 %s :You're not on that channel"
 # define ERR_USERONCHANNEL      "443 %s %s %s :is already on channel"
 # define ERR_NEEDMOREPARAMS		"461 %s %s :Not enough parameters"
@@ -65,7 +64,7 @@
 # define ERR_CHANOPRIVSNEEDED   "482 %s %s :You're not channel operator"
 # define ERR_NOOPERHOST			"491 %s :No O-lines for your host"
 # define ERR_UMODEUNKNOWNFLAG   "501 %s :Unknown MODE flag"
-# define ERR_USERSDONTMATCH     "502 %s :Cannot change mode for other users"
+# define ERR_USERSDONTMATCH     "502 :Cannot change mode for other users"
 
 //! MISC
 # define CMD_ERROR				"ERROR :%s"
