@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/29 00:36:48 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/29 13:08:22 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -802,7 +802,7 @@ namespace {
 					continue ;
 				}
 				if (!channelReceiver->getClient(client.getFd())){ // !< client sending a msg not on  channel
-					serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, channelReceiver->getName().c_str());
+					serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, client.getNickname().c_str(), channelReceiver->getName().c_str());
 					continue ;
 				}
 				text = ":" + client.getNickname() +" PRIVMSG " + channelReceiver->getName() + " :" + msg.getParam()[1];
