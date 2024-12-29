@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 11:10:53 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/18 17:41:05 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/29 22:17:45 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -498,7 +498,7 @@ void	Server::disconnectClient( int& index ) {
 		for (std::vector<Channel>::iterator it = _channel.begin(); it != _channel.end(); it++) {
 			if (it->getClient(client_sock) != NULL) {
 				it->removeClient(client_sock);
-				this->broadcastToChannel(client, "QUIT :Quit: ", &(*it), client_sock);
+				this->broadcastToChannel(client, "QUIT : Client quit", &(*it), client_sock);
 			}
 			if (it->isEmpty()) {
 				log("Removing channel %s", it->getName().c_str());

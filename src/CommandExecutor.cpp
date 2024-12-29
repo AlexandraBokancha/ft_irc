@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/29 18:52:03 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/29 22:12:36 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -675,47 +675,63 @@ namespace {
 		Client	*clientToKick;
 		std::string comment = "";
 		std::string response;
-		
+	
 		if (msg.getParam().size() <= 1) { //!< No parameter
 			serv.respond(NULL, client.getFd(), ERR_NEEDMOREPARAMS, client.getNickname().c_str(), msg.getCommand().c_str());
 			return ;
 		}
-
 		channel = serv.findChannel(msg.getParam()[0]);
 		if (!channel){ //!< Channel not found
 			serv.respond(NULL, client.getFd(), ERR_NOSUCHCHANNEL, client.getNickname().c_str(), msg.getParam()[0].c_str());
 			return ;
 		}
-		
 		if (!channel->getClient(client.getFd())){ //!< Client not on channel									 
 			serv.respond(NULL, client.getFd(), ERR_NOTONCHANNEL, client.getNickname().c_str(), channel->getName().c_str());
-			return;
+			return ;
 		}
 		if (!channel->isOperator(client.getNickname())){ //!< Client has no privilages
 			serv.respond(NULL, client.getFd(), ERR_CHANOPRIVSNEEDED, client.getNickname().c_str(), channel->getName().c_str());
 			return ;
 		}
-		else{
-			
-			clientToKick = channel->getClientByUsername(msg.getParam()[1]);
+
+		// Quick split of the client list
+		std::vector<std::string>					client_list;
+		std::string client_name;
+		size_t token_start = 0;
+		size_t pos = 0;
+
+		while ((pos = msg.getParam()[1].find(',', token_start)) != std::string::npos) {
+			client_name = msg.getParam()[1].substr(token_start, pos - token_start);
+			client_list.push_back(client_name);
+			token_start = pos + 1;
+		}
+		if (client_list.size() == 0)
+			client_list.push_back(msg.getParam()[1]);
+
+		for (size_t i = 0; i < client_list.size(); i++) {
+			clientToKick = channel->getClientbyNick(client_list[i]);
 			if (!clientToKick){ //!< user doesn't exists protection
-				return ;
+				if (!serv.findClient(client_list[i]))
+					serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), client_list[i].c_str());
+				else
+					serv.respond(NULL, client.getFd(), ERR_USERNOTINCHANNEL, client_list[i].c_str(), channel->getName().c_str());
+				continue ;
 			}
-			//!< kick client from channel
-			channel->removeClient(clientToKick->getFd());
 			
-			if (msg.getParam().size() > 2) {
+			comment = " : You've been kicked out weirdo";
+			if (msg.getParam().size() > 2 && msg.getParam()[2] != ":")
 				comment = " :" + msg.getParam()[2];
-			}
-			
-			response = ":" + client.getNickname() + "!~" + client.getUsername() + "@" + std::string(inet_ntoa((client.getNetId().sin_addr))) + \
-				" KICK " + channel->getName() + " " + msg.getParam()[1] + comment;
+
+			response = "KICK " + channel->getName() + " " + msg.getParam()[1] + comment;
 				
 			//!< response to client
-			serv.respond(NULL, client.getFd(), response.c_str());
+			serv.respond(&client, client.getFd(), response.c_str());
 			
 			//!< broadcast to channel
-			serv.broadcastToChannel(NULL, response, channel, client.getFd());
+			serv.broadcastToChannel(&client, response, channel, client.getFd());
+
+			//!< kick client from channel
+			channel->removeClient(clientToKick->getFd());
 		}
 	}
 
@@ -832,19 +848,32 @@ namespace {
 	 * 
 	 */
 	void	notice( Server& serv, Client& client, Message& msg ) {
-		std::string nick_target;
-		std::string text_target;
+		std::vector<std::string>					receiver;
+		std::vector<std::string>::const_iterator	receiver_it;
+		std::string									text;
+		Client										*clientReceiver;
+		Channel										*channelReceiver;
 
 		if (msg.getParam().size() <= 1){
 			return ;
 		}
-		nick_target = msg.getParam()[0];
-		if (serv.findClient(nick_target) == NULL){//!< No nick found
-			return ;
-		}
-		//!< send notice to client
-		text_target = ":" + client.getNickname() + " NOTICE " + nick_target + " :" + msg.getParam()[1];
-		serv.respond(NULL, serv.findClient(nick_target)->getFd(), text_target.c_str());	
+		receiver = AParser::getReceiverList(msg.getParam()[0]);
+		for (receiver_it = receiver.begin(); receiver_it != receiver.end(); receiver_it++){
+			if ((*receiver_it)[0] == '#' || (*receiver_it)[0] == '&') { //!< it's a channel
+				channelReceiver = serv.findChannel((*receiver_it));
+				if (!channelReceiver) //!< no such channel
+					continue ;
+				text = ":" + client.getNickname() +" NOTICE " + channelReceiver->getName() + " :" + msg.getParam()[1];
+				serv.broadcastToChannel(NULL, text, channelReceiver, client.getFd());
+			}
+			else { //!< it's a client
+				clientReceiver = serv.findClient((*receiver_it)); 
+				if (!clientReceiver) //!< no such client on server
+					continue ;
+				text = ":" + client.getNickname() + " NOTICE " + clientReceiver->getNickname() + " :" + msg.getParam()[1];
+				serv.respond(NULL, clientReceiver->getFd(), text.c_str());
+			}
+		}	
 	}
 	
 	/**
