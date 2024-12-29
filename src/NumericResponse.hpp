@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 11:30:30 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/29 13:06:59 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/29 18:52:17 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,9 +49,8 @@
 # define ERR_ERRONEUSNICKNAME	"432 %s %s :Erroneus nickname"
 # define ERR_NICKNAMEINUSE		"433 %s %s :Nickname is already in use" 
 # define ERR_USERNOTINCHANNEL   "441 %s %s :They aren't on that channel"
-// # define ERR_NOTONCHANNEL		"442 %s :You're not on that channel"
 # define ERR_NOTONCHANNEL		"442 %s %s :You're not on that channel"
-# define ERR_USERONCHANNEL      "443 %s %s %s :is already on channel"
+# define ERR_USERONCHANNEL      "443 %s %s :is already on channel"
 # define ERR_NEEDMOREPARAMS		"461 %s %s :Not enough parameters"
 # define ERR_ALREADYREGISTRED	"462 %s :You may not reregister."
 # define ERR_PASSWDMISMATCH		"464 %s :Password incorrect."

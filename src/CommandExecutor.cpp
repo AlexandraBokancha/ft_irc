@@ -6,7 +6,7 @@
 /*   By: alexandra <alexandra@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/18 23:20:26 by dbaladro          #+#    #+#             */
-/*   Updated: 2024/12/29 13:08:22 by dbaladro         ###   ########.fr       */
+/*   Updated: 2024/12/29 18:52:03 by dbaladro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -625,7 +625,7 @@ namespace {
 		
 		std::string nick_target = msg.getParam()[0];
 		if (serv.findClient(nick_target) == NULL){ //!< No nick found
-			serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, nick_target.c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), nick_target.c_str());
 			return ;
 		}
 		
@@ -638,7 +638,7 @@ namespace {
 				return ;
 			}
 			if (channel->getClientbyNick(nick_target)) { //!< Client tries to invite a user to a channel they are already on
-				serv.respond(NULL, client.getFd(), ERR_USERONCHANNEL, client.getNickname().c_str(), channel->getClientbyNick(nick_target)->getUsername().c_str(), \
+				serv.respond(NULL, client.getFd(), ERR_USERONCHANNEL, nick_target.c_str(), \
 					channel_target.c_str());
 				return ;
 			}
@@ -812,7 +812,7 @@ namespace {
 				clientReceiver = serv.findClient((*receiver_it)); 
 				std::cout << "RECEIVER" << *receiver_it << std::endl;
 				if (!clientReceiver){ //!< no such client on server
-					serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, (*receiver_it).c_str());
+					serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), (*receiver_it).c_str());
 					continue ;
 				}
 				text = ":" + client.getNickname() + " PRIVMSG " + clientReceiver->getNickname() + " :" + msg.getParam()[1];
@@ -948,7 +948,7 @@ namespace {
 		}
 		std::vector<std::string> tmp = msg.getParam();
 		if (!serv.findClient(tmp[0])){
-			serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, tmp[0].c_str());
+			serv.respond(NULL, client.getFd(), ERR_NOSUCHNICK, client.getNickname().c_str(), tmp[0].c_str());
 			return (war_log("ERR_NOSUCHNICK sent to Client %d", client.getFd()));
 		}
 		
